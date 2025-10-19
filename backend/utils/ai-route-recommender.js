@@ -189,12 +189,24 @@ Für **jede Route**:
 - Scenic Score (0-100)
 - Offroad-Anteil in %
 
-**SEHR WICHTIG**:
+**SEHR WICHTIG - RUNDTOUR-REGEL**:
+${roundTrip ? `
+- Dies ist eine RUNDTOUR! Die Route MUSS zum Startpunkt zurückkehren!
 - Der **erste Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
-${roundTrip ? `- Der **letzte Waypoint** MUSS **EXAKT** zurück zum Start sein: ${start.name} (${start.lat}, ${start.lon})` : '- Der letzte Waypoint ist das finale Ziel der Route'}
+- Der **letzte Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
+- Die Route sollte einen KREIS oder eine SCHLEIFE bilden
+- Plane die Waypoints so, dass die Route logisch zum Start zurückführt
+- Beispiel: Start → Nord → Ost → Süd → West → Start (Rundtour)
+- NICHT: Start → Nord → weiter Nord (keine Rundtour!)
+` : `
+- Dies ist eine EINWEG-TOUR vom Start zum Ziel
+- Der **erste Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
+- Der **letzte Waypoint** ist das finale Ziel der Route
+`}
 - Waypoints dazwischen sollten logisch auf der Route liegen
 - Jede Route sollte in eine andere Richtung/Region führen
 - Berücksichtige realistische Entfernungen für ${tripDays} Tage
+- Vermeide zu große Sprünge zwischen Waypoints (max. 300-400km pro Tag)
 
 Antworte in folgendem JSON-Format:
 {
