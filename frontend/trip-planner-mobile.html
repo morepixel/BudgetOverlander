@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Budget Overlander</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        #app {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Full-screen Map */
+        #map {
+            flex: 1;
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* Bottom Sheet */
+        #bottomSheet {
+            position: fixed;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            transform: translateY(calc(100% - 120px));
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            max-height: calc(85vh - 60px);
+            display: flex;
+            flex-direction: column;
+            pointer-events: all;
+            touch-action: none;
+        }
+
+        #bottomSheet.expanded {
+            transform: translateY(0);
+        }
+
+        #bottomSheet.minimized {
+            transform: translateY(calc(100% - 60px));
+        }
+
+        /* Sheet Handle */
+        .sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 12px auto;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        .sheet-header {
+            padding: 0 20px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            touch-action: none;
+        }
+
+        .sheet-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sheet-content {
+            flex: 1;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            padding: 20px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            position: relative;
+        }
+
+        /* Input Sections */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            display: block;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:active {
+            background: #f8f9ff;
+        }
+
+        /* Discovery Mode Card */
+        .feature-card {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #ffc107;
+        }
+
+        .feature-card h3 {
+            font-size: 1.1em;
+            color: #856404;
+            margin-bottom: 8px;
+        }
+
+        .feature-card label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #856404;
+        }
+
+        .feature-card input[type="checkbox"] {
+            width: 22px;
+            height: 22px;
+        }
+
+        /* Slider */
+        .slider-group {
+            margin: 15px 0;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        .slider-value {
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Checkbox */
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        /* Bottom Navigation */
+        #bottomNav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 200;
+            pointer-events: all;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px;
+            cursor: pointer;
+            color: #999;
+            transition: all 0.2s;
+            font-size: 0.75em;
+        }
+
+        .nav-item.active {
+            color: #667eea;
+        }
+
+        .nav-icon {
+            font-size: 1.8em;
+        }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 80%;
+        }
+
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: #999;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Autocomplete Dropdown */
+        .autocomplete-dropdown {
+            position: absolute;
+            z-index: 10000;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            width: 100%;
+            margin-top: 5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: none;
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        
+        .autocomplete-item .city-name {
+            font-size: 1.1em;
+            font-weight: 700;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        .autocomplete-item .city-details {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item:active {
+            background: #f8f9ff;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Results Card */
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border: 2px solid #f0f0f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .result-card:hover,
+        .result-card:active {
+            border-color: #667eea;
+            background: #f8f9ff;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .result-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8ebff 100%);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .result-card h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .result-card p {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-right: 5px;
+            margin-top: 5px;
+        }
+
+        .badge-scenic {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-offroad {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .badge-easy {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .badge-medium {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .badge-hard {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* Safe area for notch devices */
+        @supports (padding: max(0px)) {
+            #bottomNav {
+                padding-bottom: max(8px, env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Full-screen Map -->
+        <div id="map"></div>
+
+        <!-- Bottom Sheet -->
+        <div id="bottomSheet">
+            <div class="sheet-handle" id="sheetHandle"></div>
+            
+            <div class="sheet-header">
+                <div class="sheet-title">
+                    <span>🗺️</span>
+                    <span>Trip Planner</span>
+                </div>
+            </div>
+
+            <div class="sheet-content">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('plan')">Planen</div>
+                    <div class="tab" onclick="switchTab('discover')">Entdecken</div>
+                    <div class="tab" onclick="switchTab('results')">Ergebnisse</div>
+                </div>
+
+                <!-- Tab: Planen -->
+                <div id="tab-plan" class="tab-content active">
+                    <div class="input-group" style="position: relative;">
+                        <label class="input-label">📍 Startpunkt</label>
+                        <input type="text" id="startAddress" class="input-field" placeholder="z.B. München" oninput="searchAddress('start', this.value)">
+                        <div id="startResults" class="autocomplete-dropdown"></div>
+                    </div>
+
+                    <div class="input-group" style="position: relative;">
+                        <label class="input-label">🎯 Zielpunkt <span style="color: #999; font-size: 0.85em;">(optional)</span></label>
+                        <input type="text" id="endAddress" class="input-field" placeholder="z.B. Pyrenäen" oninput="searchAddress('end', this.value)">
+                        <div id="endResults" class="autocomplete-dropdown"></div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>⏱️ Reisetage</span>
+                            <span class="slider-value" id="daysValue">7</span>
+                        </div>
+                        <input type="range" id="tripDays" min="3" max="21" value="7" oninput="updateValue('daysValue', this.value)">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>🛣️ Max. km</span>
+                            <span class="slider-value" id="kmValue">2000</span>
+                        </div>
+                        <input type="range" id="maxKm" min="500" max="5000" value="2000" step="250" oninput="updateValue('kmValue', this.value)">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="calculateRoute()">
+                        <span>🚀</span>
+                        <span>Route berechnen</span>
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="getAIRoutes()">
+                        <span>🤖</span>
+                        <span>KI-Vorschläge holen</span>
+                    </button>
+                </div>
+
+                <!-- Tab: Entdecken -->
+                <div id="tab-discover" class="tab-content">
+                    <div class="input-group" style="position: relative;">
+                        <label class="input-label">📍 Startpunkt</label>
+                        <input type="text" id="startAddressDiscover" class="input-field" placeholder="z.B. München" oninput="searchAddress('startDiscover', this.value)">
+                        <div id="startDiscoverResults" class="autocomplete-dropdown"></div>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>🧭 Discovery Mode</h3>
+                        <label>
+                            <input type="checkbox" id="discoveryMode" checked>
+                            <span>Lass die KI tolle Routen vorschlagen!</span>
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <input type="checkbox" id="roundTrip" checked>
+                            <span>🔄 Rundtour</span>
+                        </label>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <input type="checkbox" id="stayInCountry" checked>
+                            <span>🌍 Innerhalb Landesgrenzen</span>
+                        </label>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>🏔️ Offroad-Anteil</span>
+                            <span class="slider-value" id="offroadValue">50%</span>
+                        </div>
+                        <input type="range" id="offroadWeight" min="0" max="100" value="50" step="10" oninput="updateValue('offroadValue', this.value + '%')">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <span>🏞️ Scenic-Anteil</span>
+                            <span class="slider-value" id="scenicValue">30%</span>
+                        </div>
+                        <input type="range" id="scenicWeight" min="0" max="100" value="30" step="10" oninput="updateValue('scenicValue', this.value + '%')">
+                    </div>
+
+                    <button class="btn btn-primary" onclick="getAIRoutes()" style="margin-top: 20px;">
+                        <span>🤖</span>
+                        <span>KI-Routen entdecken</span>
+                    </button>
+                </div>
+
+                <!-- Tab: Ergebnisse -->
+                <div id="tab-results" class="tab-content">
+                    <div id="resultsContainer">
+                        <p style="text-align: center; color: #999; padding: 40px 0;">
+                            Noch keine Ergebnisse.<br>
+                            Starte eine Suche!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div id="bottomNav">
+            <div class="nav-item active" onclick="showBottomSheet()">
+                <div class="nav-icon">🗺️</div>
+                <div>Planen</div>
+            </div>
+            <div class="nav-item" onclick="alert('Stellplätze coming soon')">
+                <div class="nav-icon">🏕️</div>
+                <div>Stellplätze</div>
+            </div>
+            <div class="nav-item" onclick="alert('Profil coming soon')">
+                <div class="nav-icon">👤</div>
+                <div>Profil</div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay">
+            <div class="loading-content">
+                <!-- Animated Truck -->
+                <div id="truckAnimation" style="width: 280px; height: 140px; margin: 0 auto 20px; position: relative; overflow: hidden; background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #D2B48C 60%, #D2B48C 100%); border-radius: 10px;">
+                    <!-- Mountains -->
+                    <div style="position: absolute; bottom: 60px; left: 0; width: 100%; height: 80px;">
+                        <div style="position: absolute; bottom: 0; left: 20%; width: 0; height: 0; border-left: 40px solid transparent; border-right: 40px solid transparent; border-bottom: 60px solid #8B4513; opacity: 0.6;"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; width: 0; height: 0; border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 70px solid #654321; opacity: 0.5;"></div>
+                    </div>
+                    
+                    <!-- Animated Truck -->
+                    <div id="truck" style="position: absolute; bottom: 65px; left: -60px; animation: drive 3s linear infinite; width: 50px; height: 30px;">
+                        <div style="background: #2c3e50; width: 35px; height: 20px; border-radius: 3px; position: absolute; bottom: 8px;"></div>
+                        <div style="background: #34495e; width: 15px; height: 15px; border-radius: 2px; position: absolute; bottom: 8px; left: 35px;"></div>
+                        <div style="background: #3498db; width: 12px; height: 10px; position: absolute; bottom: 18px; left: 5px; border-radius: 1px;"></div>
+                        <!-- Wheels -->
+                        <div class="wheel" style="position: absolute; bottom: 0; left: 5px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555; animation: rotate 0.5s linear infinite;"></div>
+                        <div class="wheel" style="position: absolute; bottom: 0; left: 25px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555; animation: rotate 0.5s linear infinite;"></div>
+                    </div>
+                    
+                    <!-- Dust clouds -->
+                    <div style="position: absolute; bottom: 60px; left: 10%; width: 20px; height: 20px; background: rgba(210,180,140,0.5); border-radius: 50%; animation: dust 1s infinite;"></div>
+                    <div style="position: absolute; bottom: 60px; left: 15%; width: 15px; height: 15px; background: rgba(210,180,140,0.3); border-radius: 50%; animation: dust 1.2s infinite 0.3s;"></div>
+                </div>
+                
+                <h3 style="margin: 20px 0 10px 0; color: #2c3e50;">🚙 Route wird berechnet...</h3>
+                <p id="loadingText" style="color: #666; font-size: 1em;">Suche optimale Strecke...</p>
+                
+                <!-- Progress Bar -->
+                <div style="width: 100%; height: 8px; background: #ecf0f1; border-radius: 10px; margin: 20px 0; overflow: hidden;">
+                    <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.5s; border-radius: 10px;"></div>
+                </div>
+                
+                <p style="font-size: 0.85em; color: #95a5a6;">Das kann 10-30 Sekunden dauern...</p>
+            </div>
+        </div>
+        
+        <style>
+            @keyframes drive {
+                0% { left: -60px; }
+                100% { left: 100%; }
+            }
+            
+            @keyframes rotate {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            
+            @keyframes dust {
+                0% { transform: scale(0.5); opacity: 0.7; }
+                50% { transform: scale(1.2); opacity: 0.3; }
+                100% { transform: scale(0.5); opacity: 0; }
+            }
+        </style>
+    </div>
+
+    <script src="js/api.js?v=6"></script>
+    <script>
+        let map;
+        let routeLayer;
+        let geocodingTimeout;
+        let selectedLocations = {
+            start: null,
+            end: null,
+            startDiscover: null
+        };
+        let currentRoutes = [];
+        let selectedRouteIndex = -1;
+
+        // Geocoding Search
+        async function searchAddress(type, query) {
+            if (query.length < 3) {
+                hideResults(type);
+                return;
+            }
+
+            clearTimeout(geocodingTimeout);
+            geocodingTimeout = setTimeout(async () => {
+                try {
+                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
+                    const response = await fetch(url, {
+                        headers: {
+                            'User-Agent': 'Budget-Overlander-App'
+                        }
+                    });
+                    const data = await response.json();
+                    showResults(type, data);
+                } catch (error) {
+                    console.error('Geocoding error:', error);
+                }
+            }, 300);
+        }
+
+        function showResults(type, results) {
+            const containerId = type + 'Results';
+            const container = document.getElementById(containerId);
+            
+            if (!container) {
+                console.error('Container not found:', containerId);
+                return;
+            }
+            
+            if (!results || results.length === 0) {
+                hideResults(type);
+                return;
+            }
+
+            let html = '';
+            results.forEach(result => {
+                const escapedName = result.display_name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
+                const parts = result.display_name.split(',');
+                const cityName = parts[0].trim();
+                const details = parts.slice(1).join(',').trim();
+                
+                html += `
+                    <div class="autocomplete-item" onclick='selectLocation("${type}", ${result.lat}, ${result.lon}, "${escapedName}")'>
+                        <span class="city-name">${cityName}</span>
+                        <span class="city-details">${details}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            container.style.display = 'block';
+            console.log('Showing results for', type, results.length, 'items');
+        }
+
+        function hideResults(type) {
+            const containerId = type + 'Results';
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.style.display = 'none';
+            }
+        }
+
+        function selectLocation(type, lat, lon, name) {
+            selectedLocations[type] = { lat, lon, name };
+            
+            const inputId = type === 'startDiscover' ? 'startAddressDiscover' : type + 'Address';
+            document.getElementById(inputId).value = name;
+            hideResults(type);
+        }
+
+        // Close dropdowns on click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.input-group')) {
+                hideResults('start');
+                hideResults('end');
+                hideResults('startDiscover');
+            }
+        });
+
+        // Initialize Map
+        function initMap() {
+            map = L.map('map').setView([48.1351, 11.5820], 6);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+        }
+
+        // Bottom Sheet Interactions
+        let sheet = document.getElementById('bottomSheet');
+        let handle = document.getElementById('sheetHandle');
+        let startY = 0;
+        let currentTranslate = 0;
+
+        handle.addEventListener('click', () => {
+            if (sheet.classList.contains('expanded')) {
+                minimizeSheet();
+            } else {
+                expandSheet();
+            }
+        });
+
+        let touchStartY = 0;
+        let isDragging = false;
+
+        handle.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+            isDragging = true;
+        });
+
+        handle.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaY = e.touches[0].clientY - touchStartY;
+            if (deltaY > 0 && deltaY < 300) {
+                sheet.style.transform = `translateY(calc(100% - 120px + ${deltaY}px))`;
+            }
+        });
+
+        handle.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            
+            const currentTransform = sheet.style.transform;
+            const match = currentTransform.match(/\+ (\d+)px/);
+            const deltaY = match ? parseInt(match[1]) : 0;
+            
+            if (deltaY > 100) {
+                minimizeSheet();
+            } else {
+                sheet.style.transform = 'translateY(calc(100% - 120px))';
+            }
+        });
+
+        function expandSheet() {
+            sheet.classList.add('expanded');
+            sheet.classList.remove('minimized');
+            sheet.style.transform = 'translateY(0)';
+        }
+
+        function minimizeSheet() {
+            sheet.classList.remove('expanded');
+            sheet.classList.add('minimized');
+            sheet.style.transform = 'translateY(calc(100% - 60px))';
+        }
+
+        function showBottomSheet() {
+            expandSheet();
+        }
+
+        // Tab Switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // Update Slider Values
+        function updateValue(id, value) {
+            document.getElementById(id).textContent = value;
+        }
+
+        // Calculate Route
+        async function calculateRoute() {
+            if (!selectedLocations.start) {
+                alert('Bitte Startpunkt auswählen');
+                return;
+            }
+
+            showLoading();
+            
+            // Simulate API call
+            setTimeout(() => {
+                hideLoading();
+                showRouteResults([
+                    {
+                        name: 'Hauptroute',
+                        distance: '1245 km',
+                        duration: '7 Tage',
+                        difficulty: 'medium',
+                        scenic: 85,
+                        offroad: 40
+                    }
+                ]);
+            }, 2000);
+        }
+
+        // Get AI Routes
+        async function getAIRoutes() {
+            const location = selectedLocations.startDiscover || selectedLocations.start;
+            
+            if (!location) {
+                alert('Bitte Startpunkt auswählen');
+                return;
+            }
+
+            showLoading();
+            
+            // Simulate API call
+            setTimeout(() => {
+                hideLoading();
+                showRouteResults([
+                    {
+                        name: '🏔️ Alpen-Adventure',
+                        distance: '1800 km',
+                        duration: '7 Tage',
+                        difficulty: 'hard',
+                        scenic: 95,
+                        offroad: 60
+                    },
+                    {
+                        name: '🌊 Küsten-Tour',
+                        distance: '1500 km',
+                        duration: '7 Tage',
+                        difficulty: 'easy',
+                        scenic: 90,
+                        offroad: 20
+                    },
+                    {
+                        name: '🚙 Offroad-Expedition',
+                        distance: '1200 km',
+                        duration: '7 Tage',
+                        difficulty: 'hard',
+                        scenic: 75,
+                        offroad: 85
+                    }
+                ]);
+            }, 3000);
+        }
+
+        // Show Route Results
+        function showRouteResults(routes) {
+            const container = document.getElementById('resultsContainer');
+            
+            if (!Array.isArray(routes)) {
+                console.error('Routes is not an array:', routes);
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 40px 0;">Fehler beim Laden der Routen</p>';
+                return;
+            }
+            
+            // Store routes globally
+            currentRoutes = routes;
+            selectedRouteIndex = -1;
+            
+            let html = '';
+
+            routes.forEach((route, index) => {
+                html += `
+                    <div class="result-card" onclick="selectRoute(${index})" id="route-${index}">
+                        <h4>${route.name}</h4>
+                        <p style="margin: 8px 0;">
+                            📏 ${route.distance} • ⏱️ ${route.duration}
+                        </p>
+                        <div>
+                            <span class="badge badge-${route.difficulty}">${route.difficulty.toUpperCase()}</span>
+                            <span class="badge badge-scenic">🏞️ Scenic ${route.scenic}%</span>
+                            <span class="badge badge-offroad">🚙 Offroad ${route.offroad}%</span>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.85em; color: #667eea; font-weight: 600;">
+                            👆 Antippen um Route anzuzeigen
+                        </p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            
+            // Switch to results tab
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-results').classList.add('active');
+            
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab')[2].classList.add('active');
+            
+            // Expand bottom sheet if minimized
+            expandSheet();
+        }
+        
+        // Select and display route on map
+        async function selectRoute(index) {
+            if (index < 0 || index >= currentRoutes.length) return;
+            
+            const route = currentRoutes[index];
+            selectedRouteIndex = index;
+            
+            // Update UI - highlight selected card
+            document.querySelectorAll('.result-card').forEach((card, i) => {
+                if (i === index) {
+                    card.classList.add('selected');
+                } else {
+                    card.classList.remove('selected');
+                }
+            });
+            
+            // Show loading
+            showLoading();
+            
+            try {
+                // Remove existing route layer
+                if (routeLayer) {
+                    map.removeLayer(routeLayer);
+                }
+                
+                // Get start location
+                const startLocation = selectedLocations.startDiscover || selectedLocations.start;
+                if (!startLocation) return;
+                
+                // Generate waypoints for this route
+                const waypoints = await generateRouteWaypoints(startLocation, route);
+                
+                // Calculate real street route with OSRM
+                const routeCoords = await calculateOSRMRoute(waypoints);
+                
+                if (!routeCoords || routeCoords.length === 0) {
+                    throw new Error('Keine Route gefunden');
+                }
+                
+                // Draw route on map
+                routeLayer = L.polyline(routeCoords, {
+                    color: '#667eea',
+                    weight: 4,
+                    opacity: 0.8
+                }).addTo(map);
+                
+                // Fit map to route bounds
+                map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+                
+                // Add markers for start and end
+                L.marker([routeCoords[0][0], routeCoords[0][1]], {
+                    icon: L.divIcon({
+                        html: '📍',
+                        className: 'emoji-marker',
+                        iconSize: [30, 30]
+                    })
+                }).addTo(map).bindPopup(`<b>Start:</b> ${startLocation.name}`);
+                
+                L.marker([routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1]], {
+                    icon: L.divIcon({
+                        html: '🎯',
+                        className: 'emoji-marker',
+                        iconSize: [30, 30]
+                    })
+                }).addTo(map).bindPopup(`<b>Ziel:</b> ${route.name}`);
+                
+                hideLoading();
+                
+                // Minimize bottom sheet to show map
+                minimizeSheet();
+            } catch (error) {
+                console.error('Fehler beim Laden der Route:', error);
+                hideLoading();
+                alert('Fehler beim Berechnen der Route');
+            }
+        }
+        
+        // Generate waypoints for route
+        async function generateRouteWaypoints(startLocation, route) {
+            const waypoints = [startLocation];
+            
+            // Calculate end point based on route distance
+            const distanceKm = parseInt(route.distance) || 1500;
+            const bearing = Math.random() * 360; // Random direction
+            
+            // Generate intermediate waypoints
+            const numWaypoints = Math.min(5, Math.floor(distanceKm / 300));
+            
+            for (let i = 1; i <= numWaypoints; i++) {
+                const progress = i / (numWaypoints + 1);
+                const currentDistance = distanceKm * progress;
+                
+                // Calculate coordinates using distance and bearing
+                const lat = startLocation.lat + (currentDistance / 111) * Math.cos(bearing * Math.PI / 180);
+                const lon = startLocation.lon + (currentDistance / (111 * Math.cos(startLocation.lat * Math.PI / 180))) * Math.sin(bearing * Math.PI / 180);
+                
+                waypoints.push({
+                    lat: lat,
+                    lon: lon,
+                    name: `Waypoint ${i}`
+                });
+            }
+            
+            return waypoints;
+        }
+        
+        // Calculate real route with OSRM
+        async function calculateOSRMRoute(waypoints) {
+            const allCoordinates = [];
+            
+            console.log('🗺️ Berechne Route mit', waypoints.length, 'Waypoints');
+            
+            // Calculate route between each pair of waypoints
+            for (let i = 0; i < waypoints.length - 1; i++) {
+                const start = waypoints[i];
+                const end = waypoints[i + 1];
+                
+                console.log(`Segment ${i+1}/${waypoints.length-1}: ${start.name || 'Start'} -> ${end.name || 'Ende'}`);
+                
+                // OSRM API Call
+                const coords = `${start.lon},${start.lat};${end.lon},${end.lat}`;
+                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+                
+                try {
+                    const response = await fetch(osrmUrl);
+                    const data = await response.json();
+                    
+                    if (data.code === 'Ok' && data.routes && data.routes[0]) {
+                        const geometry = data.routes[0].geometry;
+                        const segmentCoords = geometry.coordinates.map(coord => [coord[1], coord[0]]); // [lon,lat] -> [lat,lon]
+                        
+                        // Add to main route (avoid duplicates at connection points)
+                        if (i === 0) {
+                            allCoordinates.push(...segmentCoords);
+                        } else {
+                            allCoordinates.push(...segmentCoords.slice(1));
+                        }
+                        
+                        console.log(`✅ Segment ${i+1}: ${segmentCoords.length} Punkte`);
+                    } else {
+                        console.error('OSRM Error:', data);
+                    }
+                } catch (error) {
+                    console.error('OSRM Fetch Error:', error);
+                }
+            }
+            
+            console.log('🏁 Gesamt-Route:', allCoordinates.length, 'Punkte');
+            return allCoordinates;
+        }
+
+        // Loading with progress simulation
+        let loadingInterval;
+        let progressInterval;
+        
+        function showLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            const progressBar = document.getElementById('progressBar');
+            const loadingText = document.getElementById('loadingText');
+            
+            overlay.style.display = 'flex';
+            progressBar.style.width = '0%';
+            
+            const messages = [
+                'Analysiere Routen...',
+                'Prüfe Straßenverläufe...',
+                'Suche Offroad-Strecken...',
+                'Berechne Scenic Routes...',
+                'Optimiere Wegpunkte...',
+                'Fast fertig...'
+            ];
+            
+            let messageIndex = 0;
+            let progress = 0;
+            
+            // Update loading message
+            loadingInterval = setInterval(() => {
+                if (messageIndex < messages.length) {
+                    loadingText.textContent = messages[messageIndex];
+                    messageIndex++;
+                }
+            }, 2000);
+            
+            // Simulate progress
+            progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 500);
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            const progressBar = document.getElementById('progressBar');
+            
+            clearInterval(loadingInterval);
+            clearInterval(progressInterval);
+            
+            progressBar.style.width = '100%';
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 500);
+        }
+
+        // Init
+        window.addEventListener('load', () => {
+            initMap();
+            
+            // Register Service Worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js');
+            }
+        });
+    </script>
+</body>
+</html>

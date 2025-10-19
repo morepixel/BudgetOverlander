@@ -1,0 +1,141 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_1",
+        "trackCount": 43,
+        "totalLength": 69.43998575815544,
+        "avgDifficulty": 49,
+        "nearestTown": "Carril de la Cebadilla"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.3709543906976736,
+          36.91752792325582
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_3",
+        "trackCount": 16,
+        "totalLength": 23.482018951706166,
+        "avgDifficulty": 48,
+        "nearestTown": "Unbekannt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.98647075625,
+          37.2262233
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_5",
+        "trackCount": 11,
+        "totalLength": 12.77717211825652,
+        "avgDifficulty": 63,
+        "nearestTown": "Unbekannt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.0882109909090905,
+          37.03523937272727
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_2",
+        "trackCount": 9,
+        "totalLength": 21.990749048135783,
+        "avgDifficulty": 59,
+        "nearestTown": "Vía de Güéjar Sierra al Tocón"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.3859035,
+          37.240775633333335
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_4",
+        "trackCount": 9,
+        "totalLength": 20.776010172802565,
+        "avgDifficulty": 46,
+        "nearestTown": "Pista los Cerecillos"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.8867891444444442,
+          36.96290504444445
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_6",
+        "trackCount": 1,
+        "totalLength": 4.891371192761135,
+        "avgDifficulty": 40,
+        "nearestTown": "Unbekannt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.2230681,
+          37.2729875
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_7",
+        "trackCount": 1,
+        "totalLength": 1.7401131961105265,
+        "avgDifficulty": 55,
+        "nearestTown": "Unbekannt"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.0677363,
+          36.8194845
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "cluster_8",
+        "trackCount": 1,
+        "totalLength": 3.904109777867943,
+        "avgDifficulty": 70,
+        "nearestTown": "Camino Llano de los Pozos"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.4880802,
+          36.8154691
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fahrzeug-Profile - Budget Overlander</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚙 Budget Overlander</h1>
+            <div class="user-info" id="userInfo">
+                <span id="userName"></span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+                <button onclick="goHome()" class="btn btn-secondary">← Zurück</button>
+            </div>
+        </header>
+
+        <main>
+            <h2>🚗 Meine Fahrzeuge</h2>
+            <p>Verwalte deine Fahrzeug-Profile für präzise Routen-Planung</p>
+
+            <button onclick="showAddVehicle()" class="btn btn-primary" style="margin: 20px 0;">
+                + Neues Fahrzeug
+            </button>
+
+            <div id="vehiclesList"></div>
+        </main>
+    </div>
+
+    <!-- Add Vehicle Modal -->
+    <div id="addVehicleModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeModal('addVehicleModal')">&times;</span>
+            <h2>Neues Fahrzeug</h2>
+            <form onsubmit="saveVehicle(event)">
+                <label>Name *</label>
+                <input type="text" id="vehicleName" placeholder="z.B. FUSO Canter" required>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label>Breite (m) *</label>
+                        <input type="number" id="vehicleWidth" step="0.1" placeholder="2.3" required>
+                    </div>
+                    <div>
+                        <label>Höhe (m) *</label>
+                        <input type="number" id="vehicleHeight" step="0.1" placeholder="3.5" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label>Gewicht (t) *</label>
+                        <input type="number" id="vehicleWeight" step="0.1" placeholder="7.5" required>
+                    </div>
+                    <div>
+                        <label>Bodenfreiheit (m)</label>
+                        <input type="number" id="vehicleGroundClearance" step="0.01" placeholder="0.25">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label>Verbrauch Straße (L/100km)</label>
+                        <input type="number" id="vehicleFuelOnroad" step="0.1" placeholder="12">
+                    </div>
+                    <div>
+                        <label>Verbrauch Offroad (L/100km)</label>
+                        <input type="number" id="vehicleFuelOffroad" step="0.1" placeholder="18">
+                    </div>
+                </div>
+
+                <label>Reifen-Typ</label>
+                <select id="vehicleTireType">
+                    <option value="AT">All-Terrain (AT)</option>
+                    <option value="MT">Mud-Terrain (MT)</option>
+                    <option value="HT">Highway-Terrain (HT)</option>
+                </select>
+
+                <label style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+                    <input type="checkbox" id="vehicleFourWheelDrive" checked>
+                    <span>Allrad (4x4)</span>
+                </label>
+
+                <label style="display: flex; align-items: center; gap: 10px; margin: 15px 0;">
+                    <input type="checkbox" id="vehicleIsDefault">
+                    <span>Als Standard-Fahrzeug setzen</span>
+                </label>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        let vehicles = [];
+
+        async function init() {
+            if (!checkAuth()) {
+                window.location.href = 'index.html';
+                return;
+            }
+            await loadVehicles();
+        }
+
+        async function loadVehicles() {
+            try {
+                const data = await api.getVehicles();
+                vehicles = data.vehicles;
+                renderVehicles();
+            } catch (error) {
+                console.error('Fehler beim Laden:', error);
+                alert('Fehler beim Laden der Fahrzeuge: ' + error.message);
+            }
+        }
+
+        function renderVehicles() {
+            const listDiv = document.getElementById('vehiclesList');
+            
+            if (vehicles.length === 0) {
+                listDiv.innerHTML = '<p style="color: #95a5a6; text-align: center; padding: 40px;">Noch keine Fahrzeuge angelegt. Lege dein erstes Fahrzeug an!</p>';
+                return;
+            }
+
+            listDiv.innerHTML = vehicles.map(v => `
+                <div class="vehicle-card" style="background: white; padding: 20px; margin: 15px 0; border-radius: 10px; border: 2px solid ${v.is_default ? '#2ecc71' : '#ecf0f1'};">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <h3 style="margin-bottom: 10px;">
+                                ${v.name}
+                                ${v.is_default ? '<span style="background: #2ecc71; color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.8em; margin-left: 10px;">Standard</span>' : ''}
+                            </h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 15px;">
+                                <div>
+                                    <strong>📏 Maße:</strong><br>
+                                    ${v.width}m × ${v.height}m × ${v.weight}t
+                                </div>
+                                <div>
+                                    <strong>🚗 Antrieb:</strong><br>
+                                    ${v.four_wheel_drive ? '4x4 Allrad' : '2WD'}
+                                </div>
+                                <div>
+                                    <strong>⛰️ Bodenfreiheit:</strong><br>
+                                    ${v.ground_clearance}m
+                                </div>
+                                <div>
+                                    <strong>🛞 Reifen:</strong><br>
+                                    ${v.tire_type}
+                                </div>
+                                <div>
+                                    <strong>⛽ Verbrauch:</strong><br>
+                                    Straße: ${v.fuel_consumption_onroad}L<br>
+                                    Offroad: ${v.fuel_consumption_offroad}L
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            ${!v.is_default ? `<button onclick="setDefault(${v.id})" class="btn btn-secondary" style="padding: 8px 15px;">Als Standard</button>` : ''}
+                            <button onclick="deleteVehicle(${v.id})" class="btn" style="background: #e74c3c; color: white; padding: 8px 15px;">Löschen</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddVehicle() {
+            document.getElementById('addVehicleModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        async function saveVehicle(event) {
+            event.preventDefault();
+
+            const vehicleData = {
+                name: document.getElementById('vehicleName').value,
+                width: parseFloat(document.getElementById('vehicleWidth').value),
+                height: parseFloat(document.getElementById('vehicleHeight').value),
+                weight: parseFloat(document.getElementById('vehicleWeight').value),
+                fourWheelDrive: document.getElementById('vehicleFourWheelDrive').checked,
+                groundClearance: parseFloat(document.getElementById('vehicleGroundClearance').value) || 0.2,
+                tireType: document.getElementById('vehicleTireType').value,
+                fuelConsumptionOnroad: parseFloat(document.getElementById('vehicleFuelOnroad').value) || 12,
+                fuelConsumptionOffroad: parseFloat(document.getElementById('vehicleFuelOffroad').value) || 18,
+                isDefault: document.getElementById('vehicleIsDefault').checked
+            };
+
+            try {
+                await api.createVehicle(vehicleData);
+                closeModal('addVehicleModal');
+                
+                // Form zurücksetzen
+                event.target.reset();
+                
+                // Liste neu laden
+                await loadVehicles();
+                
+                alert('Fahrzeug erfolgreich angelegt!');
+            } catch (error) {
+                console.error('Fehler:', error);
+                alert('Fehler beim Speichern: ' + error.message);
+            }
+        }
+
+        async function setDefault(vehicleId) {
+            try {
+                await api.setDefaultVehicle(vehicleId);
+                await loadVehicles();
+                alert('Standard-Fahrzeug gesetzt!');
+            } catch (error) {
+                console.error('Fehler:', error);
+                alert('Fehler: ' + error.message);
+            }
+        }
+
+        async function deleteVehicle(vehicleId) {
+            if (!confirm('Fahrzeug wirklich löschen?')) return;
+
+            try {
+                await api.deleteVehicle(vehicleId);
+                await loadVehicles();
+                alert('Fahrzeug gelöscht!');
+            } catch (error) {
+                console.error('Fehler:', error);
+                alert('Fehler: ' + error.message);
+            }
+        }
+
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>

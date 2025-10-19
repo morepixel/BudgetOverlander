@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Overlander - Multi-Day Offroad Routen</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚙 Budget Overlander</h1>
+            <p class="tagline">Plane deine perfekte Multi-Day Offroad-Tour</p>
+            <div class="auth-buttons" id="authButtons">
+                <button onclick="showLogin()" class="btn btn-secondary">Login</button>
+                <button onclick="showRegister()" class="btn btn-primary">Registrieren</button>
+            </div>
+            <div class="user-info" id="userInfo" style="display: none;">
+                <span id="userName"></span>
+                <button onclick="window.location.href='trip-planner.html'" class="btn btn-primary">🗺️ Trip Planner</button>
+                <button onclick="window.location.href='profile.html'" class="btn btn-secondary">👤 Profil</button>
+                <button onclick="window.location.href='budget-radar.html'" class="btn btn-secondary">💰 Budget-Radar</button>
+                <button onclick="window.location.href='vehicles.html'" class="btn btn-secondary">🚗 Fahrzeuge</button>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <main>
+            <section class="hero">
+                <h2>Finde die besten Offroad-Strecken</h2>
+                <p>Wähle eine Region, entdecke Offroad-Hotspots und plane deine Route mit echtem Routing und Budget-Berechnung.</p>
+                
+                <div class="region-selector">
+                    <label for="regionSelect">Region wählen:</label>
+                    <select id="regionSelect" onchange="loadRegion()">
+                        <option value="">-- Bitte wählen --</option>
+                    </select>
+                </div>
+
+                <button onclick="goToPlanner()" class="btn btn-large btn-primary" id="startButton" disabled>
+                    Zur Routen-Planung →
+                </button>
+            </section>
+
+            <section class="features">
+                <h3>Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🗺️</div>
+                        <h4>Interaktive Karte</h4>
+                        <p>Visualisiere Offroad-Hotspots und wähle deine Lieblings-Cluster aus</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🚗</div>
+                        <h4>Echtes Routing</h4>
+                        <p>OSRM-basierte Routenberechnung mit tatsächlichen Straßen</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💰</div>
+                        <h4>Budget-Kalkulation</h4>
+                        <p>Sprit, Camping, Essen - alles automatisch berechnet</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4>Schwierigkeits-Score</h4>
+                        <p>Bewerte Strecken nach Oberfläche und Tracktype</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 Budget Overlander | Made with ❤️ for Overlanders</p>
+        </footer>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            <h2>Login</h2>
+            <form onsubmit="login(event)">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Passwort" required>
+                <button type="submit" class="btn btn-primary">Einloggen</button>
+            </form>
+            <p class="modal-footer">Noch kein Account? <a href="#" onclick="closeModal('loginModal'); showRegister()">Registrieren</a></p>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('registerModal')">&times;</span>
+            <h2>Registrieren</h2>
+            <form onsubmit="register(event)">
+                <input type="text" id="registerName" placeholder="Name (optional)">
+                <input type="email" id="registerEmail" placeholder="Email" required>
+                <input type="password" id="registerPassword" placeholder="Passwort" required>
+                <button type="submit" class="btn btn-primary">Registrieren</button>
+            </form>
+            <p class="modal-footer">Schon registriert? <a href="#" onclick="closeModal('registerModal'); showLogin()">Login</a></p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Lade Regionen beim Start
+        async function init() {
+            checkAuth();
+            await loadRegions();
+        }
+
+        async function loadRegions() {
+            try {
+                const data = await api.getRegions();
+                const select = document.getElementById('regionSelect');
+                
+                data.regions.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region.id;
+                    option.textContent = `${region.name} (${region.country})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Fehler beim Laden der Regionen:', error);
+                alert('Fehler beim Laden der Regionen. Ist der Backend-Server gestartet?');
+            }
+        }
+
+        function loadRegion() {
+            const select = document.getElementById('regionSelect');
+            const startButton = document.getElementById('startButton');
+            
+            if (select.value) {
+                startButton.disabled = false;
+                localStorage.setItem('selectedRegion', select.value);
+            } else {
+                startButton.disabled = true;
+            }
+        }
+
+        function goToPlanner() {
+            const region = document.getElementById('regionSelect').value;
+            if (region) {
+                window.location.href = `app.html?region=${region}`;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

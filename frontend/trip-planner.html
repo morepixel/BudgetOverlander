@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Trip Planner - Budget Overlander</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile-styles.css?v=2">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        @media (max-width: 768px) {
+            /* Map 100% height */
+            #map {
+                height: 100vh !important;
+                width: 100vw !important;
+            }
+            
+            /* Left Navigation Bar - 30px wide */
+            #left-nav-bar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 30px;
+                background: rgba(255, 255, 255, 0.95);
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+                z-index: 2000;
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                padding: 60px 0 20px 0;
+                align-items: center;
+            }
+            
+            .nav-icon {
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 18px;
+                transition: all 0.2s;
+                position: relative;
+            }
+            
+            .nav-icon:hover {
+                transform: scale(1.1);
+            }
+            
+            .nav-icon.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 50%;
+                color: white;
+            }
+            
+            /* Slide-out Panel from left */
+            #slide-panel {
+                position: fixed;
+                left: 30px;
+                top: 0;
+                bottom: 0;
+                width: 320px;
+                background: white;
+                box-shadow: 2px 0 20px rgba(0,0,0,0.2);
+                z-index: 1500;
+                transform: translateX(-100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
+            
+            #slide-panel.open {
+                transform: translateX(0);
+            }
+            
+            /* Panel Header */
+            .panel-header {
+                padding: 20px;
+                border-bottom: 2px solid #f0f0f0;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-weight: 600;
+                font-size: 1.1em;
+                color: #2c3e50;
+                flex-shrink: 0;
+            }
+            
+            /* Panel Content */
+            .panel-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px;
+            }
+            
+            /* Hide old bottom panel */
+            main > div:first-child,
+            #mobile-panel,
+            .sidebar {
+                display: none !important;
+            }
+            
+            /* Drag handle */
+            main > div:first-child::before {
+                content: '' !important;
+                width: 40px !important;
+                height: 4px !important;
+                background: #ddd !important;
+                border-radius: 2px !important;
+                margin: 12px auto 8px auto !important;
+                display: block !important;
+                flex-shrink: 0 !important;
+                cursor: grab !important;
+            }
+            
+            /* Force tabs to be visible on mobile */
+            .tabs {
+                display: flex !important;
+                position: relative !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                background: white !important;
+                padding: 15px 20px 10px 20px !important;
+                border-bottom: 2px solid #f0f0f0 !important;
+                flex-shrink: 0 !important;
+                overflow-x: auto !important;
+                margin: 0 !important;
+                z-index: 10 !important;
+            }
+            
+            .tab {
+                background: #f5f5f5 !important;
+                border-radius: 20px !important;
+                padding: 10px 20px !important;
+                border: none !important;
+                text-align: center !important;
+                font-size: 0.85em !important;
+                white-space: nowrap !important;
+                flex-shrink: 0 !important;
+                cursor: pointer !important;
+            }
+            
+            .tab.active {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+                color: white !important;
+            }
+            
+            /* Show tab content */
+            .tab-content {
+                display: none;
+                padding: 20px !important;
+                overflow-y: auto !important;
+                flex: 1 !important;
+            }
+            
+            .tab-content[style*="display: block"] {
+                display: block !important;
+            }
+            
+            /* Buttons visible */
+            .btn, button {
+                z-index: 10 !important;
+                position: relative !important;
+            }
+            
+            /* H2 hidden on mobile */
+            .sidebar > h2 {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="desktop-only">🗺️ Multi-Day Trip Planner</h1>
+            <h1 class="mobile-only" style="font-size: 1.2em; margin: 0;">🗺️ Trip Planner</h1>
+            <div class="user-info" id="userInfo">
+                <span id="userName"></span>
+                <button onclick="window.location.href='index.html'" class="btn btn-secondary">← Zurück</button>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Mobile Left Navigation Bar -->
+        <div id="left-nav-bar" class="mobile-only">
+            <div class="nav-icon active" onclick="openPanel('plan')" title="Planen">
+                📍
+            </div>
+            <div class="nav-icon" onclick="openPanel('discover')" title="Entdecken">
+                🧭
+            </div>
+            <div class="nav-icon" onclick="openPanel('results')" title="Ergebnisse">
+                📋
+            </div>
+        </div>
+
+        <!-- Mobile Slide-out Panel -->
+        <div id="slide-panel" class="mobile-only">
+            <div class="panel-header">
+                <span id="panel-icon">📍</span>
+                <span id="panel-title">Planen</span>
+            </div>
+            <div class="panel-content" id="panel-content">
+                <!-- Content wird hier dynamisch geladen -->
+            </div>
+        </div>
+
+        <main style="display: grid; grid-template-columns: 400px 1fr; gap: 20px; height: calc(100vh - 80px); padding: 20px;">
+            <!-- Sidebar / Bottom Sheet -->
+            <div class="sidebar" id="mobile-panel" style="background: white; padding: 20px; border-radius: 10px; overflow-y: auto;">
+                <h2 style="margin: 0 0 20px 0;">🗺️ Trip Planner</h2>
+                
+                <!-- Tabs -->
+                <div class="tabs" style="display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; overflow-x: auto;">
+                    <div class="tab active" onclick="switchTab('plan', this)" style="flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 600; color: #667eea; border-bottom-color: #667eea; white-space: nowrap; font-size: 0.95em;">Planen</div>
+                    <div class="tab" onclick="switchTab('discover', this)" style="flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 600; color: #999; white-space: nowrap; font-size: 0.95em;">Entdecken</div>
+                    <div class="tab" onclick="switchTab('results', this)" style="flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 600; color: #999; white-space: nowrap; font-size: 0.95em;">Ergebnisse</div>
+                    <div class="tab" onclick="switchTab('map', this)" style="flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 600; color: #999; white-space: nowrap; font-size: 0.95em;">Karte</div>
+                </div>
+                
+                <!-- Tab: Planen -->
+                <div id="tab-plan" class="tab-content" style="display: block;">
+                    <div class="input-group" style="margin-bottom: 20px; position: relative;">
+                        <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">📍 Startpunkt</label>
+                        <input type="text" id="startAddress" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('start', this.value)">
+                        <div id="startResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 99999 !important; background: white !important; border: 2px solid #e0e0e0; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: none !important;"></div>
+                        <input type="hidden" id="startLat">
+                        <input type="hidden" id="startLon">
+                    </div>
+
+                    <div class="input-group" style="margin-bottom: 20px; position: relative;">
+                        <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">🎯 Zielpunkt <span style="color: #999; font-size: 0.85em;">(optional)</span></label>
+                        <input type="text" id="endAddress" placeholder="z.B. Pyrenäen" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('end', this.value)">
+                        <div id="endResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 99999 !important; background: white !important; border: 2px solid #e0e0e0; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: none !important;"></div>
+                        <input type="hidden" id="endLat">
+                        <input type="hidden" id="endLon">
+                    </div>
+                    
+                    <button onclick="getAIRecommendations()" class="btn btn-primary" style="width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 600; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); margin-top: 20px;">
+                        <span>🚀</span>
+                        <span>Route berechnen</span>
+                    </button>
+                </div>
+                
+                <!-- Tab: Entdecken -->
+                <div id="tab-discover" class="tab-content" style="display: none;">
+                    <div class="input-group" style="margin-bottom: 20px; position: relative;">
+                        <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">📍 Startpunkt</label>
+                        <input type="text" id="startAddressDiscover" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddressDiscover(this.value)">
+                        <div id="startDiscoverResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 99999 !important; background: white !important; border: 2px solid #e0e0e0; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: none !important;"></div>
+                    </div>
+                    
+                    <div class="feature-card" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 2px solid #ffc107;">
+                        <h3 style="font-size: 1.1em; color: #856404; margin-bottom: 8px;">🧭 Discovery Mode</h3>
+                        <label style="display: flex; align-items: center; gap: 10px; color: #856404;">
+                            <input type="checkbox" id="discoveryMode" checked style="width: 22px; height: 22px;">
+                            <span>Lass die KI tolle Routen vorschlagen!</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <input type="checkbox" id="roundTrip" checked style="width: 20px; height: 20px;">
+                            <span>🔄 Rundtour</span>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                            <input type="checkbox" id="stayInCountry" checked style="width: 20px; height: 20px;">
+                            <span>🌍 Innerhalb Landesgrenzen</span>
+                        </label>
+                    </div>
+                    
+                    <div class="slider-group" style="margin: 15px 0;">
+                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                            <span>⏱️ Reisetage</span>
+                            <span class="slider-value" id="tripDaysLabel" style="font-weight: 700; color: #667eea;">7</span>
+                        </div>
+                        <input type="range" id="tripDays" min="3" max="21" value="7" oninput="document.getElementById('tripDaysLabel').textContent = this.value" style="width: 100%;">
+                    </div>
+                    
+                    <div class="slider-group" style="margin: 15px 0;">
+                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                            <span>🛣️ Max. km</span>
+                            <span class="slider-value" id="maxTotalKmLabel" style="font-weight: 700; color: #667eea;">2000</span>
+                        </div>
+                        <input type="range" id="maxTotalKm" min="500" max="5000" value="2000" step="250" oninput="document.getElementById('maxTotalKmLabel').textContent = this.value" style="width: 100%;">
+                    </div>
+
+                    <div class="slider-group" style="margin: 15px 0;">
+                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                            <span>🏔️ Offroad-Anteil</span>
+                            <span class="slider-value" id="offroadLabel" style="font-weight: 700; color: #667eea;">50%</span>
+                        </div>
+                        <input type="range" id="offroadWeight" min="0" max="100" value="50" step="10" oninput="document.getElementById('offroadLabel').textContent = this.value + '%'" style="width: 100%;">
+                    </div>
+                    
+                    <div class="slider-group" style="margin: 15px 0;">
+                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                            <span>🏞️ Scenic-Anteil</span>
+                            <span class="slider-value" id="scenicLabel" style="font-weight: 700; color: #667eea;">30%</span>
+                        </div>
+                        <input type="range" id="scenicWeight" min="0" max="100" value="30" step="10" oninput="document.getElementById('scenicLabel').textContent = this.value + '%'" style="width: 100%;">
+                    </div>
+                    
+                    <button onclick="discoverAIRoutes()" class="btn btn-primary" style="width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 600; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); margin-top: 20px;">
+                        <span>🤖</span>
+                        <span>KI-Routen entdecken</span>
+                    </button>
+                </div>
+                
+                <!-- Tab: Ergebnisse -->
+                <div id="tab-results" class="tab-content" style="display: none;">
+                    <div id="resultsContainer">
+                        <p style="text-align: center; color: #999; padding: 40px 0;">
+                            Noch keine Ergebnisse.<br>
+                            Starte eine Suche!
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Tab: Karte -->
+                <div id="tab-map" class="tab-content" style="display: none;">
+                    <div id="mapContainer" style="width: 100%; height: 500px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <div id="mapInTab" style="width: 100%; height: 100%;"></div>
+                    </div>
+                </div>
+                
+                <!-- Hidden fields for compatibility -->
+                <input type="hidden" id="maxKmPerDay" value="350">
+                <input type="hidden" id="avgSpeed" value="70">
+                <input type="hidden" id="maxDrivingHours" value="6"
+>
+                
+                <!-- Hidden compatibility fields -->
+                <input type="hidden" id="freeOnly">
+                <input type="hidden" id="maxPrice" value="20">
+                <input type="hidden" id="needsElectricity">
+                <input type="hidden" id="needsWater" value="true">
+                <input type="hidden" id="needsDisposal" value="true">
+                <input type="hidden" id="enableOptimization" value="true">
+                <input type="hidden" id="accommodationWeight" value="20">
+                <input type="hidden" id="maxDetour" value="20">
+            </div>
+            </div>
+
+            <!-- Karte -->
+            <div style="position: relative;">
+                <div id="map" style="width: 100%; height: 100%; border-radius: 10px;"></div>
+            </div>
+        </main>
+        
+        <!-- Offroad Loading Popup -->
+        <div id="loadingPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; display: none; justify-content: center; align-items: center;">
+            <div style="background: white; border-radius: 20px; padding: 40px; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+                <!-- Animated Truck -->
+                <div id="truckAnimation" style="width: 300px; height: 150px; margin: 0 auto 20px; position: relative; overflow: hidden; background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #D2B48C 60%, #D2B48C 100%); border-radius: 10px;">
+                    <!-- Mountains -->
+                    <div style="position: absolute; bottom: 60px; left: 0; width: 100%; height: 80px;">
+                        <div style="position: absolute; bottom: 0; left: 20%; width: 0; height: 0; border-left: 40px solid transparent; border-right: 40px solid transparent; border-bottom: 60px solid #8B4513; opacity: 0.6;"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; width: 0; height: 0; border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 70px solid #654321; opacity: 0.5;"></div>
+                    </div>
+                    
+                    <!-- Animated Truck -->
+                    <div id="truck" style="position: absolute; bottom: 65px; left: -60px; transition: left 3s linear; width: 50px; height: 30px;">
+                        <div style="background: #2c3e50; width: 35px; height: 20px; border-radius: 3px; position: absolute; bottom: 8px;"></div>
+                        <div style="background: #34495e; width: 15px; height: 15px; border-radius: 2px; position: absolute; bottom: 8px; left: 35px;"></div>
+                        <div style="background: #3498db; width: 12px; height: 10px; position: absolute; bottom: 18px; left: 5px; border-radius: 1px;"></div>
+                        <!-- Wheels -->
+                        <div class="wheel" style="position: absolute; bottom: 0; left: 5px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555;"></div>
+                        <div class="wheel" style="position: absolute; bottom: 0; left: 25px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555;"></div>
+                    </div>
+                    
+                    <!-- Dust clouds -->
+                    <div id="dust1" style="position: absolute; bottom: 60px; left: -20px; width: 20px; height: 20px; background: rgba(210,180,140,0.5); border-radius: 50%; animation: dust 1s infinite;"></div>
+                    <div id="dust2" style="position: absolute; bottom: 60px; left: -20px; width: 15px; height: 15px; background: rgba(210,180,140,0.3); border-radius: 50%; animation: dust 1.2s infinite 0.3s;"></div>
+                </div>
+                
+                <h2 style="margin: 20px 0 10px 0; color: #2c3e50;">🚙 Route wird berechnet...</h2>
+                <p id="loadingText" style="color: #7f8c8d; font-size: 1.1em; margin: 10px 0;">Suche optimale Strecke...</p>
+                
+                <!-- Progress Bar -->
+                <div style="width: 100%; height: 8px; background: #ecf0f1; border-radius: 10px; margin: 20px 0; overflow: hidden;">
+                    <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.5s; border-radius: 10px;"></div>
+                </div>
+                
+                <p style="font-size: 0.9em; color: #95a5a6;">Das kann 10-30 Sekunden dauern...</p>
+            </div>
+        </div>
+        
+        <style>
+            @keyframes dust {
+                0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+                50% { transform: translate(-10px, -10px) scale(1.5); opacity: 0.3; }
+                100% { transform: translate(-20px, -20px) scale(2); opacity: 0; }
+            }
+            
+            @keyframes wheelSpin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            
+            .wheel {
+                animation: wheelSpin 0.5s linear infinite;
+            }
+        </style>
+
+        <main style="display: none;">
+    </div>
+
+    <script src="js/api.js?v=5"></script>
+    <script src="js/auth.js?v=3"></script>
+    <script>
+        let map;
+        let startMarker, endMarker;
+        let routeLayer;
+        let accommodationMarkers = [];
+        let currentTrip = null;
+        let selectingStart = false;
+        let selectingEnd = false;
+
+        function init() {
+            if (!checkAuth()) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Initialisiere Karte - immer im Hintergrund auf Mobile
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: true
+            }).setView([48.1351, 11.5820], 6); // München
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
+            
+            // Force map to render correctly - multiple times
+            setTimeout(() => map.invalidateSize(), 100);
+            setTimeout(() => map.invalidateSize(), 300);
+            setTimeout(() => map.invalidateSize(), 500);
+
+            // Karten-Klick-Handler
+            map.on('click', function(e) {
+                if (selectingStart) {
+                    setStartLocation(e.latlng.lat, e.latlng.lng);
+                    selectingStart = false;
+                } else if (selectingEnd) {
+                    setEndLocation(e.latlng.lat, e.latlng.lng);
+                    selectingEnd = false;
+                }
+            });
+        }
+
+        function setStartFromMap() {
+            selectingStart = true;
+            selectingEnd = false;
+            alert('Klicke auf die Karte, um den Startpunkt zu setzen');
+        }
+
+        function setEndFromMap() {
+            selectingStart = false;
+            selectingEnd = true;
+            alert('Klicke auf die Karte, um den Zielpunkt zu setzen');
+        }
+
+        function setStartLocation(lat, lon) {
+            document.getElementById('startLat').value = lat.toFixed(4);
+            document.getElementById('startLon').value = lon.toFixed(4);
+            
+            if (startMarker) map.removeLayer(startMarker);
+            startMarker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                    html: '<div style="background: #2ecc71; border: 3px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📍</div>',
+                    className: '',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map).bindPopup('Start');
+        }
+
+        function setEndLocation(lat, lon) {
+            document.getElementById('endLat').value = lat.toFixed(4);
+            document.getElementById('endLon').value = lon.toFixed(4);
+            
+            if (endMarker) map.removeLayer(endMarker);
+            endMarker = L.marker([lat, lon], {
+                icon: L.divIcon({
+                    html: '<div style="background: #e74c3c; border: 3px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px;">🎯</div>',
+                    className: '',
+                    iconSize: [30, 30]
+                })
+            }).addTo(map).bindPopup('Ziel');
+        }
+
+        async function calculateTrip() {
+            const startLat = parseFloat(document.getElementById('startLat').value);
+            const startLon = parseFloat(document.getElementById('startLon').value);
+            const endLat = parseFloat(document.getElementById('endLat').value);
+            const endLon = parseFloat(document.getElementById('endLon').value);
+
+            if (!startLat || !startLon || !endLat || !endLon) {
+                alert('Bitte Start- und Zielpunkt eingeben');
+                return;
+            }
+
+            showLoadingPopup('Berechne Trip...');
+
+            try {
+                const preferences = {
+                    maxKmPerDay: parseInt(document.getElementById('maxKmPerDay').value),
+                    avgSpeed: parseInt(document.getElementById('avgSpeed').value),
+                    maxDrivingHours: parseInt(document.getElementById('maxDrivingHours').value),
+                    optimize: document.getElementById('enableOptimization').checked,
+                    offroadWeight: parseFloat(document.getElementById('offroadWeight').value) / 100,
+                    scenicWeight: parseFloat(document.getElementById('scenicWeight').value) / 100,
+                    accommodationWeight: parseFloat(document.getElementById('accommodationWeight').value) / 100,
+                    maxDetourPercent: parseFloat(document.getElementById('maxDetour').value),
+                    accommodation: {
+                        freeOnly: document.getElementById('freeOnly').checked,
+                        maxPrice: parseFloat(document.getElementById('maxPrice').value),
+                        needsElectricity: document.getElementById('needsElectricity').checked,
+                        needsWater: document.getElementById('needsWater').checked,
+                        needsDisposal: document.getElementById('needsDisposal').checked
+                    },
+                    route: {
+                        avoidTolls: document.getElementById('avoidTolls').checked,
+                        avoidHighways: document.getElementById('avoidHighways').checked
+                    }
+                };
+
+                const response = await fetch('http://localhost:3001/api/trip-planner/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        startLocation: { lat: startLat, lon: startLon },
+                        endLocation: { lat: endLat, lon: endLon },
+                        preferences
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Trip-Berechnung fehlgeschlagen');
+                }
+
+                const data = await response.json();
+                currentTrip = data.tripPlan;
+
+                displayTripResult(currentTrip);
+                displayTripOnMap(currentTrip);
+
+            } catch (error) {
+                console.error('Trip calculation error:', error);
+                alert('Fehler bei der Trip-Berechnung: ' + error.message);
+            } finally {
+                hideLoadingPopup();
+            }
+        }
+
+        function displayTripResult(trip) {
+            const resultDiv = document.getElementById('tripResult');
+            
+            let html = `
+                <div style="background: white; padding: 15px; border-radius: 5px; border: 2px solid #2ecc71;">
+                    <h3 style="margin: 0 0 10px 0;">📊 Routenplan</h3>
+                    <p style="margin: 5px 0;"><strong>Distanz:</strong> ${trip.totalDistance} km</p>
+                    <p style="margin: 5px 0;"><strong>Dauer:</strong> ${trip.totalDuration.toFixed(1)} h</p>
+                    <p style="margin: 5px 0;"><strong>Tage:</strong> ${trip.totalDays}</p>
+                    <p style="margin: 5px 0;"><strong>Kosten:</strong> ${trip.totalCost} €</p>
+                    ${trip.days[0]?.offroadScore ? `
+                        <hr style="margin: 10px 0;">
+                        <p style="margin: 5px 0; font-size: 0.9em;"><strong>🏔️ Offroad:</strong> ${trip.days[0].offroadScore?.toFixed(0)}%</p>
+                        <p style="margin: 5px 0; font-size: 0.9em;"><strong>🏞️ Scenic:</strong> ${trip.days[0].scenicScore?.toFixed(0)}/100</p>
+                    ` : ''}
+                </div>
+            `;
+
+            trip.days.forEach((day, i) => {
+                const acc = day.accommodation;
+                html += `
+                    <div style="background: white; padding: 15px; border-radius: 5px; margin-top: 10px; border-left: 4px solid #3498db;">
+                        <h4 style="margin: 0 0 10px 0;">📅 Tag ${day.dayNumber}</h4>
+                        <p style="margin: 5px 0; font-size: 0.9em;">📏 ${day.distance} km • ⏱️ ${day.duration.toFixed(1)} h</p>
+                        ${acc ? `
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 3px; margin-top: 10px;">
+                                <p style="margin: 0; font-weight: bold;">🏕️ ${acc.name}</p>
+                                <p style="margin: 5px 0; font-size: 0.9em;">
+                                    ${acc.price === 0 ? '💚 Kostenlos' : '💙 ' + acc.price + ' €'}
+                                    ${acc.distance ? ' • ' + acc.distance + ' km' : ''}
+                                </p>
+                            </div>
+                        ` : i < trip.days.length - 1 ? '<p style="color: #e74c3c; font-size: 0.9em;">⚠️ Keine Übernachtung gefunden</p>' : ''}
+                    </div>
+                `;
+            });
+
+            resultDiv.innerHTML = html;
+            resultDiv.style.display = 'block';
+        }
+
+        function displayTripOnMap(trip) {
+            // Entferne alte Layer
+            if (routeLayer) map.removeLayer(routeLayer);
+            accommodationMarkers.forEach(m => map.removeLayer(m));
+            accommodationMarkers = [];
+
+            // Zeige Route
+            if (trip.route && trip.route.geometry) {
+                routeLayer = L.geoJSON(trip.route.geometry, {
+                    style: {
+                        color: '#3498db',
+                        weight: 4,
+                        opacity: 0.7
+                    }
+                }).addTo(map);
+
+                map.fitBounds(routeLayer.getBounds());
+            }
+
+            // Zeige Übernachtungen
+            trip.days.forEach((day, i) => {
+                if (day.accommodation) {
+                    const acc = day.accommodation;
+                    const marker = L.marker([acc.lat, acc.lon], {
+                        icon: L.divIcon({
+                            html: `<div style="background: ${acc.price === 0 ? '#2ecc71' : '#3498db'}; border: 3px solid white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏕️</div>`,
+                            className: '',
+                            iconSize: [35, 35]
+                        })
+                    }).addTo(map).bindPopup(`
+                        <strong>Tag ${day.dayNumber}: ${acc.name}</strong><br>
+                        ${acc.price === 0 ? '💚 Kostenlos' : acc.price + ' €'}
+                    `);
+                    accommodationMarkers.push(marker);
+                }
+            });
+        }
+
+        let searchTimeout;
+        
+        async function searchAddress(type, query) {
+            if (query.length < 3) {
+                const resultsDiv = document.getElementById(type + 'Results');
+                if (resultsDiv) resultsDiv.style.display = 'none';
+                return;
+            }
+            
+            // Handle discover mode search - keep the correct type
+            if (type === 'startDiscover') {
+                const startInput = document.getElementById('startAddress');
+                if (startInput) {
+                    startInput.value = query;
+                }
+                // Don't change type - use startDiscover dropdown
+            }
+
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                try {
+                    console.log('🔍 Searching:', query, 'Type:', type);
+                    const response = await fetch(`http://localhost:3001/api/geocoding/search?q=${encodeURIComponent(query)}`);
+                    
+                    if (!response.ok) {
+                        throw new Error('Backend nicht erreichbar');
+                    }
+                    
+                    const data = await response.json();
+                    console.log('📦 API Response:', data);
+                    const results = Array.isArray(data) ? data : (data.results || []);
+                    console.log('✅ Results:', results.length);
+                    
+                    const resultsDiv = document.getElementById(type + 'Results');
+                    console.log('📍 Dropdown element:', resultsDiv);
+                    console.log('📍 Dropdown ID:', type + 'Results');
+                    
+                    if (!resultsDiv) {
+                        console.error('❌ Results div not found for type:', type);
+                        return;
+                    }
+                    
+                    console.log('📐 Before display - rect:', resultsDiv.getBoundingClientRect());
+                    
+                    if (results.length === 0) {
+                        resultsDiv.style.display = 'none';
+                        return;
+                    }
+                    
+                    resultsDiv.innerHTML = results.map(result => {
+                        const displayName = result.displayName || result.display_name || '';
+                        const parts = displayName.split(',');
+                        const cityName = parts[0].trim();
+                        const details = parts.slice(1).join(',').trim();
+                        
+                        return `<div onclick="selectAddress('${type}', ${result.lat}, ${result.lon}, '${displayName.replace(/'/g, "\\'")}')" class="autocomplete-item" style="padding: 12px 16px; cursor: pointer; border-bottom: 1px solid #f0f0f0; transition: background 0.2s;">
+                            <span style="font-size: 1.1em; font-weight: 700; color: #2c3e50; display: block; margin-bottom: 4px;">${cityName}</span>
+                            <span style="font-size: 0.85em; color: #999;">${details}</span>
+                        </div>`;
+                    }).join('');
+                    // Force display with !important
+                    resultsDiv.style.cssText = resultsDiv.style.cssText.replace('display: none !important', 'display: block !important');
+                    resultsDiv.style.setProperty('display', 'block', 'important');
+                    
+                    console.log('📐 After display - rect:', resultsDiv.getBoundingClientRect());
+                    console.log('📐 Parent element:', resultsDiv.parentElement);
+                    console.log('📐 Parent display:', window.getComputedStyle(resultsDiv.parentElement).display);
+                    console.log('📐 Parent visibility:', window.getComputedStyle(resultsDiv.parentElement).visibility);
+                } catch (error) {
+                    console.error('Geocoding error:', error);
+                }
+            }, 500);
+        }
+
+        function selectAddress(type, lat, lon, displayName) {
+            const inputId = type === 'startDiscover' ? 'startAddressDiscover' : type + 'Address';
+            const resultsDivId = type === 'startDiscover' ? 'startDiscoverResults' : type + 'Results';
+            
+            document.getElementById(inputId).value = displayName;
+            document.getElementById('startLat').value = lat.toFixed(4);
+            document.getElementById('startLon').value = lon.toFixed(4);
+            document.getElementById(resultsDivId).style.display = 'none';
+            
+            if (type === 'start' || type === 'startDiscover') {
+                setStartLocation(lat, lon);
+            } else if (type === 'end') {
+                document.getElementById('endLat').value = lat.toFixed(4);
+                document.getElementById('endLon').value = lon.toFixed(4);
+                setEndLocation(lat, lon);
+            }
+        }
+
+        // Schließe Dropdown bei Klick außerhalb
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#startAddress') && !e.target.closest('#startResults')) {
+                const startResults = document.getElementById('startResults');
+                if (startResults) startResults.style.setProperty('display', 'none', 'important');
+            }
+            if (!e.target.closest('#endAddress') && !e.target.closest('#endResults')) {
+                const endResults = document.getElementById('endResults');
+                if (endResults) endResults.style.setProperty('display', 'none', 'important');
+            }
+            if (!e.target.closest('#startAddressDiscover') && !e.target.closest('#startDiscoverResults')) {
+                const discoverResults = document.getElementById('startDiscoverResults');
+                if (discoverResults) discoverResults.style.setProperty('display', 'none', 'important');
+            }
+        });
+
+        // Mobile Panel Management
+        function openPanel(panelType) {
+            const panel = document.getElementById('slide-panel');
+            const panelIcon = document.getElementById('panel-icon');
+            const panelTitle = document.getElementById('panel-title');
+            const panelContent = document.getElementById('panel-content');
+            
+            // Update active icon
+            document.querySelectorAll('.nav-icon').forEach(icon => icon.classList.remove('active'));
+            event.target.closest('.nav-icon').classList.add('active');
+            
+            // Update panel header
+            const icons = { plan: '📍', discover: '🧭', results: '📋' };
+            const titles = { plan: 'Planen', discover: 'Entdecken', results: 'Ergebnisse' };
+            panelIcon.textContent = icons[panelType];
+            panelTitle.textContent = titles[panelType];
+            
+            // Load content
+            const sourceContent = document.getElementById('tab-' + panelType);
+            if (sourceContent) {
+                panelContent.innerHTML = sourceContent.innerHTML;
+            }
+            
+            // Toggle panel
+            if (panel.classList.contains('open') && panel.dataset.currentPanel === panelType) {
+                panel.classList.remove('open');
+                panel.dataset.currentPanel = '';
+            } else {
+                panel.classList.add('open');
+                panel.dataset.currentPanel = panelType;
+            }
+        }
+        
+        // Tab Switching
+        function switchTab(tabName, clickedElement) {
+            document.querySelectorAll('.tab').forEach(t => {
+                t.style.color = '#999';
+                t.style.borderBottomColor = 'transparent';
+            });
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            
+            // Highlight clicked tab
+            if (clickedElement) {
+                clickedElement.style.color = '#667eea';
+                clickedElement.style.borderBottomColor = '#667eea';
+            } else {
+                // Find and highlight by tabName
+                const tabs = document.querySelectorAll('.tab');
+                const tabIndex = ['plan', 'discover', 'results', 'map'].indexOf(tabName);
+                if (tabIndex >= 0 && tabs[tabIndex]) {
+                    tabs[tabIndex].style.color = '#667eea';
+                    tabs[tabIndex].style.borderBottomColor = '#667eea';
+                }
+            }
+            
+            document.getElementById('tab-' + tabName).style.display = 'block';
+            
+            // Expand panel when switching tabs
+            const sidebar = document.querySelector('main > div:first-child');
+            if (sidebar && window.innerWidth <= 768) {
+                sidebar.classList.remove('minimized');
+            }
+            
+            // Refresh map
+            if (map) {
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 100);
+            }
+        }
+        
+        // Discovery Mode Geocoding
+        function searchAddressDiscover(query) {
+            // Sync with main startAddress field
+            const startInput = document.getElementById('startAddress');
+            if (startInput) {
+                startInput.value = query;
+            }
+            searchAddress('startDiscover', query);
+        }
+        
+        // Discovery Mode Toggle (kept for compatibility)
+        function toggleDiscoveryMode() {
+            // Not needed in new layout but kept for compatibility
+        }
+
+        // Discovery Mode AI Routes
+        async function discoverAIRoutes() {
+            const startLat = parseFloat(document.getElementById('startLat').value);
+            const startLon = parseFloat(document.getElementById('startLon').value);
+            const startName = document.getElementById('startAddress').value || document.getElementById('startAddressDiscover').value;
+            
+            if (!startLat || !startLon) {
+                alert('Bitte Startpunkt eingeben');
+                return;
+            }
+            
+            // Force discovery mode settings
+            await getAIRecommendations(true);
+        }
+        
+        // KI-Routen-Vorschläge
+        async function getAIRecommendations(forceDiscovery = false) {
+            const startLat = parseFloat(document.getElementById('startLat').value);
+            const startLon = parseFloat(document.getElementById('startLon').value);
+            const startName = document.getElementById('startAddress').value;
+            const discoveryMode = forceDiscovery || document.getElementById('discoveryMode').checked;
+            
+            if (!startLat || !startLon) {
+                alert('Bitte Startpunkt eingeben');
+                return;
+            }
+            
+            let endLat, endLon, endName;
+            
+            if (discoveryMode) {
+                // Discovery Mode: Kein Ziel erforderlich
+                endLat = null;
+                endLon = null;
+                endName = null;
+            } else {
+                // Normal Mode: Ziel erforderlich
+                endLat = parseFloat(document.getElementById('endLat').value);
+                endLon = parseFloat(document.getElementById('endLon').value);
+                endName = document.getElementById('endAddress').value;
+                
+                if (!endLat || !endLon) {
+                    alert('Bitte Zielpunkt eingeben oder Discovery Mode aktivieren');
+                    return;
+                }
+            }
+
+            showLoadingPopup('🤖 KI analysiert beste Routen...');
+
+            try {
+                const preferences = {
+                    offroadWeight: parseFloat(document.getElementById('offroadWeight').value) / 100,
+                    scenicWeight: parseFloat(document.getElementById('scenicWeight').value) / 100,
+                    vehicle: 'Overland Truck',
+                    discoveryMode: discoveryMode
+                };
+                
+                if (discoveryMode) {
+                    preferences.tripDays = parseInt(document.getElementById('tripDays').value);
+                    preferences.maxTotalKm = parseInt(document.getElementById('maxTotalKm').value);
+                    preferences.roundTrip = document.getElementById('roundTrip').checked;
+                    preferences.stayInCountry = document.getElementById('stayInCountry').checked;
+                }
+
+                const body = {
+                    start: { name: startName, lat: startLat, lon: startLon },
+                    preferences
+                };
+                
+                if (!discoveryMode) {
+                    body.end = { name: endName, lat: endLat, lon: endLon };
+                }
+                
+                const response = await fetch('http://localhost:3001/api/ai/route-recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                if (!response.ok) {
+                    throw new Error('KI-Anfrage fehlgeschlagen');
+                }
+
+                const data = await response.json();
+                
+                if (!data.enabled) {
+                    alert('⚠️ KI-Features nicht verfügbar.\n\n' + (data.message || 'Bitte OPENAI_API_KEY in .env setzen'));
+                    return;
+                }
+
+                displayAIRoutes(data.routes);
+
+            } catch (error) {
+                console.error('AI recommendations error:', error);
+                alert('Fehler bei KI-Routen: ' + error.message);
+            } finally {
+                hideLoadingPopup();
+            }
+        }
+
+        function displayAIRoutes(routes) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            if (!routes || routes.length === 0) {
+                resultsContainer.innerHTML = '<p style="text-align: center; color: #999; padding: 40px 0;">Keine KI-Routen gefunden</p>';
+                return;
+            }
+
+            let html = '';
+
+            routes.forEach((route, index) => {
+                const typeIcons = {
+                    alpine: '🏔️',
+                    scenic: '🏞️',
+                    offroad: '🚙'
+                };
+                const icon = typeIcons[route.type] || '🗺️';
+                
+                const difficultyColors = {
+                    easy: '#2ecc71',
+                    medium: '#f39c12',
+                    hard: '#e74c3c'
+                };
+                const diffColor = difficultyColors[route.difficulty] || '#95a5a6';
+
+                html += `
+                    <div class="result-card" onclick="selectAIRoute(${index})" style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border: 2px solid #f0f0f0; cursor: pointer; transition: all 0.2s;">
+                        <h4 style="color: #2c3e50; margin-bottom: 8px; font-size: 1.1em;">${icon} ${route.name}</h4>
+                        <p style="margin: 8px 0; color: #666; font-size: 0.9em;">${route.description}</p>
+                        
+                        <p style="margin: 8px 0;">
+                            📏 ${route.estimatedDistance} km • ⏱️ ${route.estimatedDuration}h
+                        </p>
+                        
+                        <div>
+                            <span class="badge" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; margin-right: 5px; margin-top: 5px; background: ${diffColor}20; color: ${diffColor};">${route.difficulty.toUpperCase()}</span>
+                            <span class="badge" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; margin-right: 5px; margin-top: 5px; background: #e3f2fd; color: #1976d2;">🏞️ Scenic ${route.scenicScore}%</span>
+                            <span class="badge" style="display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 600; margin-right: 5px; margin-top: 5px; background: #fff3e0; color: #f57c00;">🚙 Offroad ${route.offroadPercent}%</span>
+                        </div>
+                        
+                        <p style="margin-top: 10px; font-size: 0.85em; color: #667eea; font-weight: 600;">
+                            👆 Antippen um Route anzuzeigen
+                        </p>
+                    </div>
+                `;
+            });
+
+            resultsContainer.innerHTML = html;
+            
+            // Switch to results tab (Desktop)
+            switchTab('results');
+            
+            // Open results panel on mobile
+            if (window.innerWidth <= 768) {
+                openPanel('results');
+            }
+            
+            // Speichere Routen für spätere Nutzung
+            window.aiRoutes = routes;
+        }
+
+        async function selectAIRoute(index) {
+            const route = window.aiRoutes[index];
+            if (!route || !route.waypoints) return;
+
+            // Minimize panel to show map
+            const sidebar = document.querySelector('main > div:first-child');
+            if (sidebar && window.innerWidth <= 768) {
+                sidebar.classList.add('minimized');
+            }
+            
+            // Zeige Loading
+            showLoadingPopup('🗺️ Berechne echte Straßenroute...');
+
+            try {
+                // Entferne alte Layer
+                if (routeLayer) map.removeLayer(routeLayer);
+                accommodationMarkers.forEach(m => map.removeLayer(m));
+                accommodationMarkers = [];
+
+                // Berechne echte Route zwischen allen Waypoints mit OSRM
+                const allCoordinates = [];
+                
+                console.log('🗺️ Berechne Route mit', route.waypoints.length, 'Waypoints');
+                
+                for (let i = 0; i < route.waypoints.length - 1; i++) {
+                    const start = route.waypoints[i];
+                    const end = route.waypoints[i + 1];
+                    
+                    console.log(`Segment ${i+1}/${route.waypoints.length-1}: ${start.name} -> ${end.name}`);
+                    
+                    // OSRM API Call
+                    const coords = `${start.lon},${start.lat};${end.lon},${end.lat}`;
+                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+                    
+                    console.log('OSRM URL:', osrmUrl);
+                    
+                    const response = await fetch(osrmUrl);
+                    const data = await response.json();
+                    
+                    console.log('OSRM Response:', data.code, data.routes ? data.routes[0].geometry.coordinates.length + ' Punkte' : 'keine Route');
+                    
+                    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+                        const segment = data.routes[0].geometry.coordinates;
+                        // Füge Segment hinzu (ohne letzten Punkt außer beim letzten Segment)
+                        if (i < route.waypoints.length - 2) {
+                            allCoordinates.push(...segment.slice(0, -1));
+                        } else {
+                            allCoordinates.push(...segment);
+                        }
+                    }
+                }
+                
+                // Zeige Route auf Karte
+                if (allCoordinates.length > 0) {
+                    routeLayer = L.geoJSON({
+                        type: 'LineString',
+                        coordinates: allCoordinates
+                    }, {
+                        style: {
+                            color: '#667eea',
+                            weight: 5,
+                            opacity: 0.7
+                        }
+                    }).addTo(map);
+                    
+                    map.fitBounds(routeLayer.getBounds());
+                }
+
+                // Füge Waypoint-Marker hinzu
+                route.waypoints.forEach((wp, i) => {
+                    const isStart = i === 0;
+                    const isEnd = i === route.waypoints.length - 1;
+                    const icon = isStart ? '🚩' : isEnd ? '🏁' : '📍';
+                    
+                    const marker = L.marker([wp.lat, wp.lon], {
+                        icon: L.divIcon({
+                            html: `<div style="background: ${isStart ? '#2ecc71' : isEnd ? '#e74c3c' : '#3498db'}; border: 3px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${icon}</div>`,
+                            className: '',
+                            iconSize: [30, 30]
+                        })
+                    }).addTo(map).bindPopup(`
+                        <strong>${wp.name}</strong><br>
+                        ${wp.description || ''}
+                    `);
+                    
+                    accommodationMarkers.push(marker);
+                });
+                
+                alert(`✅ ${route.name} ausgewählt!\n\nRoute mit echtem Straßenverlauf wird angezeigt.`);
+                
+            } catch (error) {
+                console.error('Route calculation error:', error);
+                alert('Fehler beim Berechnen der Route: ' + error.message);
+            } finally {
+                hideLoadingPopup();
+            }
+        }
+        
+        // Loading Popup Funktionen
+        let loadingInterval;
+        let progressInterval;
+        
+        function showLoadingPopup(message) {
+            const popup = document.getElementById('loadingPopup');
+            const text = document.getElementById('loadingText');
+            const truck = document.getElementById('truck');
+            const progressBar = document.getElementById('progressBar');
+            
+            text.textContent = message;
+            popup.style.display = 'flex';
+            progressBar.style.width = '0%';
+            
+            // Truck Animation
+            setTimeout(() => {
+                truck.style.left = '320px';
+            }, 100);
+            
+            // Progress simulation
+            let progress = 0;
+            progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressBar.style.width = progress + '%';
+            }, 800);
+            
+            // Rotating messages
+            const messages = [
+                'Analysiere Gelände...',
+                'Suche beste Stellplätze...',
+                'Berechne Offroad-Strecken...',
+                'Optimiere Route...',
+                'Prüfe Aussichtspunkte...'
+            ];
+            let msgIndex = 0;
+            loadingInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % messages.length;
+                text.textContent = messages[msgIndex];
+                // Reset truck
+                truck.style.transition = 'none';
+                truck.style.left = '-60px';
+                setTimeout(() => {
+                    truck.style.transition = 'left 3s linear';
+                    truck.style.left = '320px';
+                }, 50);
+            }, 3000);
+        }
+        
+        function hideLoadingPopup() {
+            const popup = document.getElementById('loadingPopup');
+            const progressBar = document.getElementById('progressBar');
+            
+            progressBar.style.width = '100%';
+            
+            setTimeout(() => {
+                popup.style.display = 'none';
+                clearInterval(loadingInterval);
+                clearInterval(progressInterval);
+            }, 500);
+        }
+
+        // Toggle Sidebar on Mobile
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('collapsed');
+        }
+        
+        // Show/hide sidebar header based on screen size
+        function handleResize() {
+            const isMobile = window.innerWidth <= 768;
+            const sidebarHeader = document.querySelector('.sidebar-header');
+            const desktopH2 = document.querySelector('.sidebar > h2:not(.sidebar-header h2)');
+            
+            if (sidebarHeader && desktopH2) {
+                sidebarHeader.style.display = isMobile ? 'flex' : 'none';
+                desktopH2.style.display = isMobile ? 'none' : 'block';
+            }
+        }
+        
+        window.addEventListener('resize', handleResize);
+        handleResize();
+        
+        // Show main content
+        document.querySelector('main').style.display = 'grid';
+        
+        init();
+        
+        // Mobile Bottom Sheet Interaction
+        if (window.innerWidth <= 768) {
+            const sidebar = document.querySelector('main > div:first-child');
+            const handle = sidebar;
+            let touchStartY = 0;
+            let isDragging = false;
+            
+            // Handle click to toggle
+            handle.addEventListener('click', (e) => {
+                // Only toggle if clicking the handle area (top 60px)
+                const rect = handle.getBoundingClientRect();
+                if (e.clientY - rect.top < 60) {
+                    if (sidebar.classList.contains('expanded')) {
+                        sidebar.classList.remove('expanded');
+                        sidebar.classList.add('minimized');
+                    } else {
+                        sidebar.classList.remove('minimized');
+                        sidebar.classList.add('expanded');
+                    }
+                }
+            });
+            
+            // Touch drag
+            handle.addEventListener('touchstart', (e) => {
+                const rect = handle.getBoundingClientRect();
+                if (e.touches[0].clientY - rect.top < 60) {
+                    touchStartY = e.touches[0].clientY;
+                    isDragging = true;
+                }
+            });
+            
+            handle.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                const deltaY = e.touches[0].clientY - touchStartY;
+                if (deltaY > 0 && deltaY < 300) {
+                    sidebar.style.transform = `translateY(calc(100% - 120px + ${deltaY}px))`;
+                }
+            });
+            
+            handle.addEventListener('touchend', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+                
+                const currentTransform = sidebar.style.transform;
+                const match = currentTransform.match(/\+ (\d+)px/);
+                const deltaY = match ? parseInt(match[1]) : 0;
+                
+                if (deltaY > 100) {
+                    sidebar.classList.remove('expanded');
+                    sidebar.classList.add('minimized');
+                    sidebar.style.transform = '';
+                } else {
+                    sidebar.style.transform = '';
+                }
+            });
+        }
+        
+        // Register Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>

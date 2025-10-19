@@ -1,0 +1,25 @@
+{
+  "totalWaysRaw": 1996,
+  "totalWaysFiltered": 5,
+  "rejectedWays": 1991,
+  "totalLength": 23590.733155199596,
+  "highways": {
+    "track": 5
+  },
+  "surfaces": {
+    "compacted": 4,
+    "gravel": 1
+  },
+  "tracktypes": {
+    "grade2": 5
+  },
+  "smoothness": {
+    "bad": 1,
+    "intermediate": 3
+  },
+  "withNames": 4,
+  "avgNodesPerWay": "152.8",
+  "minLength": 4311.542379810143,
+  "maxLength": 5474.0797092797175,
+  "estimatedDuration": 56.61775957247903
+}

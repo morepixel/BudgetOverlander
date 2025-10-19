@@ -1,0 +1,483 @@
+/* Mobile-First Responsive Styles */
+
+/* Desktop/Mobile visibility helpers */
+.mobile-only {
+    display: none;
+}
+
+.desktop-only {
+    display: block;
+}
+
+@media (max-width: 768px) {
+    .mobile-only {
+        display: block;
+    }
+    
+    .desktop-only {
+        display: none;
+    }
+    
+    /* Header - Hidden on mobile */
+    header {
+        display: none !important;
+    }
+    
+    /* Map Logo Overlay */
+    body::before {
+        content: '🗺️ Budget Overlander';
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 200;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.9em;
+        color: #667eea;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+        pointer-events: none;
+    }
+}
+
+/* Autocomplete Dropdown - Global Styles */
+.autocomplete-dropdown {
+    position: absolute;
+    z-index: 10000;
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    max-height: 250px;
+    overflow-y: auto;
+    width: 100%;
+    margin-top: 5px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    display: none;
+}
+
+.autocomplete-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item:active {
+    background: #f8f9ff;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+/* Mobile Layout (< 768px) */
+@media (max-width: 768px) {
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+        overflow: hidden;
+    }
+    
+    .container {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    header {
+        flex-shrink: 0;
+        padding: 12px 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    header h1 {
+        font-size: 1.2em;
+        margin: 0;
+        flex: 1;
+    }
+    
+    .user-info {
+        flex-direction: row;
+        gap: 10px;
+    }
+    
+    .user-info button {
+        font-size: 0.85em !important;
+        padding: 6px 12px !important;
+    }
+    
+    main {
+        flex: 1;
+        display: flex !important;
+        flex-direction: column;
+        padding: 0 !important;
+        gap: 0 !important;
+        height: auto !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Map full screen background - always visible */
+    main {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+        grid-template-columns: none !important;
+        gap: 0 !important;
+        height: 100vh !important;
+    }
+    
+    main > div:last-child {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        z-index: 1 !important;
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    main > div:last-child > div {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    
+    #map {
+        height: 100vh !important;
+        width: 100vw !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        z-index: 1 !important;
+    }
+    
+    /* Slide-In Panel from bottom - can be minimized */
+    main > div:first-child {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 65vh;
+        max-height: 65vh;
+        background: white;
+        border-radius: 20px 20px 0 0;
+        box-shadow: 0 -4px 30px rgba(0,0,0,0.2);
+        transform: translateY(0);
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        pointer-events: all;
+        overflow: hidden;
+    }
+    
+    main > div:first-child.minimized {
+        transform: translateY(calc(100% - 65px));
+    }
+    
+    /* Drag handle at top of panel */
+    main > div:first-child::before {
+        content: '';
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+        margin: 12px auto 8px auto;
+        display: block;
+        flex-shrink: 0;
+        cursor: grab;
+    }
+    
+    main > div:first-child::before:active {
+        cursor: grabbing;
+    }
+    
+    main > div:first-child > h2 {
+        padding: 0 20px 15px;
+        margin: 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 1.3em;
+        color: #2c3e50;
+        display: none;
+    }
+    
+    /* Tabs inside panel at top */
+    .tabs {
+        display: flex !important;
+        position: relative;
+        top: 0;
+        left: 0;
+        flex-direction: row;
+        gap: 8px;
+        z-index: 10;
+        background: white;
+        margin: 0 !important;
+        padding: 15px 20px 10px 20px !important;
+        border-bottom: 2px solid #f0f0f0 !important;
+        flex-shrink: 0;
+        overflow-x: auto;
+    }
+    
+    .tab {
+        background: #f5f5f5 !important;
+        border-radius: 20px !important;
+        padding: 10px 20px !important;
+        box-shadow: none !important;
+        border: none !important;
+        min-width: auto;
+        text-align: center !important;
+        font-size: 0.85em !important;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+    
+    .tab.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+    }
+    
+    main > div:first-child > div:not(.tabs),
+    main > div:first-child > button {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    /* Tab content with padding and scroll */
+    .tab-content {
+        padding: 20px !important;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        flex: 1;
+    }
+    
+    /* Panel content area */
+    main > div:first-child {
+        overflow: hidden;
+    }
+    
+    /* Drag handle at top of panel - clickable */
+    main > div:first-child::before {
+        content: '';
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 2px;
+        margin: 12px auto;
+        display: block;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+    
+    /* Make tabs clickable when minimized */
+    main > div:first-child.minimized .tabs {
+        pointer-events: all;
+        cursor: pointer;
+    }
+    
+    /* Bottom Navigation - Removed */
+    body::after {
+        display: none;
+    }
+    
+    /* Map Height */
+    #map {
+        height: 400px !important;
+        min-height: 400px;
+        border-radius: 10px;
+    }
+    
+    /* Touch-friendly Buttons */
+    button, .btn {
+        min-height: 44px !important;
+        font-size: 1em !important;
+        padding: 12px 20px !important;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    
+    /* Touch-friendly Inputs */
+    input[type="text"],
+    input[type="number"],
+    .form-input {
+        min-height: 44px !important;
+        font-size: 16px !important; /* Prevents zoom on iOS */
+        padding: 10px !important;
+        border-radius: 6px;
+    }
+    
+    /* Touch-friendly Controls */
+    input[type="range"] {
+        height: 30px;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        background: #667eea;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+    
+    input[type="range"]::-moz-range-thumb {
+        width: 25px;
+        height: 25px;
+        background: #667eea;
+        cursor: pointer;
+        border-radius: 50%;
+        border: none;
+    }
+    
+    /* Checkboxes */
+    input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        margin-right: 10px;
+        cursor: pointer;
+    }
+    
+    /* Loading Popup */
+    #loadingPopup > div {
+        max-width: 90%;
+        padding: 20px;
+        margin: 0 10px;
+    }
+    
+    #truckAnimation {
+        width: 250px !important;
+        height: 120px !important;
+    }
+    
+    /* AI Routes & Trip Results */
+    #aiRoutes > div,
+    #tripResult > div {
+        padding: 12px !important;
+        font-size: 0.95em !important;
+        margin-bottom: 10px;
+    }
+    
+    /* Headers */
+    header h1 {
+        font-size: 1.3em;
+    }
+    
+    .user-info {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .user-info button {
+        font-size: 0.85em !important;
+        padding: 8px 15px !important;
+    }
+}
+
+/* Tablet Styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    main {
+        grid-template-columns: 350px 1fr !important;
+        display: grid !important;
+    }
+    
+    main > div:first-child {
+        position: relative;
+        transform: none;
+        bottom: auto;
+        border-radius: 10px;
+        max-height: none;
+    }
+    
+    main > div:first-child::before {
+        display: none;
+    }
+    
+    body::after {
+        display: none;
+    }
+    
+    main > div:last-child {
+        position: relative;
+        bottom: auto;
+    }
+    
+    #map {
+        height: calc(100vh - 100px);
+    }
+}
+
+/* Desktop */
+@media (min-width: 1025px) {
+    main {
+        display: grid !important;
+        grid-template-columns: 400px 1fr !important;
+    }
+    
+    main > div:first-child {
+        position: relative;
+        transform: none;
+        bottom: auto;
+        border-radius: 10px;
+        max-height: none;
+        box-shadow: none;
+    }
+    
+    main > div:first-child::before {
+        display: none;
+    }
+    
+    main > div:last-child {
+        position: relative;
+        bottom: auto;
+    }
+    
+    body::after {
+        display: none;
+    }
+}
+
+/* Desktop Large */
+@media (min-width: 1400px) {
+    main {
+        grid-template-columns: 450px 1fr !important;
+    }
+}
+
+/* Landscape Mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    main > div:first-child {
+        max-height: 60vh;
+    }
+}
+
+/* Print Styles */
+@media print {
+    main > div:first-child,
+    header,
+    button,
+    body::after {
+        display: none;
+    }
+    
+    main > div:last-child,
+    #map {
+        position: relative;
+        height: 100vh !important;
+        page-break-after: always;
+    }
+}

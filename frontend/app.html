@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Overlander - Routen-Planer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map { height: 100%; }
+        .cluster-marker {
+            background: #2ecc71;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .cluster-marker.selected {
+            background: #e74c3c;
+            transform: scale(1.2);
+        }
+        .cluster-marker:hover {
+            transform: scale(1.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚙 Budget Overlander</h1>
+            <div class="user-info" id="userInfo">
+                <span id="userName"></span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+                <button onclick="goHome()" class="btn btn-secondary">← Zurück</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="app-container">
+                <div class="sidebar">
+                    <h2 id="regionName">Region</h2>
+                    <p id="regionDescription"></p>
+                    
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Lade Cluster...</p>
+                    </div>
+
+                    <div id="clusterSection" style="display: none;">
+                        <h3>Cluster auswählen</h3>
+                        <p style="font-size: 0.9em; color: #95a5a6;">Klicke auf Marker in der Karte oder wähle aus der Liste:</p>
+                        
+                        <div id="selectedClusters" style="margin: 15px 0;">
+                            <strong>Ausgewählt: <span id="selectedCount">0</span></strong>
+                            <div id="selectedList"></div>
+                        </div>
+
+                        <button onclick="calculateRoute()" class="btn btn-primary" id="calculateBtn" disabled style="width: 100%; margin-bottom: 15px;">
+                            Route berechnen
+                        </button>
+
+                        <div class="cluster-list" id="clusterList"></div>
+                    </div>
+
+                    <div id="routeSection" style="display: none;">
+                        <h3>📊 Route</h3>
+                        <div class="route-summary" id="routeSummary"></div>
+                        
+                        <button onclick="loadPOIs()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+                            📍 POIs laden (Wasser, Camping, etc.)
+                        </button>
+                        
+                        <button onclick="loadQuests()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+                            🎯 Quests laden
+                        </button>
+                        
+                        <button onclick="loadAccommodations()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+                            🏕️ Stellplätze laden
+                        </button>
+                        
+                        <button onclick="exportGPX()" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                            📥 Als GPX exportieren
+                        </button>
+                        
+                        <button onclick="resetRoute()" class="btn btn-secondary" style="width: 100%; margin-top: 10px;">
+                            Neue Route
+                        </button>
+                    </div>
+                </div>
+
+                <div class="map-container">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/api.js?v=2"></script>
+    <script src="js/auth.js?v=2"></script>
+    <script>
+        let map;
+        let markers = {};
+        let routeLayer;
+        let selectedClusters = [];
+        let allClusters = [];
+        let currentRegion = '';
+
+        // URL Parameter auslesen
+        const urlParams = new URLSearchParams(window.location.search);
+        const regionId = urlParams.get('region');
+
+        if (!regionId) {
+            alert('Keine Region ausgewählt!');
+            window.location.href = 'index.html';
+        }
+
+        // Initialisierung
+        async function init() {
+            checkAuth();
+            initMap();
+            await loadRegionData();
+        }
+
+        // Karte initialisieren
+        function initMap() {
+            map = L.map('map').setView([48.0, 8.0], 7);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Region-Daten laden
+        async function loadRegionData() {
+            try {
+                currentRegion = regionId;
+                
+                // Region-Info
+                const regionInfo = await api.getRegion(regionId);
+                document.getElementById('regionName').textContent = regionInfo.name;
+                document.getElementById('regionDescription').textContent = regionInfo.description;
+
+                // Cluster laden
+                const data = await api.getClusters(regionId);
+                allClusters = data.clusters;
+
+                // Karte zentrieren
+                if (allClusters.length > 0) {
+                    const lats = allClusters.map(c => c.center.lat);
+                    const lons = allClusters.map(c => c.center.lon);
+                    const bounds = [
+                        [Math.min(...lats), Math.min(...lons)],
+                        [Math.max(...lats), Math.max(...lons)]
+                    ];
+                    map.fitBounds(bounds);
+                }
+
+                // Marker hinzufügen
+                allClusters.forEach(cluster => {
+                    addClusterMarker(cluster);
+                });
+
+                // Cluster-Liste anzeigen
+                renderClusterList();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('clusterSection').style.display = 'block';
+
+            } catch (error) {
+                console.error('Fehler beim Laden:', error);
+                alert('Fehler beim Laden der Region-Daten: ' + error.message);
+            }
+        }
+
+        // Cluster-Marker hinzufügen
+        function addClusterMarker(cluster) {
+            const icon = L.divIcon({
+                className: 'cluster-marker',
+                html: `<div>${cluster.trackCount}</div>`,
+                iconSize: [30, 30]
+            });
+
+            const marker = L.marker([cluster.center.lat, cluster.center.lon], { icon })
+                .addTo(map)
+                .on('click', () => toggleCluster(cluster.id));
+
+            marker.bindPopup(`
+                <strong>${cluster.id}</strong><br>
+                Tracks: ${cluster.trackCount}<br>
+                Offroad: ${cluster.totalLength.toFixed(1)} km<br>
+                Schwierigkeit: ${cluster.avgDifficulty}/100<br>
+                Nähe: ${cluster.nearestTown}
+            `);
+
+            markers[cluster.id] = marker;
+        }
+
+        // Cluster auswählen/abwählen
+        function toggleCluster(clusterId) {
+            const index = selectedClusters.indexOf(clusterId);
+            
+            if (index > -1) {
+                selectedClusters.splice(index, 1);
+                markers[clusterId]._icon.classList.remove('selected');
+            } else {
+                selectedClusters.push(clusterId);
+                markers[clusterId]._icon.classList.add('selected');
+            }
+
+            updateSelectedList();
+        }
+
+        // Ausgewählte Cluster anzeigen
+        function updateSelectedList() {
+            document.getElementById('selectedCount').textContent = selectedClusters.length;
+            document.getElementById('calculateBtn').disabled = selectedClusters.length < 2;
+
+            const listDiv = document.getElementById('selectedList');
+            listDiv.innerHTML = '';
+
+            selectedClusters.forEach((clusterId, index) => {
+                const cluster = allClusters.find(c => c.id === clusterId);
+                const div = document.createElement('div');
+                div.style.cssText = 'padding: 5px; margin: 5px 0; background: #ecf0f1; border-radius: 3px; font-size: 0.9em;';
+                div.innerHTML = `${index + 1}. ${cluster.id} (${cluster.totalLength.toFixed(0)}km)`;
+                listDiv.appendChild(div);
+            });
+        }
+
+        // Cluster-Liste rendern
+        function renderClusterList() {
+            const listDiv = document.getElementById('clusterList');
+            
+            // Top 20 Cluster
+            const topClusters = allClusters.slice(0, 20);
+            
+            topClusters.forEach(cluster => {
+                const div = document.createElement('div');
+                div.className = 'cluster-item';
+                div.onclick = () => {
+                    toggleCluster(cluster.id);
+                    div.classList.toggle('selected');
+                };
+                
+                div.innerHTML = `
+                    <h4>${cluster.id}</h4>
+                    <p>
+                        🛣️ ${cluster.trackCount} Tracks, ${cluster.totalLength.toFixed(1)} km<br>
+                        ⚡ Schwierigkeit: ${cluster.avgDifficulty}/100<br>
+                        📍 ${cluster.nearestTown}
+                    </p>
+                `;
+                
+                listDiv.appendChild(div);
+            });
+        }
+
+        // Route berechnen
+        async function calculateRoute() {
+            if (selectedClusters.length < 2) {
+                alert('Bitte wähle mindestens 2 Cluster aus!');
+                return;
+            }
+
+            document.getElementById('clusterSection').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').querySelector('p').textContent = 'Berechne Route...';
+
+            try {
+                const routeData = await api.calculateRoute(currentRegion, selectedClusters);
+
+                // Speichere Route-Daten für GPX-Export
+                currentRouteData = routeData;
+
+                // Route auf Karte zeichnen
+                drawRoute(routeData);
+
+                // Route-Zusammenfassung anzeigen
+                showRouteSummary(routeData);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('routeSection').style.display = 'block';
+
+            } catch (error) {
+                console.error('Fehler bei Routen-Berechnung:', error);
+                alert('Fehler bei Routen-Berechnung: ' + error.message);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('clusterSection').style.display = 'block';
+            }
+        }
+
+        // Route auf Karte zeichnen
+        function drawRoute(routeData) {
+            // Alte Route entfernen
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+            }
+
+            // GeoJSON zeichnen
+            routeLayer = L.geoJSON(routeData.geojson, {
+                style: (feature) => {
+                    if (feature.geometry.type === 'LineString') {
+                        return {
+                            color: '#e74c3c',
+                            weight: 4,
+                            opacity: 0.7
+                        };
+                    }
+                },
+                pointToLayer: (feature, latlng) => {
+                    return L.marker(latlng, {
+                        icon: L.divIcon({
+                            className: 'cluster-marker selected',
+                            html: `<div>${feature.properties.day}</div>`,
+                            iconSize: [30, 30]
+                        })
+                    });
+                },
+                onEachFeature: (feature, layer) => {
+                    if (feature.properties.description) {
+                        layer.bindPopup(feature.properties.description);
+                    }
+                }
+            }).addTo(map);
+
+            // Karte auf Route zentrieren
+            map.fitBounds(routeLayer.getBounds());
+        }
+
+        // Route-Zusammenfassung anzeigen
+        function showRouteSummary(routeData) {
+            const summary = routeData.summary;
+            const summaryDiv = document.getElementById('routeSummary');
+
+            let html = `
+                <p><strong>🗓️ Tage:</strong> ${summary.totalDays}</p>
+                <p><strong>📏 Distanz:</strong> ${summary.totalDistance.toFixed(1)} km</p>
+                <p><strong>🛣️ Offroad:</strong> ${summary.offroadKm.toFixed(1)} km (${summary.offroadPercentage.toFixed(0)}%)</p>
+                <p><strong>🚗 Asphalt:</strong> ${summary.onroadKm.toFixed(1)} km</p>
+                <p><strong>⚡ Schwierigkeit:</strong> ${summary.avgDifficulty.toFixed(0)}/100</p>
+                <p><strong>💰 Budget:</strong> ${summary.totalCost.toFixed(2)}€</p>
+                <p><strong>⏱️ Fahrzeit:</strong> ${summary.totalTime.toFixed(1)}h</p>
+            `;
+
+            // Maut-Info
+            if (summary.toll && summary.toll.total > 0) {
+                html += `
+                    <hr>
+                    <h4>🛣️ Maut</h4>
+                    <p><strong>Gesamt:</strong> ${summary.toll.total.toFixed(2)}€</p>
+                `;
+                
+                if (summary.toll.breakdown) {
+                    html += '<details><summary style="cursor: pointer; color: #3498db;">Details anzeigen</summary><div style="margin-top: 10px;">';
+                    Object.entries(summary.toll.breakdown).forEach(([country, info]) => {
+                        html += `
+                            <p><strong>${info.name}:</strong> ${info.cost.toFixed(2)}€<br>
+                            <small>${info.distance.toFixed(0)}km - ${info.notes || ''}</small></p>
+                        `;
+                    });
+                    html += '</div></details>';
+                }
+
+                if (summary.tollFreeAlternative && summary.tollFreeAlternative.extraDistance) {
+                    const alt = summary.tollFreeAlternative;
+                    html += `
+                        <p style="background: #ecf0f1; padding: 10px; border-radius: 5px; margin-top: 10px;">
+                            <strong>💡 Mautfrei:</strong><br>
+                            +${alt.extraDistance.toFixed(0)}km, +${alt.extraTime.toFixed(1)}h<br>
+                            Ersparnis: ${alt.tollSaved.toFixed(2)}€<br>
+                            <small>${alt.recommendation}</small>
+                        </p>
+                    `;
+                }
+            }
+            
+            html += '<hr><h4>Tages-Etappen:</h4>';
+
+
+            routeData.days.forEach(day => {
+                html += `
+                    <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                        <strong>Tag ${day.day}: ${day.nearestTown}</strong><br>
+                        <small>
+                            🛣️ ${day.offroad.planned} km Offroad<br>
+                            🚗 ${day.connection.distance} km Verbindung<br>
+                            💰 ${day.budget.cost.total}€
+                        </small>
+                    </div>
+                `;
+            });
+
+            summaryDiv.innerHTML = html;
+        }
+
+        // Route zurücksetzen
+        function resetRoute() {
+            if (routeLayer) {
+                map.removeLayer(routeLayer);
+            }
+            selectedClusters = [];
+            Object.values(markers).forEach(marker => {
+                marker._icon.classList.remove('selected');
+            });
+            document.querySelectorAll('.cluster-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            updateSelectedList();
+            document.getElementById('routeSection').style.display = 'none';
+            document.getElementById('clusterSection').style.display = 'block';
+        }
+
+        // Quest Layer
+        let questMarkers = [];
+        
+        async function loadQuests() {
+            if (!currentRegion) {
+                alert('Keine Region ausgewählt');
+                return;
+            }
+
+            try {
+                const data = await api.getQuestsByRegion(currentRegion);
+                
+                console.log('Geladene Quests:', data.quests);
+                
+                // Entferne alte Quest-Marker
+                questMarkers.forEach(marker => map.removeLayer(marker));
+                questMarkers = [];
+
+                // Quest-Icons
+                const questIcons = {
+                    discover: '🔍',
+                    distance: '📏',
+                    elevation: '⛰️',
+                    difficulty: '💪',
+                    photo: '📸'
+                };
+
+                const statusColors = {
+                    pending: '#3498db',
+                    in_progress: '#f39c12',
+                    completed: '#2ecc71'
+                };
+
+                let questsWithCoords = 0;
+
+                // Füge Quest-Marker hinzu
+                data.quests.forEach(quest => {
+                    console.log('Quest:', quest.name, 'Lat:', quest.lat, 'Lon:', quest.lon);
+                    
+                    if (!quest.lat || !quest.lon) {
+                        console.log('Quest ohne Koordinaten übersprungen:', quest.name);
+                        return;
+                    }
+
+                    questsWithCoords++;
+
+                    const icon = L.divIcon({
+                        className: 'quest-marker',
+                        html: `<div style="background: ${statusColors[quest.status] || '#3498db'}; border: 3px solid white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 18px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: pointer;">${questIcons[quest.type] || '🎯'}</div>`,
+                        iconSize: [35, 35]
+                    });
+
+                    const marker = L.marker([parseFloat(quest.lat), parseFloat(quest.lon)], { icon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="min-width: 200px;">
+                                <h3 style="margin: 0 0 10px 0;">${quest.name}</h3>
+                                <p style="margin: 5px 0;">${quest.description}</p>
+                                <p style="margin: 5px 0;"><strong>Typ:</strong> ${quest.type}</p>
+                                <p style="margin: 5px 0;"><strong>XP:</strong> ${quest.reward_xp}</p>
+                                <p style="margin: 5px 0;"><strong>Schwierigkeit:</strong> ${quest.difficulty}</p>
+                                <p style="margin: 5px 0;"><strong>Status:</strong> 
+                                    <span style="color: ${statusColors[quest.status]}; font-weight: bold;">
+                                        ${quest.status === 'completed' ? '✅ Abgeschlossen' : quest.status === 'in_progress' ? '🔄 In Arbeit' : '⏳ Offen'}
+                                    </span>
+                                </p>
+                                ${quest.status !== 'completed' ? `
+                                    <button onclick="completeQuestFromMap(${quest.id})" class="btn btn-primary" style="width: 100%; margin-top: 10px;">
+                                        Quest abschließen
+                                    </button>
+                                ` : ''}
+                            </div>
+                        `);
+
+                    questMarkers.push(marker);
+                    console.log('Quest-Marker hinzugefügt:', quest.name);
+                });
+
+                if (questsWithCoords > 0) {
+                    // Zoome zu Quest-Markern
+                    const group = L.featureGroup(questMarkers);
+                    map.fitBounds(group.getBounds().pad(0.1));
+                }
+
+                alert(`${questsWithCoords} Quests auf Karte angezeigt (${data.quests.length} gesamt)`);
+            } catch (error) {
+                console.error('Quest-Fehler:', error);
+                alert('Fehler beim Laden der Quests: ' + error.message);
+            }
+        }
+
+        async function completeQuestFromMap(questId) {
+            try {
+                const result = await api.completeQuest(questId);
+                alert(`🎉 Quest abgeschlossen!\n+${result.reward_xp} XP\nGesamt XP: ${result.total_xp}\nLevel: ${result.level}`);
+                
+                // Reload quests to update status
+                loadQuests();
+            } catch (error) {
+                console.error('Quest-Complete-Fehler:', error);
+                alert('Fehler beim Abschließen der Quest: ' + error.message);
+            }
+        }
+
+        // Accommodation Layer
+        let accommodationMarkers = [];
+        
+        async function loadAccommodations() {
+            if (!currentRegion) {
+                alert('Keine Region ausgewählt');
+                return;
+            }
+
+            try {
+                // Nutze Karten-Zentrum für Suche
+                const center = map.getCenter();
+                const data = await api.searchAccommodations(center.lat, center.lng, 50);
+                
+                console.log('Geladene Stellplätze:', data.accommodations);
+                
+                // Entferne alte Marker
+                accommodationMarkers.forEach(marker => map.removeLayer(marker));
+                accommodationMarkers = [];
+
+                // Type-Icons
+                const typeIcons = {
+                    stellplatz: '🚙',
+                    campsite: '🏕️',
+                    parking: '🅿️',
+                    wildcamping: '⛺'
+                };
+
+                // Füge Stellplatz-Marker hinzu
+                data.accommodations.forEach(acc => {
+                    const icon = L.divIcon({
+                        className: 'accommodation-marker',
+                        html: `<div style="background: ${acc.price === 0 ? '#2ecc71' : '#3498db'}; border: 3px solid white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: pointer;">${typeIcons[acc.type] || '🏕️'}</div>`,
+                        iconSize: [40, 40]
+                    });
+
+                    const featureIcons = [];
+                    if (acc.features?.electricity) featureIcons.push('⚡');
+                    if (acc.features?.water) featureIcons.push('💧');
+                    if (acc.features?.disposal) featureIcons.push('🚽');
+                    if (acc.features?.wifi) featureIcons.push('📶');
+
+                    const marker = L.marker([acc.lat, acc.lon], { icon })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="min-width: 250px;">
+                                <h3 style="margin: 0 0 10px 0;">${acc.name}</h3>
+                                <p style="margin: 5px 0;"><strong>Typ:</strong> ${acc.type}</p>
+                                <p style="margin: 5px 0;"><strong>Preis:</strong> ${acc.price === 0 ? '💚 Kostenlos' : acc.price ? acc.price + ' €' : 'Unbekannt'}</p>
+                                ${acc.rating ? `<p style="margin: 5px 0;"><strong>Bewertung:</strong> ⭐ ${acc.rating}/5</p>` : ''}
+                                ${featureIcons.length > 0 ? `<p style="margin: 5px 0;"><strong>Ausstattung:</strong> ${featureIcons.join(' ')}</p>` : ''}
+                                <p style="margin: 5px 0;"><strong>Entfernung:</strong> ${acc.distance} km</p>
+                                ${acc.opening_hours ? `<p style="margin: 5px 0; font-size: 0.9em;">🕐 ${acc.opening_hours}</p>` : ''}
+                                ${acc.contact?.website ? `<p style="margin: 5px 0;"><a href="${acc.contact.website}" target="_blank">🔗 Website</a></p>` : ''}
+                                <p style="margin: 10px 0 0 0; padding-top: 10px; border-top: 1px solid #ecf0f1; font-size: 0.8em; color: #7f8c8d;">Quelle: OpenStreetMap</p>
+                            </div>
+                        `);
+
+                    accommodationMarkers.push(marker);
+                });
+
+                const freeCount = data.accommodations.filter(a => a.price === 0).length;
+                const paidCount = data.accommodations.length - freeCount;
+                
+                alert(`${data.accommodations.length} Stellplätze geladen!\n💚 ${freeCount} kostenlos | 💙 ${paidCount} kostenpflichtig`);
+            } catch (error) {
+                console.error('Accommodation-Fehler:', error);
+                alert('Fehler beim Laden der Stellplätze: ' + error.message);
+            }
+        }
+
+        // POI Layer
+        let poiMarkers = [];
+        
+        async function loadPOIs() {
+            if (selectedClusters.length === 0) {
+                alert('Keine Route vorhanden');
+                return;
+            }
+
+            try {
+                const data = await api.getPOIsForRoute(currentRegion, selectedClusters, 20, ['water', 'disposal', 'camping', 'fuel']);
+                
+                // Entferne alte POI-Marker
+                poiMarkers.forEach(marker => map.removeLayer(marker));
+                poiMarkers = [];
+
+                // POI-Icons
+                const icons = {
+                    water: '💧',
+                    disposal: '🚮',
+                    camping: '🏕️',
+                    fuel: '⛽',
+                    viewpoint: '👁️'
+                };
+
+                // Füge neue POI-Marker hinzu
+                Object.entries(data.pois).forEach(([type, pois]) => {
+                    pois.forEach(poi => {
+                        const icon = L.divIcon({
+                            className: 'poi-marker',
+                            html: `<div style="background: white; border: 2px solid #3498db; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-size: 14px;">${icons[type] || '📍'}</div>`,
+                            iconSize: [25, 25]
+                        });
+
+                        const marker = L.marker([poi.lat, poi.lon], { icon })
+                            .addTo(map)
+                            .bindPopup(`
+                                <strong>${poi.name}</strong><br>
+                                Typ: ${poi.icon} ${type}<br>
+                                ${poi.tags.operator ? `Betreiber: ${poi.tags.operator}<br>` : ''}
+                                ${poi.tags.fee ? `Gebühr: ${poi.tags.fee}<br>` : ''}
+                            `);
+
+                        poiMarkers.push(marker);
+                    });
+                });
+
+                alert(`${poiMarkers.length} POIs geladen!`);
+            } catch (error) {
+                console.error('POI-Fehler:', error);
+                alert('Fehler beim Laden der POIs: ' + error.message);
+            }
+        }
+
+        // GPX Export
+        let currentRouteData = null;
+        
+        async function exportGPX() {
+            if (!currentRouteData) {
+                alert('Keine Route zum Exportieren vorhanden');
+                return;
+            }
+
+            try {
+                const blob = await api.exportCurrentRouteGPX(
+                    currentRouteData,
+                    `Route ${currentRegion}`,
+                    currentRegion
+                );
+
+                // Download-Link erstellen
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `budget-overlander-${currentRegion}-${Date.now()}.gpx`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                alert('GPX-Datei erfolgreich heruntergeladen!');
+            } catch (error) {
+                console.error('GPX-Export-Fehler:', error);
+                alert('Fehler beim GPX-Export: ' + error.message);
+            }
+        }
+
+        // Zurück zur Startseite
+        function goHome() {
+            window.location.href = 'index.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>

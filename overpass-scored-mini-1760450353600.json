@@ -1,0 +1,1217 @@
+[
+  {
+    "id": 1259478703,
+    "name": "Unbenannt",
+    "lengthKm": "0.078",
+    "score": 85,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "ground",
+    "tracktype": "grade5",
+    "smoothness": "very_horrible",
+    "budget": {
+      "fuelNeeded": "0.02",
+      "fuelCost": "0.02",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 196943034,
+    "name": "Unbenannt",
+    "lengthKm": "0.292",
+    "score": 75,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "dirt",
+    "smoothness": "very_horrible",
+    "budget": {
+      "fuelNeeded": "0.06",
+      "fuelCost": "0.09",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 1150019046,
+    "name": "Unbenannt",
+    "lengthKm": "0.074",
+    "score": 75,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "dirt",
+    "tracktype": "grade4",
+    "smoothness": "very_bad",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 1352535583,
+    "name": "Unbenannt",
+    "lengthKm": "0.109",
+    "score": 75,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "smoothness": "very_horrible",
+    "budget": {
+      "fuelNeeded": "0.02",
+      "fuelCost": "0.03",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 1352535584,
+    "name": "Unbenannt",
+    "lengthKm": "0.013",
+    "score": 75,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "smoothness": "very_horrible",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 27565484,
+    "name": "Unbenannt",
+    "lengthKm": "0.142",
+    "score": 70,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "dirt",
+    "tracktype": "grade5",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.04",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 254933504,
+    "name": "Unbenannt",
+    "lengthKm": "0.181",
+    "score": 70,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "dirt",
+    "tracktype": "grade5",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.06",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 405838962,
+    "name": "Unbenannt",
+    "lengthKm": "0.036",
+    "score": 70,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "dirt",
+    "tracktype": "grade5",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 14605573,
+    "name": "Unbenannt",
+    "lengthKm": "0.048",
+    "score": 65,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "dirt",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 32868066,
+    "name": "Unbenannt",
+    "lengthKm": "0.045",
+    "score": 65,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "ground",
+    "tracktype": "grade5",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 52707297,
+    "name": "Unbenannt",
+    "lengthKm": "0.154",
+    "score": 65,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "ground",
+    "tracktype": "grade5",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.05",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 537987741,
+    "name": "Unbenannt",
+    "lengthKm": "0.119",
+    "score": 65,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "ground",
+    "tracktype": "grade5",
+    "budget": {
+      "fuelNeeded": "0.02",
+      "fuelCost": "0.04",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 766511991,
+    "name": "Unbenannt",
+    "lengthKm": "0.133",
+    "score": 65,
+    "category": "Schwer",
+    "emoji": "🔴",
+    "surface": "ground",
+    "tracktype": "grade5",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.04",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 15,
+      "consumptionPer100km": "19.2"
+    }
+  },
+  {
+    "id": 10603308,
+    "name": "Unbenannt",
+    "lengthKm": "0.024",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 47201823,
+    "name": "Unbenannt",
+    "lengthKm": "0.461",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.08",
+      "fuelCost": "0.13",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 51567660,
+    "name": "Unbenannt",
+    "lengthKm": "0.296",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.05",
+      "fuelCost": "0.08",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 54882612,
+    "name": "Unbenannt",
+    "lengthKm": "0.464",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.08",
+      "fuelCost": "0.13",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 144432944,
+    "name": "Unbenannt",
+    "lengthKm": "0.054",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "dirt",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 145110795,
+    "name": "Unbenannt",
+    "lengthKm": "0.224",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.04",
+      "fuelCost": "0.06",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 638213327,
+    "name": "Unbenannt",
+    "lengthKm": "0.076",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 794518518,
+    "name": "Unbenannt",
+    "lengthKm": "0.177",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.05",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 794518519,
+    "name": "Unbenannt",
+    "lengthKm": "0.170",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.05",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 794518520,
+    "name": "Unbenannt",
+    "lengthKm": "0.232",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.04",
+      "fuelCost": "0.06",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 1239701016,
+    "name": "Unbenannt",
+    "lengthKm": "0.134",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.02",
+      "fuelCost": "0.04",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 1347947274,
+    "name": "Unbenannt",
+    "lengthKm": "0.005",
+    "score": 60,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 22792337,
+    "name": "Unbenannt",
+    "lengthKm": "0.066",
+    "score": 55,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 23021454,
+    "name": "Oberer Harbuckweg",
+    "lengthKm": "0.687",
+    "score": 55,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.12",
+      "fuelCost": "0.19",
+      "timeHours": "0.03",
+      "timeMinutes": 2,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 42882552,
+    "name": "Unbenannt",
+    "lengthKm": "0.385",
+    "score": 55,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.06",
+      "fuelCost": "0.11",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 47374095,
+    "name": "Brombergfelsenweg",
+    "lengthKm": "1.098",
+    "score": 55,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.18",
+      "fuelCost": "0.30",
+      "timeHours": "0.04",
+      "timeMinutes": 3,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 85534821,
+    "name": "Unbenannt",
+    "lengthKm": "0.053",
+    "score": 55,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 459186651,
+    "name": "Unbenannt",
+    "lengthKm": "0.234",
+    "score": 55,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.04",
+      "fuelCost": "0.06",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 83918917,
+    "name": "Unbenannt",
+    "lengthKm": "0.275",
+    "score": 50,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "smoothness": "bad",
+    "budget": {
+      "fuelNeeded": "0.05",
+      "fuelCost": "0.08",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 103480647,
+    "name": "Hebsackweg",
+    "lengthKm": "0.121",
+    "score": 50,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "dirt",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.02",
+      "fuelCost": "0.03",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 119521178,
+    "name": "Unbenannt",
+    "lengthKm": "0.013",
+    "score": 50,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 127071155,
+    "name": "Unbenannt",
+    "lengthKm": "0.173",
+    "score": 50,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade4",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.05",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 145404641,
+    "name": "Unbenannt",
+    "lengthKm": "0.265",
+    "score": 50,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "dirt",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.04",
+      "fuelCost": "0.07",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 198646921,
+    "name": "Unbenannt",
+    "lengthKm": "0.095",
+    "score": 50,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "budget": {
+      "fuelNeeded": "0.02",
+      "fuelCost": "0.03",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 875719075,
+    "name": "Oberer Harbuckweg",
+    "lengthKm": "0.011",
+    "score": 50,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade1",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 4866475,
+    "name": "Unbenannt",
+    "lengthKm": "0.013",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "smoothness": "intermediate",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 22740080,
+    "name": "Hebsackweg",
+    "lengthKm": "0.241",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.04",
+      "fuelCost": "0.07",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 23021738,
+    "name": "Unbenannt",
+    "lengthKm": "0.939",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.16",
+      "fuelCost": "0.26",
+      "timeHours": "0.04",
+      "timeMinutes": 2,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 24618086,
+    "name": "Unbenannt",
+    "lengthKm": "0.525",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.09",
+      "fuelCost": "0.15",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 24618090,
+    "name": "Unbenannt",
+    "lengthKm": "0.465",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.08",
+      "fuelCost": "0.13",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 39116313,
+    "name": "Unbenannt",
+    "lengthKm": "0.157",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.04",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 41789243,
+    "name": "Unbenannt",
+    "lengthKm": "0.509",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.09",
+      "fuelCost": "0.14",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 47204897,
+    "name": "Unbenannt",
+    "lengthKm": "0.268",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "budget": {
+      "fuelNeeded": "0.05",
+      "fuelCost": "0.07",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 68354399,
+    "name": "Unbenannt",
+    "lengthKm": "0.054",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "smoothness": "intermediate",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 117392912,
+    "name": "Unbenannt",
+    "lengthKm": "0.157",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "smoothness": "intermediate",
+    "budget": {
+      "fuelNeeded": "0.03",
+      "fuelCost": "0.04",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 123599118,
+    "name": "Unbenannt",
+    "lengthKm": "0.017",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 290146829,
+    "name": "Hebsackweg",
+    "lengthKm": "0.313",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.05",
+      "fuelCost": "0.09",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 446106520,
+    "name": "Unbenannt",
+    "lengthKm": "0.564",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "smoothness": "intermediate",
+    "budget": {
+      "fuelNeeded": "0.09",
+      "fuelCost": "0.16",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 814547763,
+    "name": "Unbenannt",
+    "lengthKm": "0.294",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.05",
+      "fuelCost": "0.08",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 875707057,
+    "name": "Hebsackweg",
+    "lengthKm": "0.144",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.02",
+      "fuelCost": "0.04",
+      "timeHours": "0.01",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 1060357586,
+    "name": "Unbenannt",
+    "lengthKm": "0.231",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade3",
+    "smoothness": "intermediate",
+    "budget": {
+      "fuelNeeded": "0.04",
+      "fuelCost": "0.06",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 1151910065,
+    "name": "Unbenannt",
+    "lengthKm": "0.006",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 1338894953,
+    "name": "Hebsackweg",
+    "lengthKm": "0.026",
+    "score": 45,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "ground",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 4866766,
+    "name": "Unbenannt",
+    "lengthKm": "0.418",
+    "score": 40,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "smoothness": "bad",
+    "budget": {
+      "fuelNeeded": "0.07",
+      "fuelCost": "0.12",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 45036278,
+    "name": "Unbenannt",
+    "lengthKm": "0.031",
+    "score": 40,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 89527495,
+    "name": "Unbenannt",
+    "lengthKm": "0.069",
+    "score": 40,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 115631600,
+    "name": "Unbenannt",
+    "lengthKm": "0.057",
+    "score": 40,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "smoothness": "bad",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 27707049,
+    "name": "Unbenannt",
+    "lengthKm": "0.047",
+    "score": 35,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 36785772,
+    "name": "Weinbergweg",
+    "lengthKm": "0.282",
+    "score": 35,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "smoothness": "intermediate",
+    "budget": {
+      "fuelNeeded": "0.05",
+      "fuelCost": "0.08",
+      "timeHours": "0.01",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 41723664,
+    "name": "Unbenannt",
+    "lengthKm": "0.032",
+    "score": 35,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.01",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 59475127,
+    "name": "Stadtdamm",
+    "lengthKm": "0.375",
+    "score": 35,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.06",
+      "fuelCost": "0.10",
+      "timeHours": "0.02",
+      "timeMinutes": 1,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 174663948,
+    "name": "Unbenannt",
+    "lengthKm": "0.004",
+    "score": 35,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 197955867,
+    "name": "Unbenannt",
+    "lengthKm": "0.064",
+    "score": 35,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.01",
+      "fuelCost": "0.02",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  },
+  {
+    "id": 233201193,
+    "name": "Unbenannt",
+    "lengthKm": "0.007",
+    "score": 35,
+    "category": "Mittel",
+    "emoji": "🟡",
+    "surface": "gravel",
+    "tracktype": "grade2",
+    "budget": {
+      "fuelNeeded": "0.00",
+      "fuelCost": "0.00",
+      "timeHours": "0.00",
+      "timeMinutes": 0,
+      "avgSpeed": 25,
+      "consumptionPer100km": "16.8"
+    }
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "totalWays": 67,
+  "totalLength": 13521.890276575681,
+  "highways": {
+    "track": 67
+  },
+  "surfaces": {
+    "gravel": 23,
+    "ground": 35,
+    "dirt": 9
+  },
+  "tracktypes": {
+    "grade3": 20,
+    "grade2": 19,
+    "grade4": 14,
+    "grade5": 8,
+    "grade1": 1
+  },
+  "smoothness": {
+    "intermediate": 6,
+    "bad": 3,
+    "very_horrible": 4,
+    "very_bad": 1
+  },
+  "withNames": 10,
+  "avgNodesPerWay": "9.3",
+  "minLength": 3.7273180755386623,
+  "maxLength": 1098.4651659588621
+}
