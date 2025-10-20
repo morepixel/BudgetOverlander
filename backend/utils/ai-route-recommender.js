@@ -56,20 +56,7 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
       max_tokens: 2000
     });
 
-    const content = response.choices[0].message.content;
-    
-    // Versuche JSON zu parsen
-    let result;
-    try {
-      result = JSON.parse(content);
-    } catch (parseError) {
-      console.error('JSON Parse Error:', parseError);
-      console.error('Response content:', content);
-      return {
-        enabled: false,
-        error: 'KI-Antwort konnte nicht verarbeitet werden'
-      };
-    }
+    const result = JSON.parse(response.choices[0].message.content);
     
     return {
       enabled: true,
@@ -81,7 +68,7 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
     console.error('AI Route Recommender error:', error);
     return {
       enabled: false,
-      error: error.message || 'AI-Features nicht verfügbar - bitte OPENAI_API_KEY setzen'
+      error: error.message
     };
   }
 }
@@ -195,7 +182,6 @@ Für **jede Route**:
 - Kreativer Name (z.B. "Pyrenäen-Durchquerung", "Atlantik-Odyssee")
 - Beschreibung (2-3 Sätze) - was macht sie besonders?
 - 5-10 wichtige Waypoints mit GPS-Koordinaten
-- ${tripDays - 1} Übernachtungsempfehlungen (Campingplätze, Stellplätze, Wildcamping-Spots) mit GPS-Koordinaten
 - Top Highlights (Orte, Aussichtspunkte, Tracks)
 - Geschätzte Distanz in km (sollte <= ${maxTotalKm} km sein)
 - Geschätzte Dauer in Tagen (sollte ~${tripDays} Tage sein)
@@ -203,24 +189,12 @@ Für **jede Route**:
 - Scenic Score (0-100)
 - Offroad-Anteil in %
 
-**SEHR WICHTIG - RUNDTOUR-REGEL**:
-${roundTrip ? `
-- Dies ist eine RUNDTOUR! Die Route MUSS zum Startpunkt zurückkehren!
+**SEHR WICHTIG**:
 - Der **erste Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
-- Der **letzte Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
-- Die Route sollte einen KREIS oder eine SCHLEIFE bilden
-- Plane die Waypoints so, dass die Route logisch zum Start zurückführt
-- Beispiel: Start → Nord → Ost → Süd → West → Start (Rundtour)
-- NICHT: Start → Nord → weiter Nord (keine Rundtour!)
-` : `
-- Dies ist eine EINWEG-TOUR vom Start zum Ziel
-- Der **erste Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
-- Der **letzte Waypoint** ist das finale Ziel der Route
-`}
+${roundTrip ? `- Der **letzte Waypoint** MUSS **EXAKT** zurück zum Start sein: ${start.name} (${start.lat}, ${start.lon})` : '- Der letzte Waypoint ist das finale Ziel der Route'}
 - Waypoints dazwischen sollten logisch auf der Route liegen
 - Jede Route sollte in eine andere Richtung/Region führen
 - Berücksichtige realistische Entfernungen für ${tripDays} Tage
-- Vermeide zu große Sprünge zwischen Waypoints (max. 300-400km pro Tag)
 
 Antworte in folgendem JSON-Format:
 {
@@ -236,10 +210,6 @@ Antworte in folgendem JSON-Format:
         {"name": "Waypoint 2", "lat": 0.0, "lon": 0.0, "description": "..."},
         ...
         ${roundTrip ? `{"name": "${start.name}", "lat": ${start.lat}, "lon": ${start.lon}, "description": "Zurück am Start"}` : '{"name": "Zielpunkt", "lat": 0.0, "lon": 0.0, "description": "Ende der Tour"}'}
-      ],
-      "accommodations": [
-        {"name": "Campingplatz/Stellplatz Name", "lat": 0.0, "lon": 0.0, "type": "campsite|wildcamping|parking", "description": "Kurze Beschreibung", "dayNumber": 1},
-        {"name": "Übernachtung Tag 2", "lat": 0.0, "lon": 0.0, "type": "campsite|wildcamping|parking", "description": "...", "dayNumber": 2}
       ],
       "estimatedDistance": 1800,
       "estimatedDuration": ${tripDays},

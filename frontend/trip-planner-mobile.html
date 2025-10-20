@@ -54,7 +54,6 @@
             display: flex;
             flex-direction: column;
             pointer-events: all;
-            touch-action: none;
         }
 
         #bottomSheet.expanded {
@@ -73,13 +72,11 @@
             border-radius: 2px;
             margin: 12px auto;
             cursor: grab;
-            touch-action: none;
         }
 
         .sheet-header {
             padding: 0 20px 15px;
             border-bottom: 1px solid #f0f0f0;
-            touch-action: none;
         }
 
         .sheet-title {
@@ -93,12 +90,9 @@
 
         .sheet-content {
             flex: 1;
-            overflow-y: scroll;
-            overflow-x: hidden;
+            overflow-y: auto;
             padding: 20px;
             -webkit-overflow-scrolling: touch;
-            overscroll-behavior: contain;
-            position: relative;
         }
 
         /* Input Sections */
@@ -306,6 +300,20 @@
             max-width: 80%;
         }
 
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
         /* Tabs */
         .tabs {
@@ -339,50 +347,6 @@
             display: block;
         }
 
-        /* Autocomplete Dropdown */
-        .autocomplete-dropdown {
-            position: absolute;
-            z-index: 10000;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            max-height: 250px;
-            overflow-y: auto;
-            width: 100%;
-            margin-top: 5px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
-            display: none;
-        }
-
-        .autocomplete-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
-        }
-        
-        .autocomplete-item .city-name {
-            font-size: 1.1em;
-            font-weight: 700;
-            color: #2c3e50;
-            display: block;
-            margin-bottom: 4px;
-        }
-        
-        .autocomplete-item .city-details {
-            font-size: 0.85em;
-            color: #999;
-        }
-
-        .autocomplete-item:hover,
-        .autocomplete-item:active {
-            background: #f8f9ff;
-        }
-
-        .autocomplete-item:last-child {
-            border-bottom: none;
-        }
-
         /* Results Card */
         .result-card {
             background: white;
@@ -391,22 +355,6 @@
             margin-bottom: 15px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
             border: 2px solid #f0f0f0;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .result-card:hover,
-        .result-card:active {
-            border-color: #667eea;
-            background: #f8f9ff;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-            transform: translateY(-2px);
-        }
-        
-        .result-card.selected {
-            border-color: #667eea;
-            background: linear-gradient(135deg, #f8f9ff 0%, #e8ebff 100%);
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
         }
 
         .result-card h4 {
@@ -490,16 +438,14 @@
 
                 <!-- Tab: Planen -->
                 <div id="tab-plan" class="tab-content active">
-                    <div class="input-group" style="position: relative;">
+                    <div class="input-group">
                         <label class="input-label">📍 Startpunkt</label>
-                        <input type="text" id="startAddress" class="input-field" placeholder="z.B. München" oninput="searchAddress('start', this.value)">
-                        <div id="startResults" class="autocomplete-dropdown"></div>
+                        <input type="text" id="startAddress" class="input-field" placeholder="z.B. München">
                     </div>
 
-                    <div class="input-group" style="position: relative;">
+                    <div class="input-group">
                         <label class="input-label">🎯 Zielpunkt <span style="color: #999; font-size: 0.85em;">(optional)</span></label>
-                        <input type="text" id="endAddress" class="input-field" placeholder="z.B. Pyrenäen" oninput="searchAddress('end', this.value)">
-                        <div id="endResults" class="autocomplete-dropdown"></div>
+                        <input type="text" id="endAddress" class="input-field" placeholder="z.B. Pyrenäen">
                     </div>
 
                     <div class="slider-group">
@@ -531,12 +477,6 @@
 
                 <!-- Tab: Entdecken -->
                 <div id="tab-discover" class="tab-content">
-                    <div class="input-group" style="position: relative;">
-                        <label class="input-label">📍 Startpunkt</label>
-                        <input type="text" id="startAddressDiscover" class="input-field" placeholder="z.B. München" oninput="searchAddress('startDiscover', this.value)">
-                        <div id="startDiscoverResults" class="autocomplete-dropdown"></div>
-                    </div>
-
                     <div class="feature-card">
                         <h3>🧭 Discovery Mode</h3>
                         <label>
@@ -574,11 +514,6 @@
                         </div>
                         <input type="range" id="scenicWeight" min="0" max="100" value="30" step="10" oninput="updateValue('scenicValue', this.value + '%')">
                     </div>
-
-                    <button class="btn btn-primary" onclick="getAIRoutes()" style="margin-top: 20px;">
-                        <span>🤖</span>
-                        <span>KI-Routen entdecken</span>
-                    </button>
                 </div>
 
                 <!-- Tab: Ergebnisse -->
@@ -612,156 +547,17 @@
         <!-- Loading Overlay -->
         <div id="loadingOverlay">
             <div class="loading-content">
-                <!-- Animated Truck -->
-                <div id="truckAnimation" style="width: 280px; height: 140px; margin: 0 auto 20px; position: relative; overflow: hidden; background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #D2B48C 60%, #D2B48C 100%); border-radius: 10px;">
-                    <!-- Mountains -->
-                    <div style="position: absolute; bottom: 60px; left: 0; width: 100%; height: 80px;">
-                        <div style="position: absolute; bottom: 0; left: 20%; width: 0; height: 0; border-left: 40px solid transparent; border-right: 40px solid transparent; border-bottom: 60px solid #8B4513; opacity: 0.6;"></div>
-                        <div style="position: absolute; bottom: 0; left: 50%; width: 0; height: 0; border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 70px solid #654321; opacity: 0.5;"></div>
-                    </div>
-                    
-                    <!-- Animated Truck -->
-                    <div id="truck" style="position: absolute; bottom: 65px; left: -60px; animation: drive 3s linear infinite; width: 50px; height: 30px;">
-                        <div style="background: #2c3e50; width: 35px; height: 20px; border-radius: 3px; position: absolute; bottom: 8px;"></div>
-                        <div style="background: #34495e; width: 15px; height: 15px; border-radius: 2px; position: absolute; bottom: 8px; left: 35px;"></div>
-                        <div style="background: #3498db; width: 12px; height: 10px; position: absolute; bottom: 18px; left: 5px; border-radius: 1px;"></div>
-                        <!-- Wheels -->
-                        <div class="wheel" style="position: absolute; bottom: 0; left: 5px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555; animation: rotate 0.5s linear infinite;"></div>
-                        <div class="wheel" style="position: absolute; bottom: 0; left: 25px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555; animation: rotate 0.5s linear infinite;"></div>
-                    </div>
-                    
-                    <!-- Dust clouds -->
-                    <div style="position: absolute; bottom: 60px; left: 10%; width: 20px; height: 20px; background: rgba(210,180,140,0.5); border-radius: 50%; animation: dust 1s infinite;"></div>
-                    <div style="position: absolute; bottom: 60px; left: 15%; width: 15px; height: 15px; background: rgba(210,180,140,0.3); border-radius: 50%; animation: dust 1.2s infinite 0.3s;"></div>
-                </div>
-                
-                <h3 style="margin: 20px 0 10px 0; color: #2c3e50;">🚙 Route wird berechnet...</h3>
-                <p id="loadingText" style="color: #666; font-size: 1em;">Suche optimale Strecke...</p>
-                
-                <!-- Progress Bar -->
-                <div style="width: 100%; height: 8px; background: #ecf0f1; border-radius: 10px; margin: 20px 0; overflow: hidden;">
-                    <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.5s; border-radius: 10px;"></div>
-                </div>
-                
-                <p style="font-size: 0.85em; color: #95a5a6;">Das kann 10-30 Sekunden dauern...</p>
+                <div class="spinner"></div>
+                <h3 style="margin-bottom: 10px; color: #2c3e50;">Berechne Route...</h3>
+                <p style="color: #666;">Das kann einige Sekunden dauern</p>
             </div>
         </div>
-        
-        <style>
-            @keyframes drive {
-                0% { left: -60px; }
-                100% { left: 100%; }
-            }
-            
-            @keyframes rotate {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-            
-            @keyframes dust {
-                0% { transform: scale(0.5); opacity: 0.7; }
-                50% { transform: scale(1.2); opacity: 0.3; }
-                100% { transform: scale(0.5); opacity: 0; }
-            }
-        </style>
     </div>
 
     <script src="js/api.js?v=6"></script>
     <script>
         let map;
         let routeLayer;
-        let geocodingTimeout;
-        let selectedLocations = {
-            start: null,
-            end: null,
-            startDiscover: null
-        };
-        let currentRoutes = [];
-        let selectedRouteIndex = -1;
-
-        // Geocoding Search
-        async function searchAddress(type, query) {
-            if (query.length < 3) {
-                hideResults(type);
-                return;
-            }
-
-            clearTimeout(geocodingTimeout);
-            geocodingTimeout = setTimeout(async () => {
-                try {
-                    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
-                    const response = await fetch(url, {
-                        headers: {
-                            'User-Agent': 'Budget-Overlander-App'
-                        }
-                    });
-                    const data = await response.json();
-                    showResults(type, data);
-                } catch (error) {
-                    console.error('Geocoding error:', error);
-                }
-            }, 300);
-        }
-
-        function showResults(type, results) {
-            const containerId = type + 'Results';
-            const container = document.getElementById(containerId);
-            
-            if (!container) {
-                console.error('Container not found:', containerId);
-                return;
-            }
-            
-            if (!results || results.length === 0) {
-                hideResults(type);
-                return;
-            }
-
-            let html = '';
-            results.forEach(result => {
-                const escapedName = result.display_name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                
-                const parts = result.display_name.split(',');
-                const cityName = parts[0].trim();
-                const details = parts.slice(1).join(',').trim();
-                
-                html += `
-                    <div class="autocomplete-item" onclick='selectLocation("${type}", ${result.lat}, ${result.lon}, "${escapedName}")'>
-                        <span class="city-name">${cityName}</span>
-                        <span class="city-details">${details}</span>
-                    </div>
-                `;
-            });
-
-            container.innerHTML = html;
-            container.style.display = 'block';
-            console.log('Showing results for', type, results.length, 'items');
-        }
-
-        function hideResults(type) {
-            const containerId = type + 'Results';
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.style.display = 'none';
-            }
-        }
-
-        function selectLocation(type, lat, lon, name) {
-            selectedLocations[type] = { lat, lon, name };
-            
-            const inputId = type === 'startDiscover' ? 'startAddressDiscover' : type + 'Address';
-            document.getElementById(inputId).value = name;
-            hideResults(type);
-        }
-
-        // Close dropdowns on click outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.input-group')) {
-                hideResults('start');
-                hideResults('end');
-                hideResults('startDiscover');
-            }
-        });
 
         // Initialize Map
         function initMap() {
@@ -849,8 +645,11 @@
 
         // Calculate Route
         async function calculateRoute() {
-            if (!selectedLocations.start) {
-                alert('Bitte Startpunkt auswählen');
+            const startAddress = document.getElementById('startAddress').value;
+            const endAddress = document.getElementById('endAddress').value;
+
+            if (!startAddress) {
+                alert('Bitte Startpunkt eingeben');
                 return;
             }
 
@@ -859,7 +658,7 @@
             // Simulate API call
             setTimeout(() => {
                 hideLoading();
-                showRouteResults([
+                showResults([
                     {
                         name: 'Hauptroute',
                         distance: '1245 km',
@@ -874,10 +673,10 @@
 
         // Get AI Routes
         async function getAIRoutes() {
-            const location = selectedLocations.startDiscover || selectedLocations.start;
-            
-            if (!location) {
-                alert('Bitte Startpunkt auswählen');
+            const startAddress = document.getElementById('startAddress').value;
+
+            if (!startAddress) {
+                alert('Bitte Startpunkt eingeben');
                 return;
             }
 
@@ -886,7 +685,7 @@
             // Simulate API call
             setTimeout(() => {
                 hideLoading();
-                showRouteResults([
+                showResults([
                     {
                         name: '🏔️ Alpen-Adventure',
                         distance: '1800 km',
@@ -915,25 +714,14 @@
             }, 3000);
         }
 
-        // Show Route Results
-        function showRouteResults(routes) {
+        // Show Results
+        function showResults(routes) {
             const container = document.getElementById('resultsContainer');
-            
-            if (!Array.isArray(routes)) {
-                console.error('Routes is not an array:', routes);
-                container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 40px 0;">Fehler beim Laden der Routen</p>';
-                return;
-            }
-            
-            // Store routes globally
-            currentRoutes = routes;
-            selectedRouteIndex = -1;
-            
             let html = '';
 
-            routes.forEach((route, index) => {
+            routes.forEach(route => {
                 html += `
-                    <div class="result-card" onclick="selectRoute(${index})" id="route-${index}">
+                    <div class="result-card">
                         <h4>${route.name}</h4>
                         <p style="margin: 8px 0;">
                             📏 ${route.distance} • ⏱️ ${route.duration}
@@ -943,229 +731,23 @@
                             <span class="badge badge-scenic">🏞️ Scenic ${route.scenic}%</span>
                             <span class="badge badge-offroad">🚙 Offroad ${route.offroad}%</span>
                         </div>
-                        <p style="margin-top: 10px; font-size: 0.85em; color: #667eea; font-weight: 600;">
-                            👆 Antippen um Route anzuzeigen
-                        </p>
                     </div>
                 `;
             });
 
             container.innerHTML = html;
-            
-            // Switch to results tab
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById('tab-results').classList.add('active');
-            
+            switchTab('results');
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab')[2].classList.add('active');
-            
-            // Expand bottom sheet if minimized
-            expandSheet();
-        }
-        
-        // Select and display route on map
-        async function selectRoute(index) {
-            if (index < 0 || index >= currentRoutes.length) return;
-            
-            const route = currentRoutes[index];
-            selectedRouteIndex = index;
-            
-            // Update UI - highlight selected card
-            document.querySelectorAll('.result-card').forEach((card, i) => {
-                if (i === index) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            });
-            
-            // Show loading
-            showLoading();
-            
-            try {
-                // Remove existing route layer
-                if (routeLayer) {
-                    map.removeLayer(routeLayer);
-                }
-                
-                // Get start location
-                const startLocation = selectedLocations.startDiscover || selectedLocations.start;
-                if (!startLocation) return;
-                
-                // Generate waypoints for this route
-                const waypoints = await generateRouteWaypoints(startLocation, route);
-                
-                // Calculate real street route with OSRM
-                const routeCoords = await calculateOSRMRoute(waypoints);
-                
-                if (!routeCoords || routeCoords.length === 0) {
-                    throw new Error('Keine Route gefunden');
-                }
-                
-                // Draw route on map
-                routeLayer = L.polyline(routeCoords, {
-                    color: '#667eea',
-                    weight: 4,
-                    opacity: 0.8
-                }).addTo(map);
-                
-                // Fit map to route bounds
-                map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
-                
-                // Add markers for start and end
-                L.marker([routeCoords[0][0], routeCoords[0][1]], {
-                    icon: L.divIcon({
-                        html: '📍',
-                        className: 'emoji-marker',
-                        iconSize: [30, 30]
-                    })
-                }).addTo(map).bindPopup(`<b>Start:</b> ${startLocation.name}`);
-                
-                L.marker([routeCoords[routeCoords.length - 1][0], routeCoords[routeCoords.length - 1][1]], {
-                    icon: L.divIcon({
-                        html: '🎯',
-                        className: 'emoji-marker',
-                        iconSize: [30, 30]
-                    })
-                }).addTo(map).bindPopup(`<b>Ziel:</b> ${route.name}`);
-                
-                hideLoading();
-                
-                // Minimize bottom sheet to show map
-                minimizeSheet();
-            } catch (error) {
-                console.error('Fehler beim Laden der Route:', error);
-                hideLoading();
-                alert('Fehler beim Berechnen der Route');
-            }
-        }
-        
-        // Generate waypoints for route
-        async function generateRouteWaypoints(startLocation, route) {
-            const waypoints = [startLocation];
-            
-            // Calculate end point based on route distance
-            const distanceKm = parseInt(route.distance) || 1500;
-            const bearing = Math.random() * 360; // Random direction
-            
-            // Generate intermediate waypoints
-            const numWaypoints = Math.min(5, Math.floor(distanceKm / 300));
-            
-            for (let i = 1; i <= numWaypoints; i++) {
-                const progress = i / (numWaypoints + 1);
-                const currentDistance = distanceKm * progress;
-                
-                // Calculate coordinates using distance and bearing
-                const lat = startLocation.lat + (currentDistance / 111) * Math.cos(bearing * Math.PI / 180);
-                const lon = startLocation.lon + (currentDistance / (111 * Math.cos(startLocation.lat * Math.PI / 180))) * Math.sin(bearing * Math.PI / 180);
-                
-                waypoints.push({
-                    lat: lat,
-                    lon: lon,
-                    name: `Waypoint ${i}`
-                });
-            }
-            
-            return waypoints;
-        }
-        
-        // Calculate real route with OSRM
-        async function calculateOSRMRoute(waypoints) {
-            const allCoordinates = [];
-            
-            console.log('🗺️ Berechne Route mit', waypoints.length, 'Waypoints');
-            
-            // Calculate route between each pair of waypoints
-            for (let i = 0; i < waypoints.length - 1; i++) {
-                const start = waypoints[i];
-                const end = waypoints[i + 1];
-                
-                console.log(`Segment ${i+1}/${waypoints.length-1}: ${start.name || 'Start'} -> ${end.name || 'Ende'}`);
-                
-                // OSRM API Call
-                const coords = `${start.lon},${start.lat};${end.lon},${end.lat}`;
-                const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
-                
-                try {
-                    const response = await fetch(osrmUrl);
-                    const data = await response.json();
-                    
-                    if (data.code === 'Ok' && data.routes && data.routes[0]) {
-                        const geometry = data.routes[0].geometry;
-                        const segmentCoords = geometry.coordinates.map(coord => [coord[1], coord[0]]); // [lon,lat] -> [lat,lon]
-                        
-                        // Add to main route (avoid duplicates at connection points)
-                        if (i === 0) {
-                            allCoordinates.push(...segmentCoords);
-                        } else {
-                            allCoordinates.push(...segmentCoords.slice(1));
-                        }
-                        
-                        console.log(`✅ Segment ${i+1}: ${segmentCoords.length} Punkte`);
-                    } else {
-                        console.error('OSRM Error:', data);
-                    }
-                } catch (error) {
-                    console.error('OSRM Fetch Error:', error);
-                }
-            }
-            
-            console.log('🏁 Gesamt-Route:', allCoordinates.length, 'Punkte');
-            return allCoordinates;
         }
 
-        // Loading with progress simulation
-        let loadingInterval;
-        let progressInterval;
-        
+        // Loading
         function showLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            const progressBar = document.getElementById('progressBar');
-            const loadingText = document.getElementById('loadingText');
-            
-            overlay.style.display = 'flex';
-            progressBar.style.width = '0%';
-            
-            const messages = [
-                'Analysiere Routen...',
-                'Prüfe Straßenverläufe...',
-                'Suche Offroad-Strecken...',
-                'Berechne Scenic Routes...',
-                'Optimiere Wegpunkte...',
-                'Fast fertig...'
-            ];
-            
-            let messageIndex = 0;
-            let progress = 0;
-            
-            // Update loading message
-            loadingInterval = setInterval(() => {
-                if (messageIndex < messages.length) {
-                    loadingText.textContent = messages[messageIndex];
-                    messageIndex++;
-                }
-            }, 2000);
-            
-            // Simulate progress
-            progressInterval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 90) progress = 90;
-                progressBar.style.width = progress + '%';
-            }, 500);
+            document.getElementById('loadingOverlay').style.display = 'flex';
         }
 
         function hideLoading() {
-            const overlay = document.getElementById('loadingOverlay');
-            const progressBar = document.getElementById('progressBar');
-            
-            clearInterval(loadingInterval);
-            clearInterval(progressInterval);
-            
-            progressBar.style.width = '100%';
-            
-            setTimeout(() => {
-                overlay.style.display = 'none';
-            }, 500);
+            document.getElementById('loadingOverlay').style.display = 'none';
         }
 
         // Init

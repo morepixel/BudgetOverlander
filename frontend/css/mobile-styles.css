@@ -1,44 +1,22 @@
 /* Mobile-First Responsive Styles */
 
-/* Desktop/Mobile visibility helpers */
+/* Desktop/Mobile visibility helpers - Mobile for ALL sizes */
 .mobile-only {
-    display: none;
+    display: block !important;
 }
 
 .desktop-only {
-    display: block;
+    display: none !important;
 }
 
-@media (max-width: 768px) {
-    .mobile-only {
-        display: block;
-    }
-    
-    .desktop-only {
-        display: none;
-    }
-    
-    /* Header - Hidden on mobile */
-    header {
-        display: none !important;
-    }
-    
-    /* Map Logo Overlay */
-    body::before {
-        content: '🗺️ Budget Overlander';
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 200;
-        background: rgba(255, 255, 255, 0.95);
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 0.9em;
-        color: #667eea;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-        pointer-events: none;
-    }
+/* Header - Hidden on all sizes */
+header {
+    display: none !important;
+}
+
+/* Animated Logo - Visible on all sizes */
+#animated-logo {
+    display: block !important;
 }
 
 /* Autocomplete Dropdown - Global Styles */
@@ -72,8 +50,8 @@
     border-bottom: none;
 }
 
-/* Mobile Layout (< 768px) */
-@media (max-width: 768px) {
+/* Mobile Layout - Applied to ALL screen sizes */
+@media (min-width: 1px) {
     * {
         -webkit-tap-highlight-color: transparent;
     }
@@ -308,21 +286,12 @@
         cursor: pointer;
     }
     
-    /* Touch-friendly Inputs */
-    input[type="text"],
-    input[type="number"],
-    .form-input {
-        min-height: 44px !important;
-        font-size: 16px !important; /* Prevents zoom on iOS */
-        padding: 10px !important;
-        border-radius: 6px;
-    }
-    
     /* Touch-friendly Controls */
     input[type="range"] {
         height: 30px;
         -webkit-appearance: none;
         appearance: none;
+        border-radius: 20px;
     }
     
     input[type="range"]::-webkit-slider-thumb {
@@ -388,75 +357,7 @@
     }
 }
 
-/* Tablet Styles */
-@media (min-width: 769px) and (max-width: 1024px) {
-    main {
-        grid-template-columns: 350px 1fr !important;
-        display: grid !important;
-    }
-    
-    main > div:first-child {
-        position: relative;
-        transform: none;
-        bottom: auto;
-        border-radius: 10px;
-        max-height: none;
-    }
-    
-    main > div:first-child::before {
-        display: none;
-    }
-    
-    body::after {
-        display: none;
-    }
-    
-    main > div:last-child {
-        position: relative;
-        bottom: auto;
-    }
-    
-    #map {
-        height: calc(100vh - 100px);
-    }
-}
-
-/* Desktop */
-@media (min-width: 1025px) {
-    main {
-        display: grid !important;
-        grid-template-columns: 400px 1fr !important;
-    }
-    
-    main > div:first-child {
-        position: relative;
-        transform: none;
-        bottom: auto;
-        border-radius: 10px;
-        max-height: none;
-        box-shadow: none;
-    }
-    
-    main > div:first-child::before {
-        display: none;
-    }
-    
-    main > div:last-child {
-        position: relative;
-        bottom: auto;
-    }
-    
-    body::after {
-        display: none;
-    }
-}
-
-/* Desktop Large */
-@media (min-width: 1400px) {
-    main {
-        grid-template-columns: 450px 1fr !important;
-    }
-}
+/* Tablet & Desktop - Disabled (using mobile layout for all sizes) */
 
 /* Landscape Mobile */
 @media (max-width: 768px) and (orientation: landscape) {

@@ -71,16 +71,11 @@ async function calculateRoute(start, end, preferences = {}) {
   
   const url = `${OSRM_URL}/${coords}?${params}`;
   
-  console.log('🗺️ OSRM Request:', url);
-  
   try {
     const response = await fetch(url);
     const data = await response.json();
     
-    console.log('🗺️ OSRM Response:', data.code, data.routes?.length || 0, 'routes');
-    
     if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
-      console.error('❌ OSRM Error:', data.code, data.message);
       return null;
     }
     
