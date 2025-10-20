@@ -56,7 +56,20 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
       max_tokens: 2000
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
+    const content = response.choices[0].message.content;
+    
+    // Versuche JSON zu parsen
+    let result;
+    try {
+      result = JSON.parse(content);
+    } catch (parseError) {
+      console.error('JSON Parse Error:', parseError);
+      console.error('Response content:', content);
+      return {
+        enabled: false,
+        error: 'KI-Antwort konnte nicht verarbeitet werden'
+      };
+    }
     
     return {
       enabled: true,
@@ -68,7 +81,7 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
     console.error('AI Route Recommender error:', error);
     return {
       enabled: false,
-      error: error.message
+      error: error.message || 'AI-Features nicht verfügbar - bitte OPENAI_API_KEY setzen'
     };
   }
 }
@@ -182,6 +195,7 @@ Für **jede Route**:
 - Kreativer Name (z.B. "Pyrenäen-Durchquerung", "Atlantik-Odyssee")
 - Beschreibung (2-3 Sätze) - was macht sie besonders?
 - 5-10 wichtige Waypoints mit GPS-Koordinaten
+- ${tripDays - 1} Übernachtungsempfehlungen (Campingplätze, Stellplätze, Wildcamping-Spots) mit GPS-Koordinaten
 - Top Highlights (Orte, Aussichtspunkte, Tracks)
 - Geschätzte Distanz in km (sollte <= ${maxTotalKm} km sein)
 - Geschätzte Dauer in Tagen (sollte ~${tripDays} Tage sein)
@@ -222,6 +236,10 @@ Antworte in folgendem JSON-Format:
         {"name": "Waypoint 2", "lat": 0.0, "lon": 0.0, "description": "..."},
         ...
         ${roundTrip ? `{"name": "${start.name}", "lat": ${start.lat}, "lon": ${start.lon}, "description": "Zurück am Start"}` : '{"name": "Zielpunkt", "lat": 0.0, "lon": 0.0, "description": "Ende der Tour"}'}
+      ],
+      "accommodations": [
+        {"name": "Campingplatz/Stellplatz Name", "lat": 0.0, "lon": 0.0, "type": "campsite|wildcamping|parking", "description": "Kurze Beschreibung", "dayNumber": 1},
+        {"name": "Übernachtung Tag 2", "lat": 0.0, "lon": 0.0, "type": "campsite|wildcamping|parking", "description": "...", "dayNumber": 2}
       ],
       "estimatedDistance": 1800,
       "estimatedDuration": ${tripDays},

@@ -1,5 +1,6 @@
-// Accommodation Fetcher - OSM Overpass API
+// Accommodation Fetcher - OSM Overpass API + Park4Night
 import fetch from 'node-fetch';
+import { searchPark4Night } from './park4night-fetcher.js';
 
 const OVERPASS_URL = 'https://overpass-api.de/api/interpreter';
 
@@ -22,7 +23,7 @@ export async function searchAccommodations(lat, lon, radiusKm = 50, options = {}
   const west = lon - lonDelta;
   const east = lon + lonDelta;
 
-  // Overpass Query
+  // Overpass Query - erweitert um mehr Übernachtungsmöglichkeiten
   const query = `
 [out:json][timeout:25];
 (
@@ -37,6 +38,24 @@ export async function searchAccommodations(lat, lon, radiusKm = 50, options = {}
   // Parkplätze für Wohnmobile
   node["amenity"="parking"]["caravan"="yes"](${south},${west},${north},${east});
   way["amenity"="parking"]["caravan"="yes"](${south},${west},${north},${east});
+  node["amenity"="parking"]["motorhome"="yes"](${south},${west},${north},${east});
+  way["amenity"="parking"]["motorhome"="yes"](${south},${west},${north},${east});
+  
+  // Öffentliche Parkplätze (generell)
+  node["amenity"="parking"]["access"="yes"](${south},${west},${north},${east});
+  way["amenity"="parking"]["access"="yes"](${south},${west},${north},${east});
+  
+  // Friedhöfe (oft erlaubt für Wohnmobile)
+  node["amenity"="grave_yard"](${south},${west},${north},${east});
+  way["amenity"="grave_yard"](${south},${west},${north},${east});
+  node["landuse"="cemetery"](${south},${west},${north},${east});
+  way["landuse"="cemetery"](${south},${west},${north},${east});
+  
+  // Rastplätze
+  node["highway"="rest_area"](${south},${west},${north},${east});
+  way["highway"="rest_area"](${south},${west},${north},${east});
+  node["highway"="services"](${south},${west},${north},${east});
+  way["highway"="services"](${south},${west},${north},${east});
 );
 out body;
 >;
@@ -44,23 +63,44 @@ out skel qt;
   `;
 
   try {
-    const response = await fetch(OVERPASS_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `data=${encodeURIComponent(query)}`
-    });
-
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status}`);
-    }
-
-    const data = await response.json();
+    // Parallel: OSM + Park4Night
+    const [osmResults, p4nResults] = await Promise.all([
+      // OSM Overpass
+      fetch(OVERPASS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`
+      }).then(res => res.ok ? res.json() : { elements: [] })
+        .then(data => parseOSMElements(data.elements, lat, lon))
+        .catch(err => {
+          console.error('OSM error:', err);
+          return [];
+        }),
+      
+      // Park4Night
+      searchPark4Night(lat, lon, { maxPrice, freeOnly })
+        .catch(err => {
+          console.error('Park4Night error:', err);
+          return [];
+        })
+    ]);
     
-    // Parse OSM-Elemente
-    const accommodations = parseOSMElements(data.elements, lat, lon);
+    // Kombiniere Ergebnisse
+    const allAccommodations = [...osmResults, ...p4nResults];
+    
+    // Dedupliziere basierend auf Distanz (< 100m = gleicher Platz)
+    const unique = [];
+    for (const acc of allAccommodations) {
+      const isDuplicate = unique.some(u => 
+        haversine(u.lat, u.lon, acc.lat, acc.lon) < 0.1
+      );
+      if (!isDuplicate) {
+        unique.push(acc);
+      }
+    }
     
     // Filter nach Präferenzen
-    let filtered = accommodations;
+    let filtered = unique;
     
     if (freeOnly) {
       filtered = filtered.filter(a => a.price === 0);
@@ -70,6 +110,8 @@ out skel qt;
     
     // Sortiere nach Distanz
     filtered.sort((a, b) => a.distance - b.distance);
+    
+    console.log(`✅ Found ${filtered.length} accommodations (${osmResults.length} OSM + ${p4nResults.length} P4N)`);
     
     return filtered;
     
@@ -123,11 +165,17 @@ function parseAccommodation(element, centerLat, centerLon) {
   const tags = element.tags;
   
   // Bestimme Typ
-  let type = 'stellplatz';
+  let type = 'parking';
   if (tags.tourism === 'camp_site') {
     type = 'campsite';
+  } else if (tags.tourism === 'caravan_site') {
+    type = 'stellplatz';
   } else if (tags.amenity === 'parking') {
     type = 'parking';
+  } else if (tags.amenity === 'grave_yard' || tags.landuse === 'cemetery') {
+    type = 'parking'; // Friedhof als Parking
+  } else if (tags.highway === 'rest_area' || tags.highway === 'services') {
+    type = 'rest_area';
   }
   
   // Bestimme Preis

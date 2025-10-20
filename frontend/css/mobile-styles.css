@@ -28,7 +28,7 @@
         content: '🗺️ Budget Overlander';
         position: fixed;
         top: 20px;
-        left: 20px;
+        right: 20px;
         z-index: 200;
         background: rgba(255, 255, 255, 0.95);
         padding: 8px 16px;

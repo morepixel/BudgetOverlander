@@ -24,7 +24,7 @@
             #left-nav-bar {
                 position: fixed;
                 left: 0;
-                top: 0;
+                top: 90px;
                 bottom: 0;
                 width: 30px;
                 background: rgba(255, 255, 255, 0.95);
@@ -63,7 +63,7 @@
             #slide-panel {
                 position: fixed;
                 left: 30px;
-                top: 0;
+                top: 90px;
                 bottom: 0;
                 width: 320px;
                 background: white;
@@ -179,10 +179,10 @@
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1 class="desktop-only">🗺️ Multi-Day Trip Planner</h1>
-            <h1 class="mobile-only" style="font-size: 1.2em; margin: 0;">🗺️ Trip Planner</h1>
-            <div class="user-info" id="userInfo">
+        <header style="position: relative;">
+            <h1 class="desktop-only" style="position: absolute; left: 0;">🗺️ Multi-Day Trip Planner</h1>
+            <h1 class="mobile-only" style="font-size: 1.1em; margin: 0; position: absolute; right: 10px; background: white; padding: 8px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">🗺️ Budget Overlander</h1>
+            <div class="user-info" id="userInfo" style="margin-left: auto;">
                 <span id="userName"></span>
                 <button onclick="window.location.href='index.html'" class="btn btn-secondary">← Zurück</button>
                 <button onclick="logout()" class="btn btn-secondary">Logout</button>
@@ -191,14 +191,17 @@
 
         <!-- Mobile Left Navigation Bar -->
         <div id="left-nav-bar" class="mobile-only">
-            <div class="nav-icon active" onclick="openPanel('plan')" title="Planen">
+            <div class="nav-icon active" onclick="openPanel('plan', this)" title="Planen">
                 📍
             </div>
-            <div class="nav-icon" onclick="openPanel('discover')" title="Entdecken">
+            <div class="nav-icon" onclick="openPanel('discover', this)" title="Entdecken">
                 🧭
             </div>
-            <div class="nav-icon" onclick="openPanel('results')" title="Ergebnisse">
+            <div class="nav-icon" onclick="openPanel('results', this)" title="Ergebnisse">
                 📋
+            </div>
+            <div class="nav-icon" onclick="loadPark4NightPlaces()" title="Kostenlose Stellplätze" style="margin-top: auto; background: #2ecc71;">
+                🅿️
             </div>
         </div>
 
@@ -237,14 +240,90 @@
                     </div>
 
                     <div class="input-group" style="margin-bottom: 20px; position: relative;">
-                        <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">🎯 Zielpunkt <span style="color: #999; font-size: 0.85em;">(optional)</span></label>
-                        <input type="text" id="endAddress" placeholder="z.B. Pyrenäen" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('end', this.value)">
+                        <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">🎯 Zielpunkt</label>
+                        <input type="text" id="endAddress" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('end', this.value)">
                         <div id="endResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 99999 !important; background: white !important; border: 2px solid #e0e0e0; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: none !important;"></div>
                         <input type="hidden" id="endLat">
                         <input type="hidden" id="endLon">
                     </div>
                     
-                    <button onclick="getAIRecommendations()" class="btn btn-primary" style="width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 600; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); margin-top: 20px;">
+                    <!-- Trip Preferences -->
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.95em; color: #666;">⚙️ Trip-Einstellungen</h4>
+                        
+                        <div class="slider-group" style="margin: 12px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9em; color: #666;">
+                                <span>🛣️ Max. km/Tag</span>
+                                <span id="maxKmPerDayLabel" style="font-weight: 700; color: #667eea;">350</span>
+                            </div>
+                            <input type="range" id="maxKmPerDay" min="100" max="600" value="350" step="50" oninput="document.getElementById('maxKmPerDayLabel').textContent = this.value" style="width: 100%;">
+                        </div>
+                        
+                        <div class="slider-group" style="margin: 12px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9em; color: #666;">
+                                <span>⏱️ Max. Fahrstunden/Tag</span>
+                                <span id="maxDrivingHoursLabel" style="font-weight: 700; color: #667eea;">6</span>
+                            </div>
+                            <input type="range" id="maxDrivingHours" min="3" max="10" value="6" oninput="document.getElementById('maxDrivingHoursLabel').textContent = this.value" style="width: 100%;">
+                        </div>
+                    </div>
+                    
+                    <!-- Route Preferences -->
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.95em; color: #666;">🎯 Routen-Präferenzen</h4>
+                        
+                        <div class="slider-group" style="margin: 12px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9em; color: #666;">
+                                <span>🏔️ Offroad-Anteil</span>
+                                <span id="offroadWeightLabel" style="font-weight: 700; color: #667eea;">50%</span>
+                            </div>
+                            <input type="range" id="offroadWeight" min="0" max="100" value="50" oninput="document.getElementById('offroadWeightLabel').textContent = this.value + '%'" style="width: 100%;">
+                        </div>
+                        
+                        <div class="slider-group" style="margin: 12px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9em; color: #666;">
+                                <span>🌄 Scenic-Anteil</span>
+                                <span id="scenicWeightLabel" style="font-weight: 700; color: #667eea;">30%</span>
+                            </div>
+                            <input type="range" id="scenicWeight" min="0" max="100" value="30" oninput="document.getElementById('scenicWeightLabel').textContent = this.value + '%'" style="width: 100%;">
+                        </div>
+                        
+                        <div style="margin: 10px 0;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9em;">
+                                <input type="checkbox" id="avoidTolls" checked style="width: 18px; height: 18px;">
+                                <span>🚫 Mautstraßen vermeiden</span>
+                            </label>
+                        </div>
+                        
+                        <div style="margin: 10px 0;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9em;">
+                                <input type="checkbox" id="avoidHighways" style="width: 18px; height: 18px;">
+                                <span>🛣️ Autobahnen vermeiden</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Accommodation Preferences -->
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 12px 0; font-size: 0.95em; color: #666;">🏕️ Übernachtung</h4>
+                        
+                        <div style="margin: 10px 0;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.9em;">
+                                <input type="checkbox" id="freeOnly" style="width: 18px; height: 18px;">
+                                <span>💚 Nur kostenlose Plätze</span>
+                            </label>
+                        </div>
+                        
+                        <div class="slider-group" style="margin: 12px 0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9em; color: #666;">
+                                <span>💰 Max. Preis/Nacht</span>
+                                <span id="maxPriceLabel" style="font-weight: 700; color: #667eea;">20 €</span>
+                            </div>
+                            <input type="range" id="maxPrice" min="0" max="50" value="20" step="5" oninput="document.getElementById('maxPriceLabel').textContent = this.value + ' €'" style="width: 100%;">
+                        </div>
+                    </div>
+                    
+                    <button onclick="calculateTrip()" class="btn btn-primary" style="width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 600; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); margin-top: 20px;">
                         <span>🚀</span>
                         <span>Route berechnen</span>
                     </button>
@@ -347,7 +426,7 @@
                 <input type="hidden" id="needsElectricity">
                 <input type="hidden" id="needsWater" value="true">
                 <input type="hidden" id="needsDisposal" value="true">
-                <input type="hidden" id="enableOptimization" value="true">
+                <input type="hidden" id="enableOptimization" value="false">
                 <input type="hidden" id="accommodationWeight" value="20">
                 <input type="hidden" id="maxDetour" value="20">
             </div>
@@ -360,18 +439,24 @@
         </main>
         
         <!-- Offroad Loading Popup -->
-        <div id="loadingPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; display: none; justify-content: center; align-items: center;">
+        <div id="loadingPopup" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;">
             <div style="background: white; border-radius: 20px; padding: 40px; max-width: 500px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
                 <!-- Animated Truck -->
-                <div id="truckAnimation" style="width: 300px; height: 150px; margin: 0 auto 20px; position: relative; overflow: hidden; background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #D2B48C 60%, #D2B48C 100%); border-radius: 10px;">
-                    <!-- Mountains -->
-                    <div style="position: absolute; bottom: 60px; left: 0; width: 100%; height: 80px;">
-                        <div style="position: absolute; bottom: 0; left: 20%; width: 0; height: 0; border-left: 40px solid transparent; border-right: 40px solid transparent; border-bottom: 60px solid #8B4513; opacity: 0.6;"></div>
-                        <div style="position: absolute; bottom: 0; left: 50%; width: 0; height: 0; border-left: 50px solid transparent; border-right: 50px solid transparent; border-bottom: 70px solid #654321; opacity: 0.5;"></div>
+                <div id="truckAnimation" style="width: 300px; height: 150px; margin: 0 auto 20px; position: relative; overflow: hidden; background: #D2B48C; border-radius: 10px;">
+                    <!-- Sky -->
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 70px; background: #87CEEB;"></div>
+                    
+                    <!-- Mountains (fixed position) -->
+                    <div style="position: absolute; bottom: 70px; left: 0; width: 100%; height: 80px; pointer-events: none; z-index: 1;">
+                        <div style="position: absolute; bottom: 0; left: 15%; width: 0; height: 0; border-left: 45px solid transparent; border-right: 45px solid transparent; border-bottom: 65px solid #8B4513; opacity: 0.7;"></div>
+                        <div style="position: absolute; bottom: 0; left: 55%; width: 0; height: 0; border-left: 55px solid transparent; border-right: 55px solid transparent; border-bottom: 75px solid #654321; opacity: 0.6;"></div>
                     </div>
                     
+                    <!-- Ground line -->
+                    <div style="position: absolute; bottom: 70px; left: 0; width: 100%; height: 3px; background: #8B4513; z-index: 2;"></div>
+                    
                     <!-- Animated Truck -->
-                    <div id="truck" style="position: absolute; bottom: 65px; left: -60px; transition: left 3s linear; width: 50px; height: 30px;">
+                    <div id="truck" style="position: absolute; bottom: 73px; left: -60px; transition: left 3s linear; width: 50px; height: 30px; z-index: 10;">
                         <div style="background: #2c3e50; width: 35px; height: 20px; border-radius: 3px; position: absolute; bottom: 8px;"></div>
                         <div style="background: #34495e; width: 15px; height: 15px; border-radius: 2px; position: absolute; bottom: 8px; left: 35px;"></div>
                         <div style="background: #3498db; width: 12px; height: 10px; position: absolute; bottom: 18px; left: 5px; border-radius: 1px;"></div>
@@ -379,10 +464,6 @@
                         <div class="wheel" style="position: absolute; bottom: 0; left: 5px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555;"></div>
                         <div class="wheel" style="position: absolute; bottom: 0; left: 25px; width: 12px; height: 12px; background: #222; border-radius: 50%; border: 2px solid #555;"></div>
                     </div>
-                    
-                    <!-- Dust clouds -->
-                    <div id="dust1" style="position: absolute; bottom: 60px; left: -20px; width: 20px; height: 20px; background: rgba(210,180,140,0.5); border-radius: 50%; animation: dust 1s infinite;"></div>
-                    <div id="dust2" style="position: absolute; bottom: 60px; left: -20px; width: 15px; height: 15px; background: rgba(210,180,140,0.3); border-radius: 50%; animation: dust 1.2s infinite 0.3s;"></div>
                 </div>
                 
                 <h2 style="margin: 20px 0 10px 0; color: #2c3e50;">🚙 Route wird berechnet...</h2>
@@ -424,6 +505,7 @@
         let startMarker, endMarker;
         let routeLayer;
         let accommodationMarkers = [];
+        let park4nightMarkers = [];
         let currentTrip = null;
         let selectingStart = false;
         let selectingEnd = false;
@@ -518,19 +600,19 @@
             try {
                 const preferences = {
                     maxKmPerDay: parseInt(document.getElementById('maxKmPerDay').value),
-                    avgSpeed: parseInt(document.getElementById('avgSpeed').value),
+                    avgSpeed: 70,
                     maxDrivingHours: parseInt(document.getElementById('maxDrivingHours').value),
-                    optimize: document.getElementById('enableOptimization').checked,
+                    optimize: false,
                     offroadWeight: parseFloat(document.getElementById('offroadWeight').value) / 100,
                     scenicWeight: parseFloat(document.getElementById('scenicWeight').value) / 100,
-                    accommodationWeight: parseFloat(document.getElementById('accommodationWeight').value) / 100,
-                    maxDetourPercent: parseFloat(document.getElementById('maxDetour').value),
+                    accommodationWeight: 0.2,
+                    maxDetourPercent: 20,
                     accommodation: {
                         freeOnly: document.getElementById('freeOnly').checked,
                         maxPrice: parseFloat(document.getElementById('maxPrice').value),
-                        needsElectricity: document.getElementById('needsElectricity').checked,
-                        needsWater: document.getElementById('needsWater').checked,
-                        needsDisposal: document.getElementById('needsDisposal').checked
+                        needsElectricity: false,
+                        needsWater: true,
+                        needsDisposal: true
                     },
                     route: {
                         avoidTolls: document.getElementById('avoidTolls').checked,
@@ -560,6 +642,12 @@
 
                 displayTripResult(currentTrip);
                 displayTripOnMap(currentTrip);
+                
+                // Switch to results tab and open panel on mobile
+                switchTab('results');
+                if (window.innerWidth <= 768) {
+                    openPanel('results');
+                }
 
             } catch (error) {
                 console.error('Trip calculation error:', error);
@@ -570,44 +658,210 @@
         }
 
         function displayTripResult(trip) {
-            const resultDiv = document.getElementById('tripResult');
+            const resultDiv = document.getElementById('resultsContainer');
+            
+            // Calculate averages
+            const avgKmPerDay = trip.totalDistance / trip.totalDays;
+            const avgHoursPerDay = trip.totalDuration / trip.totalDays;
             
             let html = `
-                <div style="background: white; padding: 15px; border-radius: 5px; border: 2px solid #2ecc71;">
-                    <h3 style="margin: 0 0 10px 0;">📊 Routenplan</h3>
-                    <p style="margin: 5px 0;"><strong>Distanz:</strong> ${trip.totalDistance} km</p>
-                    <p style="margin: 5px 0;"><strong>Dauer:</strong> ${trip.totalDuration.toFixed(1)} h</p>
-                    <p style="margin: 5px 0;"><strong>Tage:</strong> ${trip.totalDays}</p>
-                    <p style="margin: 5px 0;"><strong>Kosten:</strong> ${trip.totalCost} €</p>
-                    ${trip.days[0]?.offroadScore ? `
-                        <hr style="margin: 10px 0;">
-                        <p style="margin: 5px 0; font-size: 0.9em;"><strong>🏔️ Offroad:</strong> ${trip.days[0].offroadScore?.toFixed(0)}%</p>
-                        <p style="margin: 5px 0; font-size: 0.9em;"><strong>🏞️ Scenic:</strong> ${trip.days[0].scenicScore?.toFixed(0)}/100</p>
-                    ` : ''}
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 12px; color: white; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                    <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">📊 Routenplan</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; opacity: 0.9;">Gesamt-Distanz</div>
+                            <div style="font-size: 1.4em; font-weight: 700;">${trip.totalDistance.toFixed(1)} km</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; opacity: 0.9;">Gesamt-Dauer</div>
+                            <div style="font-size: 1.4em; font-weight: 700;">${trip.totalDuration.toFixed(1)} h</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; opacity: 0.9;">Reisetage</div>
+                            <div style="font-size: 1.4em; font-weight: 700;">${trip.totalDays}</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                            <div style="font-size: 0.85em; opacity: 0.9;">Übernachtungskosten</div>
+                            <div style="font-size: 1.4em; font-weight: 700;">${trip.totalCost.toFixed(2)} €</div>
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; font-size: 0.9em;">
+                        <div style="margin-bottom: 5px;">⌀ ${avgKmPerDay.toFixed(0)} km/Tag • ⌀ ${avgHoursPerDay.toFixed(1)} h/Tag</div>
+                        ${trip.days[0]?.offroadScore ? `<div>🏔️ Offroad: ${trip.days[0].offroadScore?.toFixed(0)}% • 🏞️ Scenic: ${trip.days[0].scenicScore?.toFixed(0)}/100</div>` : ''}
+                    </div>
                 </div>
             `;
 
             trip.days.forEach((day, i) => {
                 const acc = day.accommodation;
+                const startCoord = day.coordinates?.[0];
+                const endCoord = day.coordinates?.[day.coordinates.length - 1];
+                
                 html += `
-                    <div style="background: white; padding: 15px; border-radius: 5px; margin-top: 10px; border-left: 4px solid #3498db;">
-                        <h4 style="margin: 0 0 10px 0;">📅 Tag ${day.dayNumber}</h4>
-                        <p style="margin: 5px 0; font-size: 0.9em;">📏 ${day.distance} km • ⏱️ ${day.duration.toFixed(1)} h</p>
-                        ${acc ? `
-                            <div style="background: #f8f9fa; padding: 10px; border-radius: 3px; margin-top: 10px;">
-                                <p style="margin: 0; font-weight: bold;">🏕️ ${acc.name}</p>
-                                <p style="margin: 5px 0; font-size: 0.9em;">
-                                    ${acc.price === 0 ? '💚 Kostenlos' : '💙 ' + acc.price + ' €'}
-                                    ${acc.distance ? ' • ' + acc.distance + ' km' : ''}
-                                </p>
+                    <div style="background: white; padding: 18px; border-radius: 12px; margin-bottom: 12px; border-left: 5px solid #3498db; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <h4 style="margin: 0; font-size: 1.15em; color: #2c3e50;">📅 Tag ${day.dayNumber}</h4>
+                            <span style="background: #3498db; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;">${day.distance.toFixed(1)} km</span>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                                <div style="font-size: 0.8em; color: #666; margin-bottom: 3px;">⏱️ Fahrzeit</div>
+                                <div style="font-weight: 600; color: #2c3e50;">${day.duration.toFixed(1)} h</div>
                             </div>
-                        ` : i < trip.days.length - 1 ? '<p style="color: #e74c3c; font-size: 0.9em;">⚠️ Keine Übernachtung gefunden</p>' : ''}
+                            <div style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                                <div style="font-size: 0.8em; color: #666; margin-bottom: 3px;">⌀ Geschwindigkeit</div>
+                                <div style="font-weight: 600; color: #2c3e50;">${(day.distance / day.duration).toFixed(0)} km/h</div>
+                            </div>
+                        </div>
+                        
+                        ${startCoord && endCoord ? `
+                            <div style="background: #e8f4f8; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9em;">
+                                <div style="margin-bottom: 5px;"><strong>🚩 Start:</strong> ${startCoord[1].toFixed(4)}, ${startCoord[0].toFixed(4)}</div>
+                                <div><strong>🏁 Ende:</strong> ${endCoord[1].toFixed(4)}, ${endCoord[0].toFixed(4)}</div>
+                            </div>
+                        ` : ''}
+                        
+                        ${acc ? `
+                            <div style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); padding: 15px; border-radius: 10px; color: white;">
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                    <span style="font-size: 1.5em;">🏕️</span>
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 700; font-size: 1.05em;">${acc.name}</div>
+                                        <div style="font-size: 0.85em; opacity: 0.9; margin-top: 3px;">
+                                            ${acc.type === 'campsite' ? '🏕️ Campingplatz' : acc.type === 'wildcamping' ? '⛺ Wildcamping' : '🅿️ Stellplatz'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 15px; font-size: 0.9em; background: rgba(255,255,255,0.15); padding: 8px 12px; border-radius: 6px;">
+                                    <span>${acc.price === 0 ? '💚 Kostenlos' : (acc.price ? '💰 ' + acc.price.toFixed(2) + ' €' : '💰 Preis unbekannt')}</span>
+                                    ${acc.distance ? '<span>📍 ' + acc.distance.toFixed(1) + ' km entfernt</span>' : ''}
+                                </div>
+                                ${acc.facilities ? `
+                                    <div style="margin-top: 8px; font-size: 0.85em; opacity: 0.9;">
+                                        ${acc.facilities.electricity ? '⚡ Strom • ' : ''}
+                                        ${acc.facilities.water ? '💧 Wasser • ' : ''}
+                                        ${acc.facilities.disposal ? '🚽 Entsorgung' : ''}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        ` : i < trip.days.length - 1 ? `
+                            <div style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                                <p style="margin: 0; color: #856404; font-size: 0.9em;">⚠️ Keine Übernachtung gefunden</p>
+                            </div>
+                        ` : ''}
                     </div>
                 `;
             });
+            
+            // Button "In Karte anzeigen"
+            html += `
+                <button onclick="showTripOnMap()" style="width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 600; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4); margin-top: 10px; cursor: pointer;">
+                    <span>🗺️</span>
+                    <span>In Karte anzeigen</span>
+                </button>
+            `;
 
             resultDiv.innerHTML = html;
             resultDiv.style.display = 'block';
+        }
+        
+        function showTripOnMap() {
+            // Switch to map tab
+            switchTab('map');
+            
+            // On mobile, close panel to show fullscreen map
+            if (window.innerWidth <= 768) {
+                const panel = document.getElementById('slide-panel');
+                if (panel) panel.classList.remove('open');
+            }
+        }
+        
+        async function loadPark4NightPlaces() {
+            if (!currentTrip || !currentTrip.route) {
+                alert('⚠️ Bitte erst eine Route berechnen!');
+                return;
+            }
+            
+            showLoadingPopup('🅿️ Lade kostenlose Stellplätze...');
+            
+            try {
+                // Entferne alte Park4Night Marker
+                park4nightMarkers.forEach(m => map.removeLayer(m));
+                park4nightMarkers = [];
+                
+                // Sammle Koordinaten entlang der Route (alle 50km)
+                const routeCoords = currentTrip.route.geometry.coordinates;
+                const samplePoints = [];
+                
+                for (let i = 0; i < routeCoords.length; i += Math.floor(routeCoords.length / 10)) {
+                    const coord = routeCoords[i];
+                    samplePoints.push({ lat: coord[1], lon: coord[0] });
+                }
+                
+                // Lade Park4Night Plätze für jeden Punkt über unser Backend
+                const allPlaces = [];
+                for (const point of samplePoints) {
+                    const url = `http://localhost:3001/api/park4night/places?latitude=${point.lat}&longitude=${point.lon}&freeOnly=true`;
+                    
+                    try {
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        
+                        if (data.places) {
+                            allPlaces.push(...data.places);
+                        }
+                    } catch (err) {
+                        console.error('Park4Night fetch error:', err);
+                    }
+                }
+                
+                // Dedupliziere basierend auf ID
+                const uniquePlaces = [];
+                const seenIds = new Set();
+                for (const place of allPlaces) {
+                    const placeId = place.p4n_id || place.id;
+                    if (!seenIds.has(placeId)) {
+                        seenIds.add(placeId);
+                        uniquePlaces.push(place);
+                    }
+                }
+                
+                console.log(`🅿️ Found ${uniquePlaces.length} free Park4Night places`);
+                
+                // Zeige auf Karte
+                uniquePlaces.forEach(place => {
+                    const marker = L.marker([place.lat, place.lon], {
+                        icon: L.divIcon({
+                            html: `<div style="background: #2ecc71; border: 3px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🅿️</div>`,
+                            className: '',
+                            iconSize: [30, 30]
+                        })
+                    }).addTo(map).bindPopup(`
+                        <strong>${place.name}</strong><br>
+                        💚 Kostenlos<br>
+                        ${place.rating ? `⭐ ${place.rating}/5` : ''}<br>
+                        ${place.url ? `<a href="${place.url}" target="_blank">🔗 Auf Park4Night öffnen</a>` : ''}
+                    `);
+                    
+                    park4nightMarkers.push(marker);
+                });
+                
+                // Wechsle zur Karte
+                switchTab('map');
+                if (window.innerWidth <= 768) {
+                    const panel = document.getElementById('slide-panel');
+                    if (panel) panel.classList.remove('open');
+                }
+                
+                alert(`✅ ${uniquePlaces.length} kostenlose Stellplätze geladen!`);
+                
+            } catch (error) {
+                console.error('Load Park4Night places error:', error);
+                alert('❌ Fehler beim Laden der Stellplätze');
+            } finally {
+                hideLoadingPopup();
+            }
         }
 
         function displayTripOnMap(trip) {
@@ -727,11 +981,11 @@
             const resultsDivId = type === 'startDiscover' ? 'startDiscoverResults' : type + 'Results';
             
             document.getElementById(inputId).value = displayName;
-            document.getElementById('startLat').value = lat.toFixed(4);
-            document.getElementById('startLon').value = lon.toFixed(4);
             document.getElementById(resultsDivId).style.display = 'none';
             
             if (type === 'start' || type === 'startDiscover') {
+                document.getElementById('startLat').value = lat.toFixed(4);
+                document.getElementById('startLon').value = lon.toFixed(4);
                 setStartLocation(lat, lon);
             } else if (type === 'end') {
                 document.getElementById('endLat').value = lat.toFixed(4);
@@ -757,7 +1011,7 @@
         });
 
         // Mobile Panel Management
-        function openPanel(panelType) {
+        function openPanel(panelType, clickedElement) {
             const panel = document.getElementById('slide-panel');
             const panelIcon = document.getElementById('panel-icon');
             const panelTitle = document.getElementById('panel-title');
@@ -765,7 +1019,14 @@
             
             // Update active icon
             document.querySelectorAll('.nav-icon').forEach(icon => icon.classList.remove('active'));
-            event.target.closest('.nav-icon').classList.add('active');
+            if (clickedElement) {
+                clickedElement.classList.add('active');
+            } else {
+                // Find icon by panelType
+                const iconIndex = {plan: 0, discover: 1, results: 2}[panelType];
+                const icons = document.querySelectorAll('.nav-icon');
+                if (icons[iconIndex]) icons[iconIndex].classList.add('active');
+            }
             
             // Update panel header
             const icons = { plan: '📍', discover: '🧭', results: '📋' };
@@ -928,8 +1189,15 @@
 
                 const data = await response.json();
                 
-                if (!data.enabled) {
-                    alert('⚠️ KI-Features nicht verfügbar.\n\n' + (data.message || 'Bitte OPENAI_API_KEY in .env setzen'));
+                console.log('KI Response:', data);
+                
+                if (data.enabled === false) {
+                    alert('⚠️ KI-Features nicht verfügbar.\n\n' + (data.message || data.error || 'Bitte OPENAI_API_KEY in .env setzen'));
+                    return;
+                }
+
+                if (!data.routes || data.routes.length === 0) {
+                    alert('⚠️ Keine Routen gefunden.\n\nBitte versuche es erneut.');
                     return;
                 }
 
@@ -1008,10 +1276,10 @@
             const route = window.aiRoutes[index];
             if (!route || !route.waypoints) return;
 
-            // Minimize panel to show map
-            const sidebar = document.querySelector('main > div:first-child');
-            if (sidebar && window.innerWidth <= 768) {
-                sidebar.classList.add('minimized');
+            // Close panel on mobile to show map
+            if (window.innerWidth <= 768) {
+                const panel = document.getElementById('slide-panel');
+                if (panel) panel.classList.remove('open');
             }
             
             // Zeige Loading
@@ -1073,24 +1341,50 @@
                 }
 
                 // Füge Waypoint-Marker hinzu
-                route.waypoints.forEach((wp, i) => {
-                    const isStart = i === 0;
-                    const isEnd = i === route.waypoints.length - 1;
-                    const icon = isStart ? '🚩' : isEnd ? '🏁' : '📍';
-                    
+                route.waypoints.forEach((wp, idx) => {
                     const marker = L.marker([wp.lat, wp.lon], {
                         icon: L.divIcon({
-                            html: `<div style="background: ${isStart ? '#2ecc71' : isEnd ? '#e74c3c' : '#3498db'}; border: 3px solid white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${icon}</div>`,
-                            className: '',
+                            className: 'waypoint-marker',
+                            html: `<div style="background: ${idx === 0 || idx === route.waypoints.length - 1 ? '#e74c3c' : '#3498db'}; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${idx + 1}</div>`,
                             iconSize: [30, 30]
                         })
-                    }).addTo(map).bindPopup(`
+                    }).addTo(map);
+                    
+                    marker.bindPopup(`
                         <strong>${wp.name}</strong><br>
                         ${wp.description || ''}
                     `);
                     
                     accommodationMarkers.push(marker);
                 });
+                
+                // Zeichne Übernachtungs-Marker
+                if (route.accommodations && route.accommodations.length > 0) {
+                    route.accommodations.forEach((acc, idx) => {
+                        const typeIcons = {
+                            campsite: '🏕️',
+                            wildcamping: '⛺',
+                            parking: '🅿️'
+                        };
+                        const icon = typeIcons[acc.type] || '🏕️';
+                        
+                        const marker = L.marker([acc.lat, acc.lon], {
+                            icon: L.divIcon({
+                                className: 'accommodation-marker',
+                                html: `<div style="background: #2ecc71; color: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">${icon}</div>`,
+                                iconSize: [35, 35]
+                            })
+                        }).addTo(map);
+                        
+                        marker.bindPopup(`
+                            <strong>🌙 Übernachtung Tag ${acc.dayNumber}</strong><br>
+                            <strong>${acc.name}</strong><br>
+                            ${acc.description || ''}
+                        `);
+                        
+                        accommodationMarkers.push(marker);
+                    });
+                }
                 
                 alert(`✅ ${route.name} ausgewählt!\n\nRoute mit echtem Straßenverlauf wird angezeigt.`);
                 
