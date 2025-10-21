@@ -293,11 +293,11 @@
 
         <main style="display: grid; grid-template-columns: 400px 1fr; gap: 20px; height: calc(100vh - 80px); padding: 20px;">
             <!-- Sidebar / Bottom Sheet -->
-            <div class="sidebar" id="mobile-panel" style="background: white; padding: 20px; border-radius: 10px; overflow-y: auto; display: flex; flex-direction: column; max-height: 100%;">
+            <div class="sidebar" id="mobile-panel">
                 <h2 style="margin: 0 0 20px 0;">🗺️ Trip Planner</h2>
                 
                 <!-- Tabs -->
-                <div class="tabs" style="display: flex; gap: 5px; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; overflow-x: auto;">
+                <div class="tabs">
                     <div class="tab active" onclick="switchTab('plan', this)" style="flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 600; color: #667eea; border-bottom-color: #667eea; white-space: nowrap; font-size: 0.85em;">📍 Planen</div>
                     <div class="tab" onclick="switchTab('discover', this)" style="flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 600; color: #999; white-space: nowrap; font-size: 0.85em;">🧭 Entdecken</div>
                     <div class="tab" onclick="switchTab('saved', this)" style="flex: 1; padding: 12px 8px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-weight: 600; color: #999; white-space: nowrap; font-size: 0.85em;">💾 Meine Touren</div>

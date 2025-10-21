@@ -206,8 +206,25 @@ header {
         margin: 0 !important;
         padding: 15px 20px 10px 20px !important;
         border-bottom: 2px solid #f0f0f0 !important;
-        flex-shrink: 0;
+        flex-shrink: 0 !important;
         overflow-x: auto;
+    }
+    
+    /* Sidebar container */
+    .sidebar {
+        background: white !important;
+        padding: 0 !important;
+        border-radius: 10px;
+        overflow: hidden !important;
+        display: flex !important;
+        flex-direction: column !important;
+        max-height: 100% !important;
+    }
+    
+    .sidebar > h2 {
+        padding: 20px 20px 15px 20px !important;
+        margin: 0 !important;
+        flex-shrink: 0 !important;
     }
     
     .tab {
