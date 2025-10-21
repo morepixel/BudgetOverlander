@@ -463,36 +463,38 @@
                         </label>
                     </div>
                     
-                    <div class="slider-group" style="margin: 15px 0;">
-                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
-                            <span>⏱️ Reisetage</span>
-                            <span class="slider-value" id="tripDaysLabel" style="font-weight: 700; color: #667eea;">7</span>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                        <div class="slider-group" style="margin: 15px 0;">
+                            <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                                <span>⏱️ Reisetage</span>
+                                <span class="slider-value" id="tripDaysLabel" style="font-weight: 700; color: #667eea;">7</span>
+                            </div>
+                            <input type="range" id="tripDays" min="3" max="21" value="7" oninput="document.getElementById('tripDaysLabel').textContent = this.value" style="width: 100%;">
                         </div>
-                        <input type="range" id="tripDays" min="3" max="21" value="7" oninput="document.getElementById('tripDaysLabel').textContent = this.value" style="width: 100%;">
-                    </div>
-                    
-                    <div class="slider-group" style="margin: 15px 0;">
-                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
-                            <span>🛣️ Max. km</span>
-                            <span class="slider-value" id="maxTotalKmLabel" style="font-weight: 700; color: #667eea;">2000</span>
+                        
+                        <div class="slider-group" style="margin: 15px 0;">
+                            <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                                <span>🛣️ Max. km</span>
+                                <span class="slider-value" id="maxTotalKmLabel" style="font-weight: 700; color: #667eea;">2000</span>
+                            </div>
+                            <input type="range" id="maxTotalKm" min="500" max="5000" value="2000" step="250" oninput="document.getElementById('maxTotalKmLabel').textContent = this.value" style="width: 100%;">
                         </div>
-                        <input type="range" id="maxTotalKm" min="500" max="5000" value="2000" step="250" oninput="document.getElementById('maxTotalKmLabel').textContent = this.value" style="width: 100%;">
-                    </div>
 
-                    <div class="slider-group" style="margin: 15px 0;">
-                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
-                            <span>🏔️ Offroad-Anteil</span>
-                            <span class="slider-value" id="offroadLabel" style="font-weight: 700; color: #667eea;">50%</span>
+                        <div class="slider-group" style="margin: 15px 0;">
+                            <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                                <span>🏔️ Offroad-Anteil</span>
+                                <span class="slider-value" id="offroadLabel" style="font-weight: 700; color: #667eea;">50%</span>
+                            </div>
+                            <input type="range" id="offroadWeight" min="0" max="100" value="50" step="10" oninput="document.getElementById('offroadLabel').textContent = this.value + '%'" style="width: 100%;">
                         </div>
-                        <input type="range" id="offroadWeight" min="0" max="100" value="50" step="10" oninput="document.getElementById('offroadLabel').textContent = this.value + '%'" style="width: 100%;">
-                    </div>
-                    
-                    <div class="slider-group" style="margin: 15px 0;">
-                        <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
-                            <span>🏞️ Scenic-Anteil</span>
-                            <span class="slider-value" id="scenicLabel" style="font-weight: 700; color: #667eea;">30%</span>
+                        
+                        <div class="slider-group" style="margin: 15px 0;">
+                            <div class="slider-label" style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95em; color: #666;">
+                                <span>🏞️ Scenic-Anteil</span>
+                                <span class="slider-value" id="scenicLabel" style="font-weight: 700; color: #667eea;">30%</span>
+                            </div>
+                            <input type="range" id="scenicWeight" min="0" max="100" value="30" step="10" oninput="document.getElementById('scenicLabel').textContent = this.value + '%'" style="width: 100%;">
                         </div>
-                        <input type="range" id="scenicWeight" min="0" max="100" value="30" step="10" oninput="document.getElementById('scenicLabel').textContent = this.value + '%'" style="width: 100%;">
                     </div>
                     
                     <button onclick="discoverAIRoutes()" class="btn btn-primary" style="width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 1.05em; font-weight: 600; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); margin-top: 20px;">
