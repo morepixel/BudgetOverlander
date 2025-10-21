@@ -144,12 +144,12 @@ header {
     
     /* Slide-In Panel from bottom - can be minimized */
     main > div:first-child {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 65vh;
-        max-height: 65vh;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 70vh !important;
+        max-height: 70vh !important;
         background: white;
         border-radius: 20px 20px 0 0;
         box-shadow: 0 -4px 30px rgba(0,0,0,0.2);
@@ -160,6 +160,7 @@ header {
         flex-direction: column !important;
         pointer-events: all;
         overflow: hidden !important;
+        padding: 0 !important;
     }
     
     main > div:first-child.minimized {
@@ -237,9 +238,11 @@ header {
     .tab-content {
         padding: 20px !important;
         overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
         flex: 1 1 auto !important;
-        max-height: calc(65vh - 120px) !important;
+        min-height: 0 !important;
+        height: auto !important;
     }
     
     /* Panel content area */
