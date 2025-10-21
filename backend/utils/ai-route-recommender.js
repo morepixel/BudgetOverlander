@@ -1,5 +1,6 @@
 // AI Route Recommender - OpenAI Integration
 import OpenAI from 'openai';
+import { calculateOffroadPercentage } from './offroad-finder.js';
 
 let openai = null;
 
@@ -57,6 +58,23 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
     });
 
     const result = JSON.parse(response.choices[0].message.content);
+    
+    // Berechne realistische Offroad-Prozente basierend auf tatsächlichen Tracks
+    if (result.routes && result.routes.length > 0) {
+      console.log('🔍 Berechne realistische Offroad-Prozente...');
+      
+      for (const route of result.routes) {
+        if (route.waypoints && route.waypoints.length > 0) {
+          const realisticOffroad = await calculateOffroadPercentage(route.waypoints);
+          
+          // Speichere beide Werte
+          route.offroadPercentEstimated = route.offroadPercent; // KI-Schätzung
+          route.offroadPercent = realisticOffroad; // Realistischer Wert
+          
+          console.log(`📊 ${route.name}: KI=${route.offroadPercentEstimated}%, Real=${realisticOffroad}%`);
+        }
+      }
+    }
     
     return {
       enabled: true,
