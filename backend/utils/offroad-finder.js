@@ -1,5 +1,6 @@
 // Offroad Track Finder - Nutzt Overpass API für realistische Offroad-Strecken
 import fetch from 'node-fetch';
+import pool from '../database/db-postgres.js';
 
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
@@ -8,9 +9,37 @@ const OVERPASS_ENDPOINTS = [
 ];
 
 /**
- * Finde Offroad-Tracks in einem Gebiet
+ * Finde Offroad-Tracks in einem Gebiet (mit Cache)
  */
 export async function findOffroadTracks(lat, lon, radiusKm = 50) {
+  const regionKey = `lat_${lat.toFixed(1)}_lon_${lon.toFixed(1)}_radius_${radiusKm}`;
+  
+  // 1. Prüfe Cache
+  try {
+    const cacheResult = await pool.query(
+      `SELECT tracks, total_km, avg_difficulty, track_count 
+       FROM offroad_cache 
+       WHERE region_key = $1 AND expires_at > NOW()`,
+      [regionKey]
+    );
+    
+    if (cacheResult.rows.length > 0) {
+      console.log(`✅ Cache HIT für ${regionKey}`);
+      const cached = cacheResult.rows[0];
+      return {
+        tracks: cached.tracks,
+        totalKm: parseFloat(cached.total_km),
+        avgDifficulty: cached.avg_difficulty,
+        cached: true
+      };
+    }
+    
+    console.log(`❌ Cache MISS für ${regionKey} - Rufe Overpass API auf...`);
+  } catch (error) {
+    console.error('Cache lookup error:', error);
+  }
+  
+  // 2. Kein Cache → Overpass API aufrufen
   const radiusMeters = radiusKm * 1000;
   
   const query = `
@@ -40,14 +69,44 @@ out tags geom;
       if (!response.ok) continue;
 
       const data = await response.json();
-      return processOffroadData(data);
+      const result = processOffroadData(data);
+      
+      // 3. Speichere im Cache
+      try {
+        await pool.query(
+          `INSERT INTO offroad_cache (region_key, center_lat, center_lon, radius_km, tracks, total_km, avg_difficulty, track_count)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (region_key) DO UPDATE SET
+             tracks = EXCLUDED.tracks,
+             total_km = EXCLUDED.total_km,
+             avg_difficulty = EXCLUDED.avg_difficulty,
+             track_count = EXCLUDED.track_count,
+             created_at = NOW(),
+             expires_at = NOW() + INTERVAL '30 days'`,
+          [
+            regionKey,
+            lat,
+            lon,
+            radiusKm,
+            JSON.stringify(result.tracks),
+            result.totalKm,
+            result.avgDifficulty,
+            result.tracks.length
+          ]
+        );
+        console.log(`💾 Cache gespeichert für ${regionKey}`);
+      } catch (error) {
+        console.error('Cache save error:', error);
+      }
+      
+      return { ...result, cached: false };
     } catch (error) {
       console.error(`Overpass endpoint ${endpoint} failed:`, error.message);
       continue;
     }
   }
 
-  return { tracks: [], totalKm: 0, avgDifficulty: 0 };
+  return { tracks: [], totalKm: 0, avgDifficulty: 0, cached: false };
 }
 
 /**
