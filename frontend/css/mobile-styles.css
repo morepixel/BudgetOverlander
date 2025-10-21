@@ -236,6 +236,7 @@ header {
     
     /* Tab content with padding and scroll */
     .tab-content {
+        display: none !important;
         padding: 20px !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -243,6 +244,11 @@ header {
         flex: 1 1 auto !important;
         min-height: 0 !important;
         height: auto !important;
+    }
+    
+    .tab-content:first-of-type,
+    #tab-plan {
+        display: block !important;
     }
     
     /* Panel content area */
