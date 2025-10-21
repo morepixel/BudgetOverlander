@@ -29,7 +29,7 @@
                 width: 30px;
                 background: rgba(255, 255, 255, 0.95);
                 box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-                z-index: 100005;
+                z-index: 2000;
                 display: flex;
                 flex-direction: column;
                 gap: 15px;
@@ -60,7 +60,7 @@
                 color: white;
             }
             
-            /* Autocomplete Overlay */
+            /* Autocomplete Overlay - between panel and autocomplete */
             .autocomplete-overlay {
                 position: fixed;
                 top: 0;
@@ -68,7 +68,7 @@
                 right: 0;
                 bottom: 0;
                 background: rgba(0, 0, 0, 0.6);
-                z-index: 100000;
+                z-index: 100004;
                 display: none;
                 backdrop-filter: blur(3px);
                 pointer-events: none;
@@ -87,7 +87,7 @@
                 width: 320px;
                 background: white;
                 box-shadow: 2px 0 20px rgba(0,0,0,0.2);
-                z-index: 100004;
+                z-index: 1500;
                 transform: translateX(-100%);
                 transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                 display: flex;
@@ -332,7 +332,7 @@
                     <div class="input-group" style="margin-bottom: 20px; position: relative;">
                         <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">📍 Startpunkt</label>
                         <input type="text" id="startAddress" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('start', this.value)">
-                        <div id="startResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100003 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
+                        <div id="startResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                         <input type="hidden" id="startLat">
                         <input type="hidden" id="startLon">
                     </div>
@@ -349,7 +349,7 @@
                     <div class="input-group" style="margin-bottom: 20px; position: relative;">
                         <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">🎯 Zielpunkt</label>
                         <input type="text" id="endAddress" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('end', this.value)">
-                        <div id="endResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100003 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
+                        <div id="endResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                         <input type="hidden" id="endLat">
                         <input type="hidden" id="endLon">
                     </div>
@@ -441,7 +441,7 @@
                     <div class="input-group" style="margin-bottom: 20px; position: relative;">
                         <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">📍 Startpunkt</label>
                         <input type="text" id="startAddressDiscover" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddressDiscover(this.value)">
-                        <div id="startDiscoverResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100003 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
+                        <div id="startDiscoverResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                     </div>
                     
                     <div class="feature-card" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border-radius: 12px; padding: 15px; margin-bottom: 20px; border: 2px solid #ffc107;">
@@ -1354,7 +1354,7 @@
                     <button onclick="removeWaypoint('${waypointId}')" style="background: #e74c3c; color: white; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.85em;">❌ Entfernen</button>
                 </div>
                 <input type="text" id="${waypointId}-address" placeholder="z.B. Stuttgart" class="input-field" style="width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px;" oninput="searchAddress('${waypointId}', this.value)">
-                <div id="${waypointId}Results" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100003 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: calc(100% - 30px); margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
+                <div id="${waypointId}Results" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: calc(100% - 30px); margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                 <input type="hidden" id="${waypointId}-lat">
                 <input type="hidden" id="${waypointId}-lon">
             `;
