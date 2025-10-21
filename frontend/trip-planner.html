@@ -1947,6 +1947,10 @@
                         if (route.roadStats) {
                             console.log('📊 Straßentyp-Statistiken:', route.roadStats);
                         }
+                        
+                        // Fit bounds mit allen Koordinaten
+                        const bounds = L.latLngBounds(allCoordinates.map(c => [c[1], c[0]]));
+                        map.fitBounds(bounds);
                     } else {
                         // Fallback: Einheitliche blaue Linie
                         routeLayer = L.geoJSON({
@@ -1959,9 +1963,9 @@
                                 opacity: 0.7
                             }
                         }).addTo(map);
+                        
+                        map.fitBounds(routeLayer.getBounds());
                     }
-                    
-                    map.fitBounds(routeLayer.getBounds());
                 }
                 
                 function classifyRoadType(step) {
