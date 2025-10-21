@@ -58,6 +58,34 @@ export async function planTrip(startLocation, endLocation, preferences) {
 /**
  * Berechne Route mit OSRM
  */
+/**
+ * Klassifiziere Straßentyp basierend auf OSRM Step-Daten
+ */
+function classifyRoadType(step) {
+  const name = (step.name || '').toLowerCase();
+  const mode = (step.mode || '').toLowerCase();
+  
+  // Offroad-Indikatoren
+  const offroadKeywords = ['track', 'path', 'trail', 'unpaved', 'dirt', 'gravel'];
+  const forestKeywords = ['forest', 'wald', 'forst'];
+  
+  // Prüfe auf echtes Offroad (Gelände)
+  if (offroadKeywords.some(keyword => name.includes(keyword)) || mode === 'track') {
+    return 'offroad'; // 🟠 Orange
+  }
+  
+  // Prüfe auf Schotterwege/Forststraßen
+  if (forestKeywords.some(keyword => name.includes(keyword)) || 
+      name.includes('schotter') || 
+      name.includes('kies') ||
+      mode === 'path') {
+    return 'gravel'; // 🟡 Gelb
+  }
+  
+  // Standard: Asphalt
+  return 'paved'; // 🔵 Blau
+}
+
 async function calculateRoute(start, end, preferences = {}) {
   const { avoidTolls = true, avoidHighways = false } = preferences;
   
@@ -81,12 +109,36 @@ async function calculateRoute(start, end, preferences = {}) {
     
     const route = data.routes[0];
     
+    // Klassifiziere jeden Step nach Straßentyp
+    const stepsWithType = route.legs[0].steps.map(step => ({
+      ...step,
+      roadType: classifyRoadType(step)
+    }));
+    
+    // Berechne Statistiken
+    const totalDistance = route.distance / 1000;
+    let pavedKm = 0;
+    let gravelKm = 0;
+    let offroadKm = 0;
+    
+    stepsWithType.forEach(step => {
+      const stepKm = step.distance / 1000;
+      if (step.roadType === 'offroad') offroadKm += stepKm;
+      else if (step.roadType === 'gravel') gravelKm += stepKm;
+      else pavedKm += stepKm;
+    });
+    
     return {
-      distance: route.distance / 1000, // m → km
+      distance: totalDistance,
       duration: route.duration / 3600, // s → h
       geometry: route.geometry,
       legs: route.legs,
-      steps: route.legs[0].steps
+      steps: stepsWithType,
+      roadStats: {
+        paved: { km: pavedKm, percent: (pavedKm / totalDistance * 100).toFixed(1) },
+        gravel: { km: gravelKm, percent: (gravelKm / totalDistance * 100).toFixed(1) },
+        offroad: { km: offroadKm, percent: (offroadKm / totalDistance * 100).toFixed(1) }
+      }
     };
   } catch (error) {
     console.error('OSRM routing error:', error);
