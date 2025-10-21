@@ -264,20 +264,20 @@
             <!-- Spacer to push items below to bottom -->
             <div style="flex: 1;"></div>
             
-            <!-- Selected Parking Spots -->
-            <div id="selected-parking-list" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
-                <!-- Dynamically filled -->
+            <div class="nav-icon" onclick="loadPark4NightPlaces()" title="Kostenlose Stellplätze" style="background: #2ecc71;">
+                🅿️
             </div>
             
             <!-- Export Button -->
-            <div id="export-btn" style="display: none; margin-bottom: 8px;">
+            <div id="export-btn" style="display: none; margin-top: 8px;">
                 <div class="nav-icon" onclick="showExportMenu()" title="Parkplätze exportieren" style="background: #3498db;">
                     💾
                 </div>
             </div>
             
-            <div class="nav-icon" onclick="loadPark4NightPlaces()" title="Kostenlose Stellplätze" style="background: #2ecc71;">
-                🅿️
+            <!-- Selected Parking Spots -->
+            <div id="selected-parking-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                <!-- Dynamically filled -->
             </div>
         </div>
 
