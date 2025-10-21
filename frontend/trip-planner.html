@@ -60,24 +60,6 @@
                 color: white;
             }
             
-            /* Autocomplete Overlay - between panel and autocomplete */
-            .autocomplete-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0, 0, 0, 0.6);
-                z-index: 100004;
-                display: none;
-                backdrop-filter: blur(3px);
-                pointer-events: none;
-            }
-            
-            .autocomplete-overlay.active {
-                display: block;
-            }
-            
             /* Slide-out Panel from left */
             #slide-panel {
                 position: fixed;
@@ -199,9 +181,6 @@
     </style>
 </head>
 <body>
-    <!-- Autocomplete Overlay -->
-    <div id="autocomplete-overlay" class="autocomplete-overlay"></div>
-    
     <!-- Animated Logo (rechts oben) -->
     <div id="animated-logo" style="display: none; position: fixed; top: 15px; right: 15px; z-index: 2000; pointer-events: none;">
         <div style="width: 120px; height: 50px; position: relative; overflow: hidden; background: #D2B48C; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
@@ -331,7 +310,7 @@
                 <div id="tab-plan" class="tab-content">
                     <div class="input-group" style="margin-bottom: 20px; position: relative;">
                         <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">📍 Startpunkt</label>
-                        <input type="text" id="startAddress" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('start', this.value)">
+                        <input type="text" id="startAddress" placeholder="z.B. München" class="input-field address-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('start', this.value)" onkeydown="handleAddressKeydown(event, 'start')">
                         <div id="startResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                         <input type="hidden" id="startLat">
                         <input type="hidden" id="startLon">
@@ -348,7 +327,7 @@
                     
                     <div class="input-group" style="margin-bottom: 20px; position: relative;">
                         <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">🎯 Zielpunkt</label>
-                        <input type="text" id="endAddress" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('end', this.value)">
+                        <input type="text" id="endAddress" placeholder="z.B. München" class="input-field address-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddress('end', this.value)" onkeydown="handleAddressKeydown(event, 'end')">
                         <div id="endResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                         <input type="hidden" id="endLat">
                         <input type="hidden" id="endLon">
@@ -440,7 +419,7 @@
                 <div id="tab-discover" class="tab-content" style="display: none;">
                     <div class="input-group" style="margin-bottom: 20px; position: relative;">
                         <label class="input-label" style="display: block; font-weight: 600; color: #555; margin-bottom: 8px; font-size: 0.95em;">📍 Startpunkt</label>
-                        <input type="text" id="startAddressDiscover" placeholder="z.B. München" class="input-field" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddressDiscover(this.value)">
+                        <input type="text" id="startAddressDiscover" placeholder="z.B. München" class="input-field address-input" style="width: 100%; padding: 14px 16px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px;" oninput="searchAddressDiscover(this.value)" onkeydown="handleAddressKeydown(event, 'startDiscover')">
                         <div id="startDiscoverResults" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: 100%; margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                     </div>
                     
@@ -1353,7 +1332,7 @@
                     <label class="input-label" style="font-weight: 600; color: #555; font-size: 0.95em;">🚩 Zwischenstation ${waypointCounter}</label>
                     <button onclick="removeWaypoint('${waypointId}')" style="background: #e74c3c; color: white; border: none; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.85em;">❌ Entfernen</button>
                 </div>
-                <input type="text" id="${waypointId}-address" placeholder="z.B. Stuttgart" class="input-field" style="width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px;" oninput="searchAddress('${waypointId}', this.value)">
+                <input type="text" id="${waypointId}-address" placeholder="z.B. Stuttgart" class="input-field address-input" style="width: 100%; padding: 12px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px;" oninput="searchAddress('${waypointId}', this.value)" onkeydown="handleAddressKeydown(event, '${waypointId}')">
                 <div id="${waypointId}Results" class="autocomplete-dropdown" style="position: absolute !important; z-index: 100005 !important; background: white !important; border: 2px solid #667eea; border-radius: 8px; max-height: 250px; overflow-y: auto; width: calc(100% - 30px); margin-top: 5px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); display: none !important;"></div>
                 <input type="hidden" id="${waypointId}-lat">
                 <input type="hidden" id="${waypointId}-lon">
@@ -1371,14 +1350,76 @@
             waypoints = waypoints.filter(w => w.id !== waypointId);
         }
         
+        let currentAutocompleteType = null;
+        let selectedAutocompleteIndex = -1;
+        
+        // Handle keyboard navigation in autocomplete
+        function handleAddressKeydown(event, type) {
+            const resultsDiv = document.getElementById(type + 'Results');
+            
+            if (!resultsDiv || resultsDiv.style.display === 'none') {
+                return;
+            }
+            
+            const items = resultsDiv.querySelectorAll('.autocomplete-item');
+            
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
+                highlightAutocompleteItem(items, selectedAutocompleteIndex);
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, -1);
+                highlightAutocompleteItem(items, selectedAutocompleteIndex);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                if (selectedAutocompleteIndex >= 0 && items[selectedAutocompleteIndex]) {
+                    items[selectedAutocompleteIndex].click();
+                }
+            } else if (event.key === 'Escape') {
+                resultsDiv.style.display = 'none';
+                enableAllAddressInputs();
+                selectedAutocompleteIndex = -1;
+            }
+        }
+        
+        function highlightAutocompleteItem(items, index) {
+            items.forEach((item, i) => {
+                if (i === index) {
+                    item.style.background = '#f8f9ff';
+                } else {
+                    item.style.background = 'white';
+                }
+            });
+        }
+        
+        function disableOtherAddressInputs(exceptType) {
+            const allInputs = document.querySelectorAll('.address-input');
+            allInputs.forEach(input => {
+                const inputType = input.id.replace('Address', '').replace('Discover', 'Discover');
+                if (inputType !== exceptType && !input.id.includes(exceptType)) {
+                    input.disabled = true;
+                    input.style.opacity = '0.5';
+                    input.style.cursor = 'not-allowed';
+                }
+            });
+        }
+        
+        function enableAllAddressInputs() {
+            const allInputs = document.querySelectorAll('.address-input');
+            allInputs.forEach(input => {
+                input.disabled = false;
+                input.style.opacity = '1';
+                input.style.cursor = 'text';
+            });
+        }
+        
         async function searchAddress(type, query) {
             if (query.length < 3) {
                 const resultsDiv = document.getElementById(type + 'Results');
                 if (resultsDiv) resultsDiv.style.display = 'none';
-                
-                // Hide overlay
-                const overlay = document.getElementById('autocomplete-overlay');
-                if (overlay) overlay.classList.remove('active');
+                enableAllAddressInputs();
+                selectedAutocompleteIndex = -1;
                 return;
             }
             
@@ -1419,9 +1460,6 @@
                     
                     if (results.length === 0) {
                         resultsDiv.style.display = 'none';
-                        // Hide overlay
-                        const overlay = document.getElementById('autocomplete-overlay');
-                        if (overlay) overlay.classList.remove('active');
                         return;
                     }
                     
@@ -1440,9 +1478,10 @@
                     resultsDiv.style.cssText = resultsDiv.style.cssText.replace('display: none !important', 'display: block !important');
                     resultsDiv.style.setProperty('display', 'block', 'important');
                     
-                    // Show overlay
-                    const overlay = document.getElementById('autocomplete-overlay');
-                    if (overlay) overlay.classList.add('active');
+                    // Disable other inputs and reset selection
+                    disableOtherAddressInputs(type);
+                    selectedAutocompleteIndex = -1;
+                    currentAutocompleteType = type;
                     
                     console.log('📐 After display - rect:', resultsDiv.getBoundingClientRect());
                     console.log('📐 Parent element:', resultsDiv.parentElement);
@@ -1455,9 +1494,9 @@
         }
 
         function selectAddress(type, lat, lon, displayName) {
-            // Hide overlay
-            const overlay = document.getElementById('autocomplete-overlay');
-            if (overlay) overlay.classList.remove('active');
+            // Re-enable all inputs
+            enableAllAddressInputs();
+            selectedAutocompleteIndex = -1;
             
             // Handle waypoints
             if (type.startsWith('waypoint-')) {
