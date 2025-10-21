@@ -156,10 +156,10 @@ header {
         transform: translateY(0);
         transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 50;
-        display: flex;
-        flex-direction: column;
+        display: flex !important;
+        flex-direction: column !important;
         pointer-events: all;
-        overflow: hidden;
+        overflow: hidden !important;
     }
     
     main > div:first-child.minimized {
@@ -236,9 +236,10 @@ header {
     /* Tab content with padding and scroll */
     .tab-content {
         padding: 20px !important;
-        overflow-y: auto;
+        overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
-        flex: 1;
+        flex: 1 1 auto !important;
+        max-height: calc(65vh - 120px) !important;
     }
     
     /* Panel content area */
