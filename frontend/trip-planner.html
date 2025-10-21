@@ -1871,15 +1871,17 @@
                 
                 console.log('🗺️ Berechne Route mit', route.waypoints.length, 'Waypoints');
                 
+                const allSteps = [];
+                
                 for (let i = 0; i < route.waypoints.length - 1; i++) {
                     const start = route.waypoints[i];
                     const end = route.waypoints[i + 1];
                     
                     console.log(`Segment ${i+1}/${route.waypoints.length-1}: ${start.name} -> ${end.name}`);
                     
-                    // OSRM API Call
+                    // OSRM API Call mit steps=true für Straßentyp-Info
                     const coords = `${start.lon},${start.lat};${end.lon},${end.lat}`;
-                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson`;
+                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true`;
                     
                     console.log('OSRM URL:', osrmUrl);
                     
@@ -1896,8 +1898,21 @@
                         } else {
                             allCoordinates.push(...segment);
                         }
+                        
+                        // Sammle Steps mit Straßentyp-Klassifizierung
+                        if (data.routes[0].legs && data.routes[0].legs[0].steps) {
+                            data.routes[0].legs[0].steps.forEach(step => {
+                                allSteps.push({
+                                    ...step,
+                                    roadType: classifyRoadType(step)
+                                });
+                            });
+                        }
                     }
                 }
+                
+                // Füge Steps zur Route hinzu
+                route.steps = allSteps;
                 
                 // Zeige Route auf Karte mit Farben nach Straßentyp
                 if (allCoordinates.length > 0) {
@@ -1947,6 +1962,31 @@
                     }
                     
                     map.fitBounds(routeLayer.getBounds());
+                }
+                
+                function classifyRoadType(step) {
+                    const name = (step.name || '').toLowerCase();
+                    const mode = (step.mode || '').toLowerCase();
+                    
+                    // Offroad-Indikatoren
+                    const offroadKeywords = ['track', 'path', 'trail', 'unpaved', 'dirt', 'gravel'];
+                    const forestKeywords = ['forest', 'wald', 'forst'];
+                    
+                    // Prüfe auf echtes Offroad (Gelände)
+                    if (offroadKeywords.some(keyword => name.includes(keyword)) || mode === 'track') {
+                        return 'offroad'; // 🟠 Orange
+                    }
+                    
+                    // Prüfe auf Schotterwege/Forststraßen
+                    if (forestKeywords.some(keyword => name.includes(keyword)) || 
+                        name.includes('schotter') || 
+                        name.includes('kies') ||
+                        mode === 'path') {
+                        return 'gravel'; // 🟡 Gelb
+                    }
+                    
+                    // Standard: Asphalt
+                    return 'paved'; // 🔵 Blau
                 }
                 
                 function getRoadColor(roadType) {
