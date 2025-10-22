@@ -184,7 +184,9 @@ function buildDiscoveryPrompt(start, preferences) {
     stayInCountry = false,
     offroadWeight = 0.5,
     scenicWeight = 0.3,
-    vehicle = 'Overland Truck'
+    vehicle = 'Overland Truck',
+    avoidHighways = false,
+    avoidTolls = false
   } = preferences;
 
   return `
@@ -200,6 +202,8 @@ ${stayInCountry && start.country ? `- WICHTIG: Bleibe innerhalb von ${start.coun
 - Offroad-Wunsch: ${Math.round(offroadWeight * 100)}%
 - Scenic-Wunsch: ${Math.round(scenicWeight * 100)}%
 - Fahrzeug: ${vehicle}
+${avoidHighways ? '- WICHTIG: Vermeide Autobahnen! Nutze nur Landstraßen, Bundesstraßen und kleinere Straßen.' : ''}
+${avoidTolls ? '- WICHTIG: Vermeide mautpflichtige Straßen!' : ''}
 
 **Aufgabe**: Empfehle 3 unterschiedliche Abenteuer-Routen die vom Startpunkt wegführen:
 
@@ -266,7 +270,9 @@ function buildRoutePrompt(start, end, preferences) {
   const {
     offroadWeight = 0.5,
     scenicWeight = 0.3,
-    vehicle = 'Overland Truck'
+    vehicle = 'Overland Truck',
+    avoidHighways = false,
+    avoidTolls = false
   } = preferences;
 
   return `
@@ -279,6 +285,8 @@ Plane eine epische Overlanding-Route von ${start.name} nach ${end.name}.
 - Offroad-Anteil: ${Math.round(offroadWeight * 100)}% (${offroadWeight > 0.7 ? 'sehr wichtig' : offroadWeight > 0.4 ? 'wichtig' : 'optional'})
 - Scenic Routes: ${Math.round(scenicWeight * 100)}% (${scenicWeight > 0.7 ? 'maximale Schönheit' : scenicWeight > 0.4 ? 'schöne Strecken' : 'egal'})
 - Fahrzeug: ${vehicle}
+${avoidHighways ? '- WICHTIG: Vermeide Autobahnen! Nutze nur Landstraßen, Bundesstraßen und kleinere Straßen.' : ''}
+${avoidTolls ? '- WICHTIG: Vermeide mautpflichtige Straßen!' : ''}
 
 **Aufgabe**: Empfehle 3 unterschiedliche Routen-Varianten:
 
