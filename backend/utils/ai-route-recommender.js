@@ -2,6 +2,8 @@
 import OpenAI from 'openai';
 import { calculateOffroadPercentage } from './offroad-finder.js';
 import { calculateScenicScore, findScenicAlongRoute } from './scenic-finder.js';
+import { calculateGermanyOffroadPercentage, isInGermany as isInGermanyOffroad } from './germany-offroad-finder.js';
+import { calculateGermanyScenicScore, findGermanyScenicAlongRoute, isInGermany as isInGermanyScenic } from './germany-scenic-finder.js';
 
 let openai = null;
 
@@ -66,19 +68,29 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
       
       for (const route of result.routes) {
         if (route.waypoints && route.waypoints.length > 0) {
-          // Offroad-Prozente (nur aus echten Daten)
-          const realisticOffroad = await calculateOffroadPercentage(route.waypoints);
+          // Check if route is in Germany
+          const firstWp = route.waypoints[0];
+          const inGermany = isInGermanyOffroad(firstWp.lat, firstWp.lon);
+          
+          // Offroad-Prozente (schnell aus Deutschland-DB oder langsam aus Overpass)
+          const realisticOffroad = inGermany 
+            ? await calculateGermanyOffroadPercentage(route.waypoints)
+            : await calculateOffroadPercentage(route.waypoints);
           route.offroadPercent = realisticOffroad;
           
-          // Scenic-Score (nur aus echten Daten)
-          const realisticScenic = await calculateScenicScore(route.waypoints);
+          // Scenic-Score (schnell aus Deutschland-DB oder langsam aus Overpass)
+          const realisticScenic = inGermany
+            ? await calculateGermanyScenicScore(route.waypoints)
+            : await calculateScenicScore(route.waypoints);
           route.scenicScore = realisticScenic;
           
           // Scenic-Punkte entlang Route
-          const scenicPoints = await findScenicAlongRoute(route.waypoints, 10);
+          const scenicPoints = inGermany
+            ? await findGermanyScenicAlongRoute(route.waypoints, 10)
+            : await findScenicAlongRoute(route.waypoints, 10);
           route.scenicPoints = scenicPoints;
           
-          console.log(`📊 ${route.name}: Offroad=${realisticOffroad}%, Scenic=${realisticScenic}/100`);
+          console.log(`📊 ${route.name}: Offroad=${realisticOffroad}%, Scenic=${realisticScenic}/100 ${inGermany ? '(Germany DB ⚡)' : '(Overpass API 🐌)'}`);
         }
       }
     }
