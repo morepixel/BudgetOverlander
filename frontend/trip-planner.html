@@ -2011,8 +2011,11 @@
                         
                         // Zeige Scenic-Punkte auf der Karte
                         if (route.scenicPoints) {
+                            console.log('🎯 Route has scenicPoints:', route.scenicPoints);
                             showScenicPoints(route.scenicPoints);
                             updateLegendWithCounts(route.scenicPoints);
+                        } else {
+                            console.warn('⚠️ Route has NO scenicPoints');
                         }
                         
                         // Fit bounds mit allen Koordinaten
@@ -2219,11 +2222,22 @@
                     const scenicRoadCount = scenicPoints?.scenicRoads?.length || 0;
                     const parkCount = scenicPoints?.naturalParks?.length || 0;
                     
-                    console.log(`📊 Updating legend: ${viewpointCount} viewpoints, ${scenicRoadCount} roads, ${parkCount} parks`);
+                    console.log(`📊 Updating legend with counts:`, {
+                        viewpoints: viewpointCount,
+                        roads: scenicRoadCount,
+                        parks: parkCount,
+                        scenicPoints: scenicPoints
+                    });
                     
-                    // Warte kurz, falls Legende noch nicht gerendert ist
-                    setTimeout(() => {
+                    // Versuche mehrmals, falls Legende noch nicht gerendert ist
+                    let attempts = 0;
+                    const maxAttempts = 5;
+                    
+                    const tryUpdate = () => {
+                        attempts++;
                         const legendDiv = document.querySelector('.road-legend');
+                        console.log(`🔍 Attempt ${attempts}: Legend div found:`, !!legendDiv);
+                        
                         if (legendDiv) {
                             legendDiv.innerHTML = `
                                 <div style="font-weight: 700; margin-bottom: 8px; color: #333;">Straßentypen</div>
@@ -2253,11 +2267,16 @@
                                     <span>Nationalpark (${parkCount})</span>
                                 </div>
                             `;
-                            console.log('✅ Legend updated successfully');
+                            console.log('✅ Legend updated successfully with counts:', {viewpointCount, scenicRoadCount, parkCount});
+                        } else if (attempts < maxAttempts) {
+                            console.log(`⏳ Legend not found, retrying in 200ms...`);
+                            setTimeout(tryUpdate, 200);
                         } else {
-                            console.error('❌ Legend div not found');
+                            console.error('❌ Legend div not found after', maxAttempts, 'attempts');
                         }
-                    }, 100);
+                    };
+                    
+                    tryUpdate();
                 }
 
                 // Füge Waypoint-Marker hinzu
