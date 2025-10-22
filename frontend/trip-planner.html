@@ -2012,6 +2012,7 @@
                         // Zeige Scenic-Punkte auf der Karte
                         if (route.scenicPoints) {
                             showScenicPoints(route.scenicPoints);
+                            updateLegendWithCounts(route.scenicPoints);
                         }
                         
                         // Fit bounds mit allen Koordinaten
@@ -2149,6 +2150,45 @@
                         });
                         
                         console.log(`🌄 ${scenicPoints.scenicRoads.length} Panoramastraßen angezeigt`);
+                    }
+                }
+                
+                // Update Legende mit POI-Anzahlen
+                function updateLegendWithCounts(scenicPoints) {
+                    const viewpointCount = scenicPoints?.viewpoints?.length || 0;
+                    const scenicRoadCount = scenicPoints?.scenicRoads?.length || 0;
+                    const parkCount = scenicPoints?.naturalParks?.length || 0;
+                    
+                    const legendDiv = document.querySelector('.road-legend');
+                    if (legendDiv) {
+                        legendDiv.innerHTML = `
+                            <div style="font-weight: 700; margin-bottom: 8px; color: #333;">Straßentypen</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                <div style="width: 20px; height: 3px; background: #667eea;"></div>
+                                <span>Asphalt</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                <div style="width: 20px; height: 3px; background: #f7b731;"></div>
+                                <span>Schotter/Forst</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <div style="width: 20px; height: 3px; background: #ff6b35;"></div>
+                                <span>Offroad</span>
+                            </div>
+                            <div style="font-weight: 700; margin-bottom: 8px; margin-top: 8px; color: #333; border-top: 1px solid #eee; padding-top: 8px;">Scenic</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                <div style="width: 20px; height: 3px; background: #2ecc71; border-style: dashed;"></div>
+                                <span>Panoramastraße (${scenicRoadCount})</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                                <span style="font-size: 16px;">📸</span>
+                                <span>Aussichtspunkt (${viewpointCount})</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 16px;">🏞️</span>
+                                <span>Nationalpark (${parkCount})</span>
+                            </div>
+                        `;
                     }
                 }
 
