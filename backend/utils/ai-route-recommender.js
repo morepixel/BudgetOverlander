@@ -66,15 +66,13 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
       
       for (const route of result.routes) {
         if (route.waypoints && route.waypoints.length > 0) {
-          // Offroad-Prozente
+          // Offroad-Prozente (nur aus echten Daten)
           const realisticOffroad = await calculateOffroadPercentage(route.waypoints);
-          route.offroadPercentEstimated = route.offroadPercent; // KI-Schätzung
-          route.offroadPercent = realisticOffroad; // Realistischer Wert
+          route.offroadPercent = realisticOffroad;
           
-          // Scenic-Score
+          // Scenic-Score (nur aus echten Daten)
           const realisticScenic = await calculateScenicScore(route.waypoints);
-          route.scenicScoreEstimated = route.scenicScore; // KI-Schätzung
-          route.scenicScore = realisticScenic; // Realistischer Wert
+          route.scenicScore = realisticScenic;
           
           // Scenic-Punkte entlang Route
           const scenicPoints = await findScenicAlongRoute(route.waypoints, 10);
@@ -191,29 +189,19 @@ ${stayInCountry && start.country ? `- WICHTIG: Bleibe innerhalb von ${start.coun
 - Scenic-Wunsch: ${Math.round(scenicWeight * 100)}%
 - Fahrzeug: ${vehicle}
 
-**WICHTIG - Realistische Offroad-Prozente für Europa:**
-- Deutschland/Schweiz/Österreich: 5-15% Offroad (meist Schotterwege)
-- Skandinavien: 15-25% Offroad
-- Südeuropa (Spanien/Portugal): 20-35% Offroad
-- Osteuropa/Balkan: 25-40% Offroad
-- Island/Schottland: 30-50% Offroad
-
 **Aufgabe**: Empfehle 3 unterschiedliche Abenteuer-Routen die vom Startpunkt wegführen:
 
 1. **Alpine Adventure**
    - Durch Bergregionen, Pässe, alpine Landschaften
    - Für: Bergliebhaber & Fotografen
-   - Offroad: 10-20%
 
 2. **Coastal Explorer**
    - Entlang Küsten, Strände, maritime Landschaften
    - Für: Meer-Fans & Entspannung
-   - Offroad: 5-15%
 
 3. **Offroad Expedition**
-   - Maximale Offroad-Strecken, abgelegene Gegenden
+   - Maximale Offroad-Strecken, abgelegene Gegenden, Schotterwege
    - Für: Hardcore-Offroader
-   - Offroad: 20-35% (in Deutschland/Mitteleuropa)
 
 Für **jede Route**:
 - Kreativer Name (z.B. "Pyrenäen-Durchquerung", "Atlantik-Odyssee")
@@ -223,8 +211,6 @@ Für **jede Route**:
 - Geschätzte Distanz in km (sollte <= ${maxTotalKm} km sein)
 - Geschätzte Dauer in Tagen (sollte ~${tripDays} Tage sein)
 - Schwierigkeit (easy/medium/hard)
-- Scenic Score (0-100)
-- Offroad-Anteil in %
 
 **SEHR WICHTIG**:
 - Der **erste Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
@@ -251,18 +237,14 @@ Antworte in folgendem JSON-Format:
       "estimatedDistance": 1800,
       "estimatedDuration": ${tripDays},
       "difficulty": "medium",
-      "scenicScore": 85,
-      "offroadPercent": 15,
       "bestFor": "Für wen ist diese Route ideal?"
     }
   ]
 }
 
-**NOCHMAL ZUR ERINNERUNG - Offroad-Prozente:**
-- Alpine Adventure: 10-15%
-- Coastal Explorer: 5-10%
-- Offroad Expedition: 20-30% (MAXIMAL in Deutschland!)
-- NIEMALS über 35% in Mitteleuropa!`;
+**WICHTIG:** 
+- Gib KEINE Offroad- oder Scenic-Prozente an - diese werden automatisch aus echten Daten berechnet
+- Fokussiere dich auf realistische Waypoints und gute Routenführung`;
 }
 
 /**
@@ -286,30 +268,19 @@ Plane eine epische Overlanding-Route von ${start.name} nach ${end.name}.
 - Scenic Routes: ${Math.round(scenicWeight * 100)}% (${scenicWeight > 0.7 ? 'maximale Schönheit' : scenicWeight > 0.4 ? 'schöne Strecken' : 'egal'})
 - Fahrzeug: ${vehicle}
 
-**WICHTIG - Realistische Offroad-Prozente für Europa:**
-- Deutschland/Schweiz/Österreich: 5-15% Offroad (meist Schotterwege, Forststraßen)
-- Skandinavien: 15-25% Offroad
-- Südeuropa (Spanien/Portugal/Italien): 20-35% Offroad
-- Osteuropa/Balkan: 25-40% Offroad
-- Island/Schottland: 30-50% Offroad
-- Nordafrika/Marokko: 40-60% Offroad
-
 **Aufgabe**: Empfehle 3 unterschiedliche Routen-Varianten:
 
 1. **Alpine/Mountain Route** 
    - Fokus: Bergpässe, höchste Aussichtspunkte, alpine Landschaften
    - Für: Landschafts-Liebhaber & Fotografen
-   - Offroad: 8-15% (Alpenpässe, Schotterwege)
    
 2. **Scenic Backroads**
    - Fokus: Malerische Landstraßen, schöne Dörfer, kulturelle Highlights
    - Für: Genießer & Kultur-Interessierte
-   - Offroad: 5-10% (minimale Schotterwege)
    
 3. **Offroad Adventure**
-   - Fokus: Maximale Offroad-Strecken, Tracks, 4x4-Herausforderungen
+   - Fokus: Maximale Offroad-Strecken, Schotterwege, Forststraßen, Tracks
    - Für: Offroad-Enthusiasten
-   - Offroad: 15-30% (in Mitteleuropa), 30-50% (Südeuropa/Skandinavien)
 
 Für **jede Route**:
 - Kreativer Name
@@ -319,8 +290,6 @@ Für **jede Route**:
 - Geschätzte Distanz in km
 - Geschätzte Dauer in Stunden
 - Schwierigkeit (easy/medium/hard)
-- Scenic Score (0-100)
-- Offroad-Anteil in %
 
 **SEHR WICHTIG**: 
 - Der **erste Waypoint** MUSS **EXAKT** der Startpunkt sein: ${start.name} (${start.lat}, ${start.lon})
@@ -348,18 +317,14 @@ Antworte in folgendem JSON-Format:
       "estimatedDistance": 1200,
       "estimatedDuration": 0,
       "difficulty": "medium",
-      "scenicScore": 85,
-      "offroadPercent": 12,
       "bestFor": "Für wen ist diese Route ideal?"
     }
   ]
 }
 
-**KRITISCH - Offroad-Prozente MÜSSEN realistisch sein:**
-- Alpine Route: 8-15%
-- Scenic Route: 5-10%
-- Offroad Route: 15-30%
-- NIEMALS über 35% in Deutschland/Österreich/Schweiz!`;
+**WICHTIG:**
+- Gib KEINE Offroad- oder Scenic-Prozente an - diese werden automatisch aus echten Daten berechnet
+- Fokussiere dich auf realistische Waypoints und gute Routenführung`;
 }
 
 /**
