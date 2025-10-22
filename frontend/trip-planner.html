@@ -2093,11 +2093,8 @@
                                 })
                             }).addTo(map);
                             
-                            marker.bindPopup(`
-                                <strong>📸 ${vp.name}</strong><br>
-                                ${vp.elevation ? `Höhe: ${vp.elevation}m<br>` : ''}
-                                ${vp.description || 'Aussichtspunkt'}
-                            `);
+                            // Lade Fotos für diesen Viewpoint
+                            loadPhotosForViewpoint(marker, vp);
                             
                             accommodationMarkers.push(marker);
                         });
@@ -2150,6 +2147,69 @@
                         });
                         
                         console.log(`🌄 ${scenicPoints.scenicRoads.length} Panoramastraßen angezeigt`);
+                    }
+                }
+                
+                // Lade Fotos für Viewpoint von Flickr
+                async function loadPhotosForViewpoint(marker, vp) {
+                    // Zeige zunächst Basis-Popup
+                    marker.bindPopup(`
+                        <div style="min-width: 250px;">
+                            <strong>📸 ${vp.name}</strong><br>
+                            ${vp.elevation ? `Höhe: ${vp.elevation}m<br>` : ''}
+                            ${vp.description || 'Aussichtspunkt'}<br>
+                            <div style="margin-top: 10px; color: #999; font-size: 0.9em;">
+                                <span class="loading-photos">🔄 Lade Fotos...</span>
+                            </div>
+                        </div>
+                    `);
+                    
+                    // Lade Fotos asynchron
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/photos/nearby?lat=${vp.lat}&lon=${vp.lon}&radius=0.5&limit=3`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.photos && data.photos.length > 0) {
+                            // Update Popup mit Fotos
+                            const photosHtml = data.photos.map(photo => `
+                                <div style="margin-top: 8px;">
+                                    <a href="${photo.flickrUrl}" target="_blank" style="text-decoration: none;">
+                                        <img src="${photo.thumbnail}" 
+                                             style="width: 100%; border-radius: 4px; cursor: pointer;"
+                                             alt="${photo.title}">
+                                        <div style="font-size: 0.8em; color: #666; margin-top: 4px;">
+                                            ${photo.title} • ${photo.author}
+                                        </div>
+                                    </a>
+                                </div>
+                            `).join('');
+                            
+                            marker.setPopupContent(`
+                                <div style="min-width: 250px; max-width: 300px;">
+                                    <strong>📸 ${vp.name}</strong><br>
+                                    ${vp.elevation ? `Höhe: ${vp.elevation}m<br>` : ''}
+                                    ${vp.description || 'Aussichtspunkt'}
+                                    ${photosHtml}
+                                    <div style="font-size: 0.75em; color: #999; margin-top: 8px;">
+                                        Fotos von Flickr
+                                    </div>
+                                </div>
+                            `);
+                        } else {
+                            // Keine Fotos gefunden
+                            marker.setPopupContent(`
+                                <div style="min-width: 250px;">
+                                    <strong>📸 ${vp.name}</strong><br>
+                                    ${vp.elevation ? `Höhe: ${vp.elevation}m<br>` : ''}
+                                    ${vp.description || 'Aussichtspunkt'}<br>
+                                    <div style="margin-top: 10px; color: #999; font-size: 0.9em;">
+                                        Keine Fotos verfügbar
+                                    </div>
+                                </div>
+                            `);
+                        }
+                    } catch (error) {
+                        console.error('Fehler beim Laden der Fotos:', error);
                     }
                 }
                 
