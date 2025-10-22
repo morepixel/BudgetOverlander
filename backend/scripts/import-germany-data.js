@@ -4,17 +4,30 @@ import pool from '../database/db-postgres.js';
 
 const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
 
-// Germany bounding box: [lat_min, lon_min, lat_max, lon_max]
-const GERMANY_BBOX = [47.2701, 5.8663, 55.0583, 15.0419];
+// Germany split into regions to avoid Overpass size limits
+const GERMANY_REGIONS = [
+  { name: 'Nord', bbox: [53.0, 7.0, 55.1, 15.1] },
+  { name: 'Nordwest', bbox: [51.0, 5.8, 53.0, 9.0] },
+  { name: 'Nordost', bbox: [51.0, 9.0, 53.0, 15.1] },
+  { name: 'Mitte-West', bbox: [49.0, 5.8, 51.0, 9.0] },
+  { name: 'Mitte-Ost', bbox: [49.0, 9.0, 51.0, 15.1] },
+  { name: 'Süd-West', bbox: [47.2, 5.8, 49.0, 9.0] },
+  { name: 'Süd-Ost', bbox: [47.2, 9.0, 49.0, 15.1] }
+];
 
 /**
- * Import Offroad Tracks for Germany
+ * Import Offroad Tracks for Germany (region by region)
  */
 async function importOffroadTracks() {
-  console.log('🚙 Importiere Offroad-Tracks für Deutschland...');
+  console.log('🚙 Importiere Offroad-Tracks für Deutschland (7 Regionen)...');
   
-  const query = `
-[out:json][timeout:300][bbox:${GERMANY_BBOX.join(',')}];
+  let totalImported = 0;
+  
+  for (const region of GERMANY_REGIONS) {
+    console.log(`\n📍 Region: ${region.name}`);
+    
+    const query = `
+[out:json][timeout:300][bbox:${region.bbox.join(',')}];
 (
   way["highway"~"^(track|path)$"]
      ["surface"~"^(gravel|dirt|ground|unpaved|fine_gravel|compacted)$"]
@@ -24,75 +37,87 @@ async function importOffroadTracks() {
 out geom;
 `;
 
-  try {
-    const response = await fetch(OVERPASS_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-      body: new URLSearchParams({ data: query }).toString(),
-    });
+    try {
+      const response = await fetch(OVERPASS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: new URLSearchParams({ data: query }).toString(),
+      });
 
-    if (!response.ok) {
-      throw new Error(`Overpass API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(`📦 ${data.elements.length} Offroad-Tracks gefunden`);
-
-    let imported = 0;
-    for (const element of data.elements) {
-      if (!element.geometry || element.geometry.length < 2) continue;
-
-      const tags = element.tags || {};
-      const coords = element.geometry.map(p => ({ lat: p.lat, lon: p.lon }));
-      
-      // Calculate center point
-      const centerLat = element.geometry.reduce((sum, p) => sum + p.lat, 0) / element.geometry.length;
-      const centerLon = element.geometry.reduce((sum, p) => sum + p.lon, 0) / element.geometry.length;
-      
-      // Calculate length
-      const length = calculateLength(element.geometry);
-      
-      // Calculate difficulty
-      const difficulty = calculateDifficulty(tags);
-
-      try {
-        await pool.query(
-          `INSERT INTO germany_offroad_tracks (osm_id, name, highway, surface, tracktype, difficulty, length_km, center_lat, center_lon, geometry_json)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-           ON CONFLICT (osm_id) DO NOTHING`,
-          [
-            element.id,
-            tags.name || null,
-            tags.highway,
-            tags.surface,
-            tags.tracktype || null,
-            difficulty,
-            length,
-            centerLat,
-            centerLon,
-            JSON.stringify(coords)
-          ]
-        );
-        imported++;
-      } catch (error) {
-        console.error(`Fehler bei Track ${element.id}:`, error.message);
+      if (!response.ok) {
+        console.error(`❌ Overpass API error für ${region.name}: ${response.status}`);
+        continue;
       }
-    }
 
-    console.log(`✅ ${imported} Offroad-Tracks importiert`);
-    
-    // Update metadata
+      const data = await response.json();
+      console.log(`📦 ${data.elements.length} Offroad-Tracks gefunden`);
+
+      let imported = 0;
+      for (const element of data.elements) {
+        if (!element.geometry || element.geometry.length < 2) continue;
+
+        const tags = element.tags || {};
+        const coords = element.geometry.map(p => ({ lat: p.lat, lon: p.lon }));
+        
+        // Calculate center point
+        const centerLat = element.geometry.reduce((sum, p) => sum + p.lat, 0) / element.geometry.length;
+        const centerLon = element.geometry.reduce((sum, p) => sum + p.lon, 0) / element.geometry.length;
+        
+        // Calculate length
+        const length = calculateLength(element.geometry);
+        
+        // Calculate difficulty
+        const difficulty = calculateDifficulty(tags);
+
+        try {
+          await pool.query(
+            `INSERT INTO germany_offroad_tracks (osm_id, name, highway, surface, tracktype, difficulty, length_km, center_lat, center_lon, geometry_json)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             ON CONFLICT (osm_id) DO NOTHING`,
+            [
+              element.id,
+              tags.name || null,
+              tags.highway,
+              tags.surface,
+              tags.tracktype || null,
+              difficulty,
+              length,
+              centerLat,
+              centerLon,
+              JSON.stringify(coords)
+            ]
+          );
+          imported++;
+        } catch (error) {
+          console.error(`Fehler bei Track ${element.id}:`, error.message);
+        }
+      }
+
+      console.log(`✅ ${imported} Offroad-Tracks in ${region.name} importiert`);
+      totalImported += imported;
+      
+      // Wait between regions to respect rate limits
+      if (region !== GERMANY_REGIONS[GERMANY_REGIONS.length - 1]) {
+        console.log('⏳ Warte 10 Sekunden...');
+        await new Promise(resolve => setTimeout(resolve, 10000));
+      }
+      
+    } catch (error) {
+      console.error(`❌ Fehler beim Import von ${region.name}:`, error.message);
+    }
+  }
+  
+  console.log(`\n✅ GESAMT: ${totalImported} Offroad-Tracks importiert`);
+  
+  // Update metadata
+  try {
     await pool.query(
       `INSERT INTO germany_data_metadata (data_type, total_records, source)
-       VALUES ('offroad_tracks', $1, 'Overpass API')
-       ON CONFLICT (data_type) DO UPDATE SET
-         last_updated = NOW(),
-         total_records = $1`,
-      [imported]
+       VALUES ('offroad_tracks', $1, 'Overpass API')`,
+      [totalImported]
     );
-    
   } catch (error) {
-    console.error('❌ Fehler beim Import von Offroad-Tracks:', error);
+    console.error('Metadata update error:', error);
   }
 }
 
