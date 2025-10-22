@@ -55,6 +55,8 @@ export async function calculateGermanyOffroadPercentage(waypoints) {
   }
 
   // Für jedes Segment: Prüfe ob Offroad-Tracks in unmittelbarer Nähe (< 1km)
+  // PARALLEL für Performance
+  const segmentChecks = [];
   for (let i = 0; i < waypoints.length - 1; i++) {
     const wp1 = waypoints[i];
     const wp2 = waypoints[i + 1];
@@ -64,13 +66,21 @@ export async function calculateGermanyOffroadPercentage(waypoints) {
     const midLat = (wp1.lat + wp2.lat) / 2;
     const midLon = (wp1.lon + wp2.lon) / 2;
     
-    const result = await findGermanyOffroadTracks(midLat, midLon, 1); // Nur 1km Radius!
-    
-    // Wenn Tracks gefunden: Segment ist potentiell Offroad
-    if (result.tracks.length > 0) {
-      offroadSegmentLength += segmentLength;
-    }
+    segmentChecks.push({
+      promise: findGermanyOffroadTracks(midLat, midLon, 1),
+      segmentLength
+    });
   }
+  
+  // Warte auf alle Checks parallel
+  const results = await Promise.all(segmentChecks.map(c => c.promise));
+  
+  // Zähle Offroad-Segmente
+  results.forEach((result, idx) => {
+    if (result.tracks.length > 0) {
+      offroadSegmentLength += segmentChecks[idx].segmentLength;
+    }
+  });
 
   // Berechne Prozentsatz
   if (totalRouteLength === 0) return 0;

@@ -40,13 +40,15 @@ export async function calculateGermanyScenicScore(waypoints) {
   let totalScenicRoads = 0;
   let totalNaturalParks = 0;
 
-  // Für jeden Waypoint: Suche Scenic-Punkte
-  for (const wp of waypoints) {
-    const result = await findGermanyScenicPoints(wp.lat, wp.lon, 25);
+  // Für jeden Waypoint: Suche Scenic-Punkte (PARALLEL)
+  const promises = waypoints.map(wp => findGermanyScenicPoints(wp.lat, wp.lon, 25));
+  const results = await Promise.all(promises);
+  
+  results.forEach(result => {
     totalViewpoints += result.viewpoints.length;
     totalScenicRoads += result.scenicRoads.length;
     totalNaturalParks += result.naturalParks.length;
-  }
+  });
 
   // Score-Berechnung (0-100)
   const viewpointScore = Math.min(totalViewpoints * 5, 40); // Max 40 Punkte
@@ -66,12 +68,15 @@ export async function findGermanyScenicAlongRoute(waypoints, maxDistanceKm = 10)
   const allScenicRoads = [];
   const allNaturalParks = [];
   
-  for (const wp of waypoints) {
-    const result = await findGermanyScenicPoints(wp.lat, wp.lon, maxDistanceKm);
+  // PARALLEL für Performance
+  const promises = waypoints.map(wp => findGermanyScenicPoints(wp.lat, wp.lon, maxDistanceKm));
+  const results = await Promise.all(promises);
+  
+  results.forEach(result => {
     allViewpoints.push(...result.viewpoints);
     allScenicRoads.push(...result.scenicRoads);
     allNaturalParks.push(...result.naturalParks);
-  }
+  });
   
   // Dedupliziere basierend auf ID
   const uniqueViewpoints = Array.from(new Map(allViewpoints.map(v => [v.id, v])).values());
