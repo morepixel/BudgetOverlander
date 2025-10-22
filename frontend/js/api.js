@@ -1,5 +1,8 @@
 // API Client für Backend-Kommunikation
-const API_BASE_URL = 'http://localhost:3001/api';
+// Automatisch zwischen Development und Production wechseln
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3001/api'
+    : '/api';  // Production: Nutzt Nginx Reverse Proxy
 
 const api = {
     // Helper: Fetch mit Token

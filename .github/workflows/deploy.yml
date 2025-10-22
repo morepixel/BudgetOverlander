@@ -1,0 +1,71 @@
+name: Deploy to Mittwald
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci --production
+      
+      - name: Deploy to Mittwald via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.MITTWALD_HOST }}
+          username: ${{ secrets.MITTWALD_USER }}
+          key: ${{ secrets.MITTWALD_SSH_KEY }}
+          port: 22
+          script: |
+            # Wechsle ins Projekt-Verzeichnis
+            cd /home/${{ secrets.MITTWALD_USER }}/budget-overlander
+            
+            # Backup der aktuellen Version
+            if [ -d "backend" ]; then
+              cp backend/.env backend/.env.backup
+            fi
+            
+            # Pull neueste Änderungen
+            git fetch origin
+            git reset --hard origin/main
+            
+            # Restore .env
+            if [ -f "backend/.env.backup" ]; then
+              mv backend/.env.backup backend/.env
+            fi
+            
+            # Backend Dependencies installieren
+            cd backend
+            npm ci --production
+            
+            # PM2 neu starten
+            pm2 restart budget-overlander-api || pm2 start server.js --name budget-overlander-api
+            pm2 save
+            
+            # Frontend aktualisieren (falls Nginx direkt aus Git-Repo liest)
+            # Sonst: sudo cp -r ../frontend/* /var/www/budget-overlander/
+            
+            echo "✅ Deployment erfolgreich!"
+      
+      - name: Deployment Status
+        if: success()
+        run: echo "🚀 Deployment auf Mittwald erfolgreich abgeschlossen!"
+      
+      - name: Deployment Failed
+        if: failure()
+        run: echo "❌ Deployment fehlgeschlagen - prüfe Logs!"

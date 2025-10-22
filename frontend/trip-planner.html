@@ -951,7 +951,11 @@
                     body.waypoints = waypointLocations;
                 }
 
-                const response = await fetch('http://localhost:3001/api/trip-planner/calculate', {
+                const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:3001/api/trip-planner/calculate'
+                    : '/api/trip-planner/calculate';
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1145,9 +1149,12 @@
                 }
                 
                 // Lade Park4Night Plätze für jeden Punkt über unser Backend
+                const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:3001/api'
+                    : '/api';
                 const allPlaces = [];
                 for (const point of samplePoints) {
-                    const url = `http://localhost:3001/api/park4night/places?latitude=${point.lat}&longitude=${point.lon}&freeOnly=true`;
+                    const url = `${apiBase}/park4night/places?latitude=${point.lat}&longitude=${point.lon}&freeOnly=true`;
                     
                     try {
                         const response = await fetch(url);
@@ -1289,9 +1296,12 @@
                 }
                 
                 // Lade Park4Night Plätze für jeden Punkt
+                const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:3001/api'
+                    : '/api';
                 const allPlaces = [];
                 for (const point of samplePoints) {
-                    const url = `http://localhost:3001/api/park4night/places?latitude=${point.lat}&longitude=${point.lon}&freeOnly=true`;
+                    const url = `${apiBase}/park4night/places?latitude=${point.lat}&longitude=${point.lon}&freeOnly=true`;
                     
                     try {
                         const response = await fetch(url);
@@ -1540,7 +1550,10 @@
             searchTimeout = setTimeout(async () => {
                 try {
                     console.log('🔍 Searching:', query, 'Type:', type);
-                    const response = await fetch(`http://localhost:3001/api/geocoding/search?q=${encodeURIComponent(query)}`);
+                    const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                        ? 'http://localhost:3001/api'
+                        : '/api';
+                    const response = await fetch(`${apiBase}/geocoding/search?q=${encodeURIComponent(query)}`);
                     
                     if (!response.ok) {
                         throw new Error('Backend nicht erreichbar');
@@ -1826,7 +1839,11 @@
                     body.end = { name: endName, lat: endLat, lon: endLon };
                 }
                 
-                const response = await fetch('http://localhost:3001/api/ai/route-recommendations', {
+                const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:3001/api/ai/route-recommendations'
+                    : '/api/ai/route-recommendations';
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -2203,7 +2220,10 @@
                     
                     // Lade Fotos asynchron
                     try {
-                        const response = await fetch(`${API_BASE_URL}/photos/nearby?lat=${vp.lat}&lon=${vp.lon}&radius=0.5&limit=3`);
+                        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                            ? 'http://localhost:3001/api'
+                            : '/api';
+                        const response = await fetch(`${apiBase}/photos/nearby?lat=${vp.lat}&lon=${vp.lon}&radius=0.5&limit=3`);
                         const data = await response.json();
                         
                         if (data.success && data.photos && data.photos.length > 0) {
