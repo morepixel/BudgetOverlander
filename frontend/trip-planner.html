@@ -1955,7 +1955,21 @@
                     
                     // OSRM API Call mit steps=true für Straßentyp-Info
                     const coords = `${start.lon},${start.lat};${end.lon},${end.lat}`;
-                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=true`;
+                    
+                    // Baue URL mit Optionen
+                    const params = new URLSearchParams({
+                        overview: 'full',
+                        geometries: 'geojson',
+                        steps: 'true'
+                    });
+                    
+                    // Füge exclude parameter hinzu wenn Autobahnen vermieden werden sollen
+                    const avoidHighways = document.getElementById('avoidHighwaysDiscover')?.checked || false;
+                    if (avoidHighways) {
+                        params.append('exclude', 'motorway');
+                    }
+                    
+                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?${params.toString()}`;
                     
                     console.log('OSRM URL:', osrmUrl);
                     
