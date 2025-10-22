@@ -182,19 +182,29 @@ ${stayInCountry && start.country ? `- WICHTIG: Bleibe innerhalb von ${start.coun
 - Scenic-Wunsch: ${Math.round(scenicWeight * 100)}%
 - Fahrzeug: ${vehicle}
 
+**WICHTIG - Realistische Offroad-Prozente für Europa:**
+- Deutschland/Schweiz/Österreich: 5-15% Offroad (meist Schotterwege)
+- Skandinavien: 15-25% Offroad
+- Südeuropa (Spanien/Portugal): 20-35% Offroad
+- Osteuropa/Balkan: 25-40% Offroad
+- Island/Schottland: 30-50% Offroad
+
 **Aufgabe**: Empfehle 3 unterschiedliche Abenteuer-Routen die vom Startpunkt wegführen:
 
 1. **Alpine Adventure**
    - Durch Bergregionen, Pässe, alpine Landschaften
    - Für: Bergliebhaber & Fotografen
+   - Offroad: 10-20%
 
 2. **Coastal Explorer**
    - Entlang Küsten, Strände, maritime Landschaften
    - Für: Meer-Fans & Entspannung
+   - Offroad: 5-15%
 
 3. **Offroad Expedition**
    - Maximale Offroad-Strecken, abgelegene Gegenden
    - Für: Hardcore-Offroader
+   - Offroad: 20-35% (in Deutschland/Mitteleuropa)
 
 Für **jede Route**:
 - Kreativer Name (z.B. "Pyrenäen-Durchquerung", "Atlantik-Odyssee")
@@ -261,19 +271,30 @@ Plane eine epische Overlanding-Route von ${start.name} nach ${end.name}.
 - Scenic Routes: ${Math.round(scenicWeight * 100)}% (${scenicWeight > 0.7 ? 'maximale Schönheit' : scenicWeight > 0.4 ? 'schöne Strecken' : 'egal'})
 - Fahrzeug: ${vehicle}
 
+**WICHTIG - Realistische Offroad-Prozente für Europa:**
+- Deutschland/Schweiz/Österreich: 5-15% Offroad (meist Schotterwege, Forststraßen)
+- Skandinavien: 15-25% Offroad
+- Südeuropa (Spanien/Portugal/Italien): 20-35% Offroad
+- Osteuropa/Balkan: 25-40% Offroad
+- Island/Schottland: 30-50% Offroad
+- Nordafrika/Marokko: 40-60% Offroad
+
 **Aufgabe**: Empfehle 3 unterschiedliche Routen-Varianten:
 
 1. **Alpine/Mountain Route** 
    - Fokus: Bergpässe, höchste Aussichtspunkte, alpine Landschaften
    - Für: Landschafts-Liebhaber & Fotografen
+   - Offroad: 8-15% (Alpenpässe, Schotterwege)
    
 2. **Scenic Backroads**
    - Fokus: Malerische Landstraßen, schöne Dörfer, kulturelle Highlights
    - Für: Genießer & Kultur-Interessierte
+   - Offroad: 5-10% (minimale Schotterwege)
    
 3. **Offroad Adventure**
    - Fokus: Maximale Offroad-Strecken, Tracks, 4x4-Herausforderungen
    - Für: Offroad-Enthusiasten
+   - Offroad: 15-30% (in Mitteleuropa), 30-50% (Südeuropa/Skandinavien)
 
 Für **jede Route**:
 - Kreativer Name
