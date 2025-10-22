@@ -252,11 +252,17 @@ Antworte in folgendem JSON-Format:
       "estimatedDuration": ${tripDays},
       "difficulty": "medium",
       "scenicScore": 85,
-      "offroadPercent": 40,
+      "offroadPercent": 15,
       "bestFor": "Für wen ist diese Route ideal?"
     }
   ]
-}`;
+}
+
+**NOCHMAL ZUR ERINNERUNG - Offroad-Prozente:**
+- Alpine Adventure: 10-15%
+- Coastal Explorer: 5-10%
+- Offroad Expedition: 20-30% (MAXIMAL in Deutschland!)
+- NIEMALS über 35% in Mitteleuropa!`;
 }
 
 /**
@@ -340,14 +346,20 @@ Antworte in folgendem JSON-Format:
         {"name": "${end.name}", "lat": ${end.lat}, "lon": ${end.lon}, "description": "Zielpunkt"}
       ],
       "estimatedDistance": 1200,
-      "estimatedDuration": 15,
+      "estimatedDuration": 0,
       "difficulty": "medium",
-      "scenicScore": 95,
-      "offroadPercent": 30,
+      "scenicScore": 85,
+      "offroadPercent": 12,
       "bestFor": "Für wen ist diese Route ideal?"
     }
   ]
-}`;
+}
+
+**KRITISCH - Offroad-Prozente MÜSSEN realistisch sein:**
+- Alpine Route: 8-15%
+- Scenic Route: 5-10%
+- Offroad Route: 15-30%
+- NIEMALS über 35% in Deutschland/Österreich/Schweiz!`;
 }
 
 /**
