@@ -6,8 +6,8 @@ import { authenticateToken } from './auth.js';
 
 const router = express.Router();
 
-// POST /api/trip-planner/calculate - Berechne Multi-Day Trip
-router.post('/calculate', authenticateToken, async (req, res) => {
+// POST /api/trip-planner/calculate - Berechne Multi-Day Trip (öffentlich)
+router.post('/calculate', async (req, res) => {
   try {
     const { startLocation, endLocation, preferences } = req.body;
     
