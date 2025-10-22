@@ -1964,9 +1964,16 @@
                     });
                     
                     // Füge exclude parameter hinzu wenn Autobahnen vermieden werden sollen
-                    const avoidHighways = document.getElementById('avoidHighwaysDiscover')?.checked || false;
+                    // Prüfe beide möglichen Checkboxen (Discovery Mode und Normal Mode)
+                    const avoidHighwaysDiscover = document.getElementById('avoidHighwaysDiscover')?.checked || false;
+                    const avoidHighwaysNormal = document.getElementById('avoidHighways')?.checked || false;
+                    const avoidHighways = avoidHighwaysDiscover || avoidHighwaysNormal;
+                    
+                    console.log('🛣️ Avoid Highways:', avoidHighways);
+                    
                     if (avoidHighways) {
                         params.append('exclude', 'motorway');
+                        console.log('✅ Excluding motorways from route');
                     }
                     
                     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coords}?${params.toString()}`;
