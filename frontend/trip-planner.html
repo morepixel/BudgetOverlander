@@ -1246,21 +1246,34 @@
                 park4nightMarkers.forEach(m => map.removeLayer(m));
                 park4nightMarkers = [];
                 
-                // Extrahiere Koordinaten aus routeLayer (GeoJSON)
+                // Extrahiere Koordinaten aus routeLayer (kann LayerGroup oder GeoJSON sein)
                 const routeCoords = [];
-                routeLayer.eachLayer(layer => {
-                    if (layer.feature && layer.feature.geometry) {
-                        const coords = layer.feature.geometry.coordinates;
-                        if (layer.feature.geometry.type === 'LineString') {
-                            routeCoords.push(...coords);
-                        } else if (layer.feature.geometry.type === 'MultiLineString') {
-                            coords.forEach(line => routeCoords.push(...line));
+                
+                if (routeLayer) {
+                    routeLayer.eachLayer(layer => {
+                        // Prüfe ob es ein GeoJSON Layer ist
+                        if (layer.feature && layer.feature.geometry) {
+                            const coords = layer.feature.geometry.coordinates;
+                            if (layer.feature.geometry.type === 'LineString') {
+                                routeCoords.push(...coords);
+                            } else if (layer.feature.geometry.type === 'MultiLineString') {
+                                coords.forEach(line => routeCoords.push(...line));
+                            }
                         }
-                    }
-                });
+                        // Prüfe ob es ein Polyline ist
+                        else if (layer.getLatLngs) {
+                            const latlngs = layer.getLatLngs();
+                            latlngs.forEach(latlng => {
+                                routeCoords.push([latlng.lng, latlng.lat]);
+                            });
+                        }
+                    });
+                }
+                
+                console.log(`📍 Extracted ${routeCoords.length} route coordinates`);
                 
                 if (routeCoords.length === 0) {
-                    alert('⚠️ Keine Route gefunden!');
+                    alert('⚠️ Keine Route gefunden! Bitte zuerst eine Route generieren.');
                     hideLoadingPopup();
                     return;
                 }
