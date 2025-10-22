@@ -1,6 +1,7 @@
 // AI Route Recommender - OpenAI Integration
 import OpenAI from 'openai';
 import { calculateOffroadPercentage } from './offroad-finder.js';
+import { calculateScenicScore, findScenicAlongRoute } from './scenic-finder.js';
 
 let openai = null;
 
@@ -59,19 +60,27 @@ export async function getAIRouteRecommendations(start, end, preferences = {}) {
 
     const result = JSON.parse(response.choices[0].message.content);
     
-    // Berechne realistische Offroad-Prozente basierend auf tatsächlichen Tracks
+    // Berechne realistische Werte basierend auf tatsächlichen Daten
     if (result.routes && result.routes.length > 0) {
-      console.log('🔍 Berechne realistische Offroad-Prozente...');
+      console.log('🔍 Berechne realistische Offroad- und Scenic-Werte...');
       
       for (const route of result.routes) {
         if (route.waypoints && route.waypoints.length > 0) {
+          // Offroad-Prozente
           const realisticOffroad = await calculateOffroadPercentage(route.waypoints);
-          
-          // Speichere beide Werte
           route.offroadPercentEstimated = route.offroadPercent; // KI-Schätzung
           route.offroadPercent = realisticOffroad; // Realistischer Wert
           
-          console.log(`📊 ${route.name}: KI=${route.offroadPercentEstimated}%, Real=${realisticOffroad}%`);
+          // Scenic-Score
+          const realisticScenic = await calculateScenicScore(route.waypoints);
+          route.scenicScoreEstimated = route.scenicScore; // KI-Schätzung
+          route.scenicScore = realisticScenic; // Realistischer Wert
+          
+          // Scenic-Punkte entlang Route
+          const scenicPoints = await findScenicAlongRoute(route.waypoints, 10);
+          route.scenicPoints = scenicPoints;
+          
+          console.log(`📊 ${route.name}: Offroad=${realisticOffroad}%, Scenic=${realisticScenic}/100`);
         }
       }
     }

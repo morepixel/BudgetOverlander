@@ -794,7 +794,7 @@
                 maxZoom: 19
             }).addTo(map);
             
-            // Legende für Straßentypen
+            // Legende für Straßentypen und Scenic
             const legend = L.control({ position: 'bottomright' });
             legend.onAdd = function(map) {
                 const div = L.DomUtil.create('div', 'road-legend');
@@ -809,9 +809,22 @@
                         <div style="width: 20px; height: 3px; background: #f7b731;"></div>
                         <span>Schotter/Forst</span>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                         <div style="width: 20px; height: 3px; background: #ff6b35;"></div>
                         <span>Offroad</span>
+                    </div>
+                    <div style="font-weight: 700; margin-bottom: 8px; margin-top: 8px; color: #333; border-top: 1px solid #eee; padding-top: 8px;">Scenic</div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                        <div style="width: 20px; height: 3px; background: #2ecc71; border-style: dashed;"></div>
+                        <span>Panoramastraße</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px;">
+                        <span style="font-size: 16px;">📸</span>
+                        <span>Aussichtspunkt</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 16px;">🏞️</span>
+                        <span>Nationalpark</span>
                     </div>
                 `;
                 return div;
@@ -1989,6 +2002,11 @@
                             console.log('📊 Straßentyp-Statistiken:', route.roadStats);
                         }
                         
+                        // Zeige Scenic-Punkte auf der Karte
+                        if (route.scenicPoints) {
+                            showScenicPoints(route.scenicPoints);
+                        }
+                        
                         // Fit bounds mit allen Koordinaten
                         const bounds = L.latLngBounds(allCoordinates.map(c => [c[1], c[0]]));
                         map.fitBounds(bounds);
@@ -2049,6 +2067,81 @@
                         case 'gravel': return '🟡 Schotterweg/Forststraße';
                         case 'paved': return '🔵 Asphalt';
                         default: return 'Straße';
+                    }
+                }
+                
+                // Zeige Scenic-Punkte auf der Karte
+                function showScenicPoints(scenicPoints) {
+                    if (!scenicPoints) return;
+                    
+                    // Aussichtspunkte
+                    if (scenicPoints.viewpoints && scenicPoints.viewpoints.length > 0) {
+                        scenicPoints.viewpoints.forEach(vp => {
+                            const marker = L.marker([vp.lat, vp.lon], {
+                                icon: L.divIcon({
+                                    className: 'scenic-marker',
+                                    html: '<div style="background: #2ecc71; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">📸</div>',
+                                    iconSize: [28, 28]
+                                })
+                            }).addTo(map);
+                            
+                            marker.bindPopup(`
+                                <strong>📸 ${vp.name}</strong><br>
+                                ${vp.elevation ? `Höhe: ${vp.elevation}m<br>` : ''}
+                                ${vp.description || 'Aussichtspunkt'}
+                            `);
+                            
+                            accommodationMarkers.push(marker);
+                        });
+                        
+                        console.log(`📸 ${scenicPoints.viewpoints.length} Aussichtspunkte angezeigt`);
+                    }
+                    
+                    // Naturschutzgebiete / National Parks
+                    if (scenicPoints.naturalParks && scenicPoints.naturalParks.length > 0) {
+                        scenicPoints.naturalParks.forEach(park => {
+                            const marker = L.marker([park.lat, park.lon], {
+                                icon: L.divIcon({
+                                    className: 'park-marker',
+                                    html: '<div style="background: #27ae60; color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">🏞️</div>',
+                                    iconSize: [28, 28]
+                                })
+                            }).addTo(map);
+                            
+                            marker.bindPopup(`
+                                <strong>🏞️ ${park.name}</strong><br>
+                                ${park.type === 'national_park' ? 'Nationalpark' : 'Naturschutzgebiet'}<br>
+                                ${park.description || ''}
+                            `);
+                            
+                            accommodationMarkers.push(marker);
+                        });
+                        
+                        console.log(`🏞️ ${scenicPoints.naturalParks.length} Parks/Schutzgebiete angezeigt`);
+                    }
+                    
+                    // Scenic Roads (grüne Linien)
+                    if (scenicPoints.scenicRoads && scenicPoints.scenicRoads.length > 0) {
+                        scenicPoints.scenicRoads.forEach(road => {
+                            if (road.geometry && road.geometry.length > 0) {
+                                const coords = road.geometry.map(p => [p.lat, p.lon]);
+                                const scenicLine = L.polyline(coords, {
+                                    color: '#2ecc71',
+                                    weight: 4,
+                                    opacity: 0.6,
+                                    dashArray: '10, 5'
+                                }).addTo(map);
+                                
+                                scenicLine.bindPopup(`
+                                    <strong>🌄 ${road.name}</strong><br>
+                                    Panoramastraße
+                                `);
+                                
+                                accommodationMarkers.push(scenicLine);
+                            }
+                        });
+                        
+                        console.log(`🌄 ${scenicPoints.scenicRoads.length} Panoramastraßen angezeigt`);
                     }
                 }
 
