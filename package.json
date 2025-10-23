@@ -1,15 +1,20 @@
 {
-  "name": "budget-overlander-overpass-test",
+  "name": "budget-overlander",
   "version": "1.0.0",
-  "description": "Test-Script für Overpass-API zur Analyse von Offroad-Wegen",
+  "description": "Budget Overlander - Offroad Route Planning Platform",
   "type": "module",
-  "main": "test-overpass-api.js",
+  "main": "backend/server.js",
   "scripts": {
+    "start": "cd backend && npm start",
+    "install": "cd backend && npm install",
     "test:small": "node test-overpass-api.js small",
     "test:medium": "node test-overpass-api.js medium",
     "test:large": "node test-overpass-api.js large"
   },
-  "keywords": ["overpass", "openstreetmap", "offroad", "overlander"],
+  "engines": {
+    "node": "18.x"
+  },
+  "keywords": ["overpass", "openstreetmap", "offroad", "overlander", "route-planning"],
   "author": "",
   "license": "MIT"
 }
