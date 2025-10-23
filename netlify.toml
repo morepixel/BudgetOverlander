@@ -2,6 +2,6 @@
   publish = "frontend"
   
 [[redirects]]
-  from = "/*"
+  from = "/"
   to = "/trip-planner.html"
   status = 200
