@@ -5,8 +5,7 @@
   "type": "module",
   "main": "backend/server.js",
   "scripts": {
-    "start": "cd backend && npm start",
-    "install": "cd backend && npm install",
+    "start": "node backend/server.js",
     "test:small": "node test-overpass-api.js small",
     "test:medium": "node test-overpass-api.js medium",
     "test:large": "node test-overpass-api.js large"
