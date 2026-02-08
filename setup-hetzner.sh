@@ -34,10 +34,12 @@ apt-get install -y certbot python3-certbot-nginx
 
 # PostgreSQL konfigurieren
 echo "🗄️ PostgreSQL einrichten..."
+DB_PASSWORD=$(openssl rand -base64 32)
 sudo -u postgres psql << EOF
 CREATE DATABASE budget_overlander;
-CREATE USER overlander WITH PASSWORD 'CHANGE_THIS_PASSWORD';
+CREATE USER overlander WITH PASSWORD '${DB_PASSWORD}';
 GRANT ALL PRIVILEGES ON DATABASE budget_overlander TO overlander;
+ALTER DATABASE budget_overlander OWNER TO overlander;
 \q
 EOF
 
@@ -54,14 +56,29 @@ npm install
 
 # .env erstellen
 echo "📝 .env Datei erstellen..."
+DB_PASSWORD=$(openssl rand -base64 32)
+JWT_SECRET=$(openssl rand -base64 32)
+
 cat > .env << EOF
 PORT=3001
-DATABASE_URL=postgresql://overlander:CHANGE_THIS_PASSWORD@localhost:5432/budget_overlander
+NODE_ENV=production
+
+# Database
+DB_USER=overlander
+DB_HOST=localhost
+DB_NAME=budget_overlander
+DB_PASSWORD=${DB_PASSWORD}
+DB_PORT=5432
+
+# JWT
+JWT_SECRET=${JWT_SECRET}
+
+# API Keys
 OPENAI_API_KEY=DEIN_OPENAI_KEY
 FLICKR_API_KEY=DEIN_FLICKR_KEY
-JWT_SECRET=$(openssl rand -base64 32)
-NODE_ENV=production
 EOF
+
+echo "📝 PostgreSQL Passwort: ${DB_PASSWORD}"
 
 echo "⚠️  WICHTIG: Bearbeite /var/www/budget-overlander/backend/.env"
 echo "   - Setze OPENAI_API_KEY"
