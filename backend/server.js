@@ -21,6 +21,8 @@ import geocodingRouter from './routes/geocoding.js';
 import aiRoutesRouter from './routes/ai-routes.js';
 import park4nightRouter from './routes/park4night.js';
 import photosRouter from './routes/photos.js';
+import resourcesRouter from './routes/resources.js';
+import consumersRouter from './routes/consumers.js';
 
 dotenv.config();
 
@@ -55,6 +57,8 @@ app.use('/api/geocoding', geocodingRouter);
 app.use('/api/ai', aiRoutesRouter);
 app.use('/api/park4night', park4nightRouter);
 app.use('/api/photos', photosRouter);
+app.use('/api/resources', resourcesRouter);
+app.use('/api/consumers', consumersRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {

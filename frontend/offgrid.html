@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2d5a27">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Offgrid Compass</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a3a1a 0%, #2d5a27 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .app-container { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { font-size: 32px; }
+        .logo-text { font-size: 20px; font-weight: 700; }
+        .header-actions { display: flex; gap: 10px; }
+        .icon-btn {
+            width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.1);
+            border: none; color: white; font-size: 20px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.2); }
+        .vehicle-selector {
+            background: rgba(255,255,255,0.1); border-radius: 16px; padding: 16px;
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;
+        }
+        .vehicle-info { display: flex; align-items: center; gap: 12px; }
+        .vehicle-icon { font-size: 28px; }
+        .vehicle-name { font-size: 18px; font-weight: 600; }
+        .vehicle-details { font-size: 14px; opacity: 0.8; }
+        .resources-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .resource-card {
+            background: rgba(255,255,255,0.1); border-radius: 16px; padding: 16px;
+            cursor: pointer; transition: transform 0.2s, background 0.2s;
+        }
+        .resource-card:hover { transform: scale(1.02); background: rgba(255,255,255,0.15); }
+        .resource-card.warning { background: rgba(255, 193, 7, 0.2); border: 2px solid rgba(255, 193, 7, 0.5); }
+        .resource-card.critical { background: rgba(220, 53, 69, 0.2); border: 2px solid rgba(220, 53, 69, 0.5); }
+        .resource-card.inverted.warning { background: rgba(220, 53, 69, 0.2); border: 2px solid rgba(220, 53, 69, 0.5); }
+        .resource-card.inverted.critical { background: rgba(220, 53, 69, 0.3); border: 2px solid rgba(220, 53, 69, 0.7); }
+        .resource-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .resource-icon { font-size: 24px; }
+        .resource-percentage { font-size: 20px; font-weight: 700; }
+        .resource-name { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+        .resource-bar-bg { height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+        .resource-bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .resource-bar.water { background: #3498db; }
+        .resource-bar.power { background: #f39c12; }
+        .resource-bar.fuel { background: #e74c3c; }
+        .resource-bar.gas { background: #9b59b6; }
+        .resource-bar.greywater { background: #95a5a6; }
+        .resource-bar.toilet { background: #1abc9c; }
+        .resource-bar.food { background: #e67e22; }
+        .resource-bar.drinks { background: #3498db; }
+        .resource-bar.beer { background: #f1c40f; }
+        .resource-remaining { font-size: 12px; opacity: 0.9; }
+        .resource-value { font-size: 11px; opacity: 0.7; }
+        .quick-actions { background: rgba(255,255,255,0.1); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
+        .quick-actions-title { font-size: 14px; opacity: 0.8; margin-bottom: 12px; }
+        .quick-actions-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .quick-action-btn {
+            background: rgba(255,255,255,0.1); border: none; border-radius: 10px; padding: 10px;
+            color: white; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;
+            flex: 0 0 calc(25% - 6px); transition: background 0.2s;
+        }
+        .quick-action-btn:hover { background: rgba(255,255,255,0.2); }
+        .quick-action-btn .icon { font-size: 20px; }
+        .quick-action-btn .label { font-size: 10px; text-align: center; }
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
+            display: none; align-items: flex-end; justify-content: center; z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #1a3a1a; border-radius: 24px 24px 0 0; padding: 24px;
+            width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 20px; font-weight: 700; }
+        .modal-close { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: white; font-size: 20px; cursor: pointer; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; opacity: 0.9; }
+        .form-input {
+            width: 100%; padding: 12px 14px; border: 2px solid rgba(255,255,255,0.2); border-radius: 10px;
+            background: rgba(255,255,255,0.1); color: white; font-size: 16px;
+        }
+        .form-input:focus { outline: none; border-color: #4CAF50; }
+        .form-input::placeholder { color: rgba(255,255,255,0.5); }
+        .slider-container { padding: 10px 0; }
+        .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .slider-value { font-weight: 700; color: #4CAF50; }
+        input[type="range"] { width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); -webkit-appearance: none; appearance: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #4CAF50; cursor: pointer; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: #4CAF50; color: white; }
+        .btn-primary:hover { background: #45a049; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: white; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+        .setup-screen { display: none; }
+        .setup-screen.active { display: block; }
+        .setup-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+        .setup-subtitle { font-size: 15px; opacity: 0.8; margin-bottom: 20px; }
+        .setup-section { background: rgba(255,255,255,0.1); border-radius: 14px; padding: 16px; margin-bottom: 14px; }
+        .setup-section-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .category-toggle { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+        .category-toggle input { width: 22px; height: 22px; cursor: pointer; }
+        .category-toggle-label { flex: 1; font-size: 15px; }
+        .category-toggle-icon { font-size: 20px; }
+        .loading { text-align: center; padding: 40px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #4CAF50; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .no-vehicle { text-align: center; padding: 40px 20px; }
+        .no-vehicle-icon { font-size: 64px; margin-bottom: 16px; }
+        .no-vehicle-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+        .no-vehicle-text { opacity: 0.8; margin-bottom: 24px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .tab { flex: 1; padding: 10px; text-align: center; background: rgba(255,255,255,0.1); border: none; border-radius: 10px; color: white; cursor: pointer; font-size: 14px; }
+        .tab.active { background: #4CAF50; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="logo">
+                <span class="logo-icon">⚡</span>
+                <span class="logo-text">Offgrid Compass</span>
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn" onclick="showSetup()" title="Einstellungen">⚙️</button>
+                <button class="icon-btn" onclick="logout()" title="Logout">🚪</button>
+            </div>
+        </div>
+
+        <div id="loadingState" class="loading">
+            <div class="spinner"></div>
+            <p>Lade Daten...</p>
+        </div>
+
+        <div id="loginState" style="display: none; text-align: center; padding: 40px 20px;">
+            <div style="font-size: 64px; margin-bottom: 20px;">⚡</div>
+            <h1 style="font-size: 28px; margin-bottom: 8px;">Offgrid Compass</h1>
+            <p style="opacity: 0.8; margin-bottom: 30px;">Deine Autarkie im Blick</p>
+            
+            <div class="form-group">
+                <input type="email" class="form-input" id="loginEmail" placeholder="E-Mail" style="text-align: center;">
+            </div>
+            <div class="form-group">
+                <input type="password" class="form-input" id="loginPassword" placeholder="Passwort" style="text-align: center;">
+            </div>
+            
+            <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom: 10px;">Einloggen</button>
+            <button class="btn btn-secondary" onclick="doRegister()">Neuen Account erstellen</button>
+        </div>
+
+        <div id="noVehicleState" class="no-vehicle" style="display: none;">
+            <div class="no-vehicle-icon">🚐</div>
+            <div class="no-vehicle-title">Kein Fahrzeug eingerichtet</div>
+            <div class="no-vehicle-text">Richte zuerst dein Fahrzeug ein.</div>
+            <button class="btn btn-primary" onclick="showSetup()">Fahrzeug einrichten</button>
+        </div>
+
+        <div id="dashboardState" style="display: none;">
+            <div class="vehicle-selector" onclick="showSetup()">
+                <div class="vehicle-info">
+                    <span class="vehicle-icon">🚐</span>
+                    <div>
+                        <div class="vehicle-name" id="vehicleName">Mein Fahrzeug</div>
+                        <div class="vehicle-details" id="vehicleDetails">-</div>
+                    </div>
+                </div>
+                <span>▶</span>
+            </div>
+
+            <div class="resources-grid" id="resourcesGrid"></div>
+
+            <div class="quick-actions">
+                <div class="quick-actions-title">Schnellaktionen</div>
+                <div class="quick-actions-grid" id="quickActionsGrid"></div>
+            </div>
+        </div>
+
+        <div id="setupScreen" class="setup-screen">
+            <div class="setup-title">Fahrzeug einrichten</div>
+            <div class="setup-subtitle">Wähle deine Ressourcen und gib die Kapazitäten ein</div>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchSetupTab('categories')">Kategorien</button>
+                <button class="tab" onclick="switchSetupTab('details')">Details</button>
+            </div>
+
+            <form id="vehicleForm" onsubmit="saveVehicle(event)">
+                <div id="categoriesTab">
+                    <div class="input-row">
+                        <div class="form-group" style="flex:2;">
+                            <label class="form-label">Fahrzeugname</label>
+                            <input type="text" class="form-input" id="setupName" placeholder="z.B. Mein Fuso" required>
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label class="form-label">Personen</label>
+                            <input type="number" class="form-input" id="setupPersonCount" placeholder="2" min="1" max="10" value="2">
+                        </div>
+                    </div>
+
+                    <div class="setup-section">
+                        <div class="setup-section-title">Aktive Ressourcen</div>
+                        <div id="categoryToggles"></div>
+                    </div>
+                </div>
+
+                <div id="detailsTab" style="display: none;">
+                    <div id="resourceDetails"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Speichern</button>
+                <button type="button" class="btn btn-secondary" style="margin-top: 10px;" onclick="cancelSetup()">Abbrechen</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="resourceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">Ressource anpassen</span>
+                <button class="modal-close" onclick="closeResourceModal()">✕</button>
+            </div>
+            <div class="slider-container">
+                <div class="slider-header">
+                    <span>Füllstand</span>
+                    <span class="slider-value" id="modalSliderValue">50%</span>
+                </div>
+                <input type="range" id="modalSlider" min="0" max="100" value="50" oninput="updateSliderValue()">
+            </div>
+            <div class="btn-grid">
+                <button class="btn btn-secondary" onclick="setLevel(0)">Leer</button>
+                <button class="btn btn-secondary" onclick="setLevel(25)">25%</button>
+                <button class="btn btn-secondary" onclick="setLevel(50)">50%</button>
+                <button class="btn btn-secondary" onclick="setLevel(75)">75%</button>
+                <button class="btn btn-secondary" onclick="setLevel(100)">Voll</button>
+            </div>
+            <button class="btn btn-primary" onclick="saveResourceLevel()">Speichern</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="consumersModal">
+        <div class="modal" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <span class="modal-title">🔋 Verbraucher verwalten</span>
+                <button class="modal-close" onclick="closeConsumersModal()">✕</button>
+            </div>
+            <div id="consumersList"></div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="setup-section-title">Neuer Verbraucher</div>
+                <div class="input-row">
+                    <div class="form-group" style="flex: 2;">
+                        <input type="text" class="form-input" id="newConsumerName" placeholder="z.B. Kühlschrank">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <input type="number" class="form-input" id="newConsumerAh" placeholder="Ah/Tag" step="0.1">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="addConsumer()">Hinzufügen</button>
+            </div>
+            <div id="consumersSummary" style="margin-top: 16px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3001/api' : '/api';
+
+        const RESOURCE_CONFIG = {
+            water: { icon: '💧', name: 'Wasser', unit: 'L', color: '#3498db', capacityField: 'freshWaterCapacity', consumptionField: 'waterConsumptionPerDay', inverted: false },
+            power: { icon: '🔋', name: 'Batterie', unit: 'Ah', color: '#f39c12', capacityField: 'batteryCapacity', consumptionField: 'powerConsumptionPerDay', inverted: false },
+            fuel: { icon: '⛽', name: 'Treibstoff', unit: 'L', color: '#e74c3c', capacityField: 'fuelTankCapacity', consumptionField: 'fuelConsumption', inverted: false },
+            gas: { icon: '🔥', name: 'Gas', unit: 'kg', color: '#9b59b6', capacityField: 'gasCapacity', consumptionField: 'gasConsumptionPerDay', inverted: false },
+            greywater: { icon: '🚿', name: 'Abwasser', unit: 'L', color: '#95a5a6', capacityField: 'greyWaterCapacity', consumptionField: null, inverted: true },
+            toilet: { icon: '🚽', name: 'Toilette', unit: '', color: '#1abc9c', capacityField: 'toiletCapacity', consumptionField: null, inverted: true, hasType: true, types: ['ttt', 'clesana', 'chemical'] },
+            food: { icon: '🍽️', name: 'Essen', unit: 'Tage', color: '#e67e22', capacityField: 'foodCapacity', consumptionField: null, inverted: false },
+            drinks: { icon: '🥤', name: 'Getränke', unit: 'L', color: '#3498db', capacityField: 'drinksCapacity', consumptionField: null, inverted: false },
+            beer: { icon: '🍺', name: 'Bier', unit: 'Flaschen', color: '#f1c40f', capacityField: 'beerCapacity', consumptionField: 'beerConsumptionPerDay', inverted: false }
+        };
+
+        let currentVehicle = null;
+        let currentLevels = null;
+        let currentResourceType = null;
+        let enabledResources = ['water', 'power', 'fuel', 'gas'];
+
+        function getToken() { return localStorage.getItem('token'); }
+
+        async function fetchAPI(endpoint, options = {}) {
+            const token = getToken();
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...options.headers }
+            });
+            if (response.status === 401 || response.status === 403) { 
+                localStorage.removeItem('token');
+                const loginEl = document.getElementById('loginState');
+                if (loginEl) {
+                    document.getElementById('loadingState').style.display = 'none';
+                    document.getElementById('noVehicleState').style.display = 'none';
+                    document.getElementById('dashboardState').style.display = 'none';
+                    document.getElementById('setupScreen').classList.remove('active');
+                    loginEl.style.display = 'block';
+                }
+                return null; 
+            }
+            return response.json();
+        }
+
+        async function init() {
+            const token = getToken();
+            if (!token) { 
+                showLogin(); 
+                return; 
+            }
+            try {
+                const data = await fetchAPI('/resources/current');
+                if (!data || !data.vehicle) { showNoVehicle(); return; }
+                currentVehicle = data.vehicle;
+                currentLevels = data.levels;
+                enabledResources = currentVehicle.enabled_resources || ['water', 'power', 'fuel', 'gas'];
+                showDashboard();
+                updateUI();
+            } catch (error) {
+                console.error('Init error:', error);
+                showNoVehicle();
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('noVehicleState').style.display = 'none';
+            document.getElementById('dashboardState').style.display = 'none';
+            document.getElementById('setupScreen').classList.remove('active');
+            document.getElementById('loginState').style.display = 'block';
+        }
+
+        async function doLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) { alert('Bitte E-Mail und Passwort eingeben'); return; }
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    init();
+                } else {
+                    alert(data.message || 'Login fehlgeschlagen');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login fehlgeschlagen');
+            }
+        }
+
+        async function doRegister() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            if (!email || !password) { alert('Bitte E-Mail und Passwort eingeben'); return; }
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: email.split('@')[0], email, password })
+                });
+                const data = await response.json();
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    init();
+                } else if (response.ok) {
+                    alert('Registrierung erfolgreich! Bitte einloggen.');
+                } else {
+                    alert(data.message || 'Registrierung fehlgeschlagen');
+                }
+            } catch (error) {
+                console.error('Register error:', error);
+                alert('Registrierung fehlgeschlagen');
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('loginState').style.display = 'none';
+            document.getElementById('noVehicleState').style.display = 'none';
+            document.getElementById('dashboardState').style.display = 'none';
+            document.getElementById('setupScreen').classList.remove('active');
+        }
+
+        function showNoVehicle() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('loginState').style.display = 'none';
+            document.getElementById('noVehicleState').style.display = 'block';
+            document.getElementById('dashboardState').style.display = 'none';
+            document.getElementById('setupScreen').classList.remove('active');
+        }
+
+        function showDashboard() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('loginState').style.display = 'none';
+            document.getElementById('noVehicleState').style.display = 'none';
+            document.getElementById('dashboardState').style.display = 'block';
+            document.getElementById('setupScreen').classList.remove('active');
+        }
+
+        function showSetup() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('loginState').style.display = 'none';
+            document.getElementById('noVehicleState').style.display = 'none';
+            document.getElementById('dashboardState').style.display = 'none';
+            document.getElementById('setupScreen').classList.add('active');
+            renderCategoryToggles();
+            renderResourceDetails();
+            if (currentVehicle) prefillSetup();
+        }
+
+        function cancelSetup() {
+            if (currentVehicle) showDashboard();
+            else showNoVehicle();
+        }
+
+        function switchSetupTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('categoriesTab').style.display = tab === 'categories' ? 'block' : 'none';
+            document.getElementById('detailsTab').style.display = tab === 'details' ? 'block' : 'none';
+            if (tab === 'details') renderResourceDetails();
+        }
+
+        function renderCategoryToggles() {
+            const container = document.getElementById('categoryToggles');
+            container.innerHTML = '';
+            for (const [key, config] of Object.entries(RESOURCE_CONFIG)) {
+                const checked = enabledResources.includes(key) ? 'checked' : '';
+                container.innerHTML += `
+                    <label class="category-toggle">
+                        <input type="checkbox" id="toggle_${key}" ${checked} onchange="toggleCategory('${key}')">
+                        <span class="category-toggle-icon">${config.icon}</span>
+                        <span class="category-toggle-label">${config.name}</span>
+                    </label>
+                `;
+            }
+        }
+
+        function toggleCategory(key) {
+            const checked = document.getElementById(`toggle_${key}`).checked;
+            if (checked && !enabledResources.includes(key)) enabledResources.push(key);
+            else if (!checked) enabledResources = enabledResources.filter(r => r !== key);
+            renderResourceDetails();
+        }
+
+        function renderResourceDetails() {
+            const container = document.getElementById('resourceDetails');
+            container.innerHTML = '';
+            for (const key of enabledResources) {
+                const config = RESOURCE_CONFIG[key];
+                
+                if (key === 'toilet') {
+                    container.innerHTML += `
+                        <div class="setup-section">
+                            <div class="setup-section-title">${config.icon} ${config.name}</div>
+                            <div class="form-group">
+                                <label class="form-label">Toiletten-Typ</label>
+                                <select class="form-input" id="setup_toiletType" onchange="updateToiletFields()">
+                                    <option value="ttt">Trockentrenntoilette (TTT)</option>
+                                    <option value="clesana">Clesana (Verbrennend)</option>
+                                    <option value="chemical">Chemie-Toilette</option>
+                                </select>
+                            </div>
+                            <div id="toiletTypeFields"></div>
+                        </div>
+                    `;
+                    setTimeout(updateToiletFields, 0);
+                } else {
+                    container.innerHTML += `
+                        <div class="setup-section">
+                            <div class="setup-section-title">${config.icon} ${config.name}</div>
+                            <div class="input-row">
+                                <div class="form-group">
+                                    <label class="form-label">Kapazität (${config.unit})</label>
+                                    <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1">
+                                </div>
+                                ${config.consumptionField ? `
+                                <div class="form-group">
+                                    <label class="form-label">Verbrauch/Tag</label>
+                                    <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="z.B. 15" step="0.1">
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function updateToiletFields() {
+            const type = document.getElementById('setup_toiletType')?.value || 'ttt';
+            const container = document.getElementById('toiletTypeFields');
+            if (!container) return;
+            
+            if (type === 'ttt') {
+                container.innerHTML = `
+                    <div class="input-row">
+                        <div class="form-group">
+                            <label class="form-label">Feststoff-Tank (L)</label>
+                            <input type="number" class="form-input" id="setup_tttSolidCapacity" placeholder="z.B. 10" step="1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pipi-Tank (L)</label>
+                            <input type="number" class="form-input" id="setup_tttLiquidCapacity" placeholder="z.B. 10" step="1">
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'clesana') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label class="form-label">Anzahl Tüten</label>
+                        <input type="number" class="form-input" id="setup_clesanaBagsCapacity" placeholder="z.B. 50" step="1">
+                    </div>
+                `;
+            } else if (type === 'chemical') {
+                container.innerHTML = `
+                    <div class="form-group">
+                        <label class="form-label">Tank-Kapazität (L)</label>
+                        <input type="number" class="form-input" id="setup_chemicalTankCapacity" placeholder="z.B. 20" step="1">
+                    </div>
+                `;
+            }
+            
+            if (currentVehicle) prefillToiletFields();
+        }
+
+        function prefillToiletFields() {
+            const type = document.getElementById('setup_toiletType')?.value;
+            if (type === 'ttt') {
+                const solid = document.getElementById('setup_tttSolidCapacity');
+                const liquid = document.getElementById('setup_tttLiquidCapacity');
+                if (solid && currentVehicle.ttt_solid_capacity) solid.value = currentVehicle.ttt_solid_capacity;
+                if (liquid && currentVehicle.ttt_liquid_capacity) liquid.value = currentVehicle.ttt_liquid_capacity;
+            } else if (type === 'clesana') {
+                const bags = document.getElementById('setup_clesanaBagsCapacity');
+                if (bags && currentVehicle.clesana_bags_capacity) bags.value = currentVehicle.clesana_bags_capacity;
+            } else if (type === 'chemical') {
+                const tank = document.getElementById('setup_chemicalTankCapacity');
+                if (tank && currentVehicle.chemical_tank_capacity) tank.value = currentVehicle.chemical_tank_capacity;
+            }
+        }
+
+        function prefillSetup() {
+            document.getElementById('setupName').value = currentVehicle.name || '';
+            document.getElementById('setupPersonCount').value = currentVehicle.person_count || 2;
+            for (const key of enabledResources) {
+                const config = RESOURCE_CONFIG[key];
+                const capEl = document.getElementById(`setup_${config.capacityField}`);
+                const conEl = config.consumptionField ? document.getElementById(`setup_${config.consumptionField}`) : null;
+                if (capEl && currentVehicle[toSnakeCase(config.capacityField)]) capEl.value = currentVehicle[toSnakeCase(config.capacityField)];
+                if (conEl && currentVehicle[toSnakeCase(config.consumptionField)]) conEl.value = currentVehicle[toSnakeCase(config.consumptionField)];
+            }
+            if (currentVehicle.toilet_type) {
+                const el = document.getElementById('setup_toiletType');
+                if (el) el.value = currentVehicle.toilet_type;
+            }
+        }
+
+        function toSnakeCase(str) { return str.replace(/([A-Z])/g, '_$1').toLowerCase(); }
+
+        function updateUI() {
+            if (!currentVehicle || !currentLevels) return;
+            document.getElementById('vehicleName').textContent = currentVehicle.name || 'Mein Fahrzeug';
+            document.getElementById('vehicleDetails').textContent = `${enabledResources.length} Ressourcen aktiv`;
+            renderResourceCards();
+            renderQuickActions();
+        }
+
+        function renderResourceCards() {
+            const grid = document.getElementById('resourcesGrid');
+            grid.innerHTML = '';
+            for (const key of enabledResources) {
+                if (key === 'toilet') {
+                    renderToiletCard(grid);
+                    continue;
+                }
+                const config = RESOURCE_CONFIG[key];
+                const levelField = `${key}_level`;
+                const pctField = `${key}_percentage`;
+                const remainField = key === 'fuel' ? 'fuel_km_remaining' : `${key}_days_remaining`;
+                const level = currentLevels[levelField] || 0;
+                const pct = currentLevels[pctField] || 0;
+                const remaining = currentLevels[remainField];
+                const capacity = currentVehicle[toSnakeCase(config.capacityField)] || 0;
+                let statusClass = '';
+                if (config.inverted) {
+                    if (pct > 80) statusClass = 'critical inverted';
+                    else if (pct > 60) statusClass = 'warning inverted';
+                } else {
+                    if (pct < 20) statusClass = 'critical';
+                    else if (pct < 40) statusClass = 'warning';
+                }
+                const remainingText = remaining != null ? (key === 'fuel' ? `~${remaining} km` : `~${remaining} Tage`) : '--';
+                const consumersBtn = key === 'power' ? `<button class="icon-btn" onclick="event.stopPropagation(); openConsumersModal();" style="position:absolute;bottom:8px;right:8px;font-size:14px;">⚙️</button>` : '';
+                grid.innerHTML += `
+                    <div class="resource-card ${statusClass}" onclick="openResourceModal('${key}')" style="position:relative;">
+                        ${consumersBtn}
+                        <div class="resource-header">
+                            <span class="resource-icon">${config.icon}</span>
+                            <span class="resource-percentage">${Math.round(pct)}%</span>
+                        </div>
+                        <div class="resource-name">${config.name}</div>
+                        <div class="resource-bar-bg">
+                            <div class="resource-bar ${key}" style="width: ${pct}%"></div>
+                        </div>
+                        <div class="resource-remaining">${remainingText}</div>
+                        <div class="resource-value">${Math.round(level)} / ${capacity} ${config.unit}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderToiletCard(grid) {
+            const toiletType = currentVehicle.toilet_type || 'ttt';
+            
+            if (toiletType === 'ttt') {
+                const solidCap = currentVehicle.ttt_solid_capacity || 10;
+                const liquidCap = currentVehicle.ttt_liquid_capacity || 10;
+                const solidPct = currentLevels.ttt_solid_percentage || 0;
+                const liquidPct = currentLevels.ttt_liquid_percentage || 0;
+                const solidDays = currentLevels.ttt_solid_days ?? '--';
+                const liquidDays = currentLevels.ttt_liquid_days ?? '--';
+                grid.innerHTML += `
+                    <div class="resource-card inverted" style="position:relative;">
+                        <div class="resource-header">
+                            <span class="resource-icon">🚽</span>
+                            <span class="resource-percentage">TTT</span>
+                        </div>
+                        <div class="resource-name">Trockentrenn</div>
+                        <div style="display:flex;gap:8px;margin:8px 0;">
+                            <div style="flex:1;text-align:center;">
+                                <div style="font-size:11px;opacity:0.7;">Feststoff ~${solidDays}d</div>
+                                <div class="resource-bar-bg"><div class="resource-bar toilet" style="width:${solidPct}%"></div></div>
+                                <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:4px;" onclick="toiletUse('solid')">💩 Benutzt</button>
+                            </div>
+                            <div style="flex:1;text-align:center;">
+                                <div style="font-size:11px;opacity:0.7;">Urin ~${liquidDays}d</div>
+                                <div class="resource-bar-bg"><div class="resource-bar toilet" style="width:${liquidPct}%"></div></div>
+                                <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:4px;" onclick="toiletUse('liquid')">💧 Benutzt</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (toiletType === 'clesana') {
+                const bagsCap = currentVehicle.clesana_bags_capacity || 50;
+                const bagsRemaining = currentLevels.clesana_bags_remaining ?? bagsCap;
+                const pct = Math.round((bagsRemaining / bagsCap) * 100);
+                const days = currentLevels.clesana_days ?? '--';
+                grid.innerHTML += `
+                    <div class="resource-card ${pct < 20 ? 'critical' : pct < 40 ? 'warning' : ''}" style="position:relative;">
+                        <div class="resource-header">
+                            <span class="resource-icon">🚽</span>
+                            <span class="resource-percentage">${bagsRemaining}</span>
+                        </div>
+                        <div class="resource-name">Clesana</div>
+                        <div class="resource-bar-bg">
+                            <div class="resource-bar toilet" style="width:${pct}%"></div>
+                        </div>
+                        <div class="resource-remaining">~${days} Tage</div>
+                        <div class="resource-value">${bagsRemaining} / ${bagsCap} Tüten</div>
+                        <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:8px;width:100%;" onclick="toiletUse('clesana')">🚽 Benutzt (-1 Tüte)</button>
+                    </div>
+                `;
+            } else if (toiletType === 'chemical') {
+                const tankCap = currentVehicle.chemical_tank_capacity || 20;
+                const pct = currentLevels.chemical_percentage || 0;
+                const level = currentLevels.chemical_level || 0;
+                const days = currentLevels.chemical_days ?? '--';
+                grid.innerHTML += `
+                    <div class="resource-card inverted ${pct > 80 ? 'critical' : pct > 60 ? 'warning' : ''}" style="position:relative;">
+                        <div class="resource-header">
+                            <span class="resource-icon">🚽</span>
+                            <span class="resource-percentage">${Math.round(pct)}%</span>
+                        </div>
+                        <div class="resource-name">Chemie-WC</div>
+                        <div class="resource-bar-bg">
+                            <div class="resource-bar toilet" style="width:${pct}%"></div>
+                        </div>
+                        <div class="resource-remaining">~${days} Tage</div>
+                        <div class="resource-value">${Math.round(level)} / ${tankCap} L</div>
+                        <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:8px;width:100%;" onclick="toiletUse('chemical')">🚽 Benutzt</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function toiletUse(type) {
+            try {
+                await fetchAPI('/resources/toilet-use', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, useType: type })
+                });
+                const data = await fetchAPI('/resources/current');
+                if (data) {
+                    currentLevels = data.levels;
+                    updateUI();
+                }
+            } catch (error) { console.error('Toilet use error:', error); }
+        }
+
+        function renderQuickActions() {
+            const grid = document.getElementById('quickActionsGrid');
+            grid.innerHTML = '';
+            for (const key of enabledResources) {
+                const config = RESOURCE_CONFIG[key];
+                const action = config.inverted ? 'empty' : 'full';
+                const label = config.inverted ? 'Geleert' : 'Voll';
+                grid.innerHTML += `
+                    <button class="quick-action-btn" onclick="quickAction('${key}', '${action}')">
+                        <span class="icon">${config.icon}</span>
+                        <span class="label">${label}</span>
+                    </button>
+                `;
+            }
+        }
+
+        function openResourceModal(type) {
+            currentResourceType = type;
+            const config = RESOURCE_CONFIG[type];
+            document.getElementById('modalTitle').textContent = `${config.icon} ${config.name}`;
+            const pct = currentLevels[`${type}_percentage`] || 0;
+            document.getElementById('modalSlider').value = pct;
+            document.getElementById('modalSliderValue').textContent = `${Math.round(pct)}%`;
+            document.getElementById('resourceModal').classList.add('active');
+        }
+
+        function closeResourceModal() { document.getElementById('resourceModal').classList.remove('active'); }
+        function updateSliderValue() { document.getElementById('modalSliderValue').textContent = `${document.getElementById('modalSlider').value}%`; }
+        function setLevel(pct) { document.getElementById('modalSlider').value = pct; updateSliderValue(); }
+
+        async function saveResourceLevel() {
+            const pct = parseInt(document.getElementById('modalSlider').value);
+            const config = RESOURCE_CONFIG[currentResourceType];
+            const capacity = currentVehicle[toSnakeCase(config.capacityField)] || 100;
+            const amount = (pct / 100) * capacity;
+            try {
+                const data = await fetchAPI('/resources/log', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, resourceType: currentResourceType, action: 'set_level', amount })
+                });
+                currentLevels = data.levels;
+                updateUI();
+                closeResourceModal();
+            } catch (error) { console.error('Save error:', error); }
+        }
+
+        async function quickAction(type, action) {
+            try {
+                const data = await fetchAPI('/resources/log', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, resourceType: type, action, amount: 0 })
+                });
+                currentLevels = data.levels;
+                updateUI();
+            } catch (error) { console.error('Quick action error:', error); }
+        }
+
+        async function saveVehicle(event) {
+            event.preventDefault();
+            const personCount = parseInt(document.getElementById('setupPersonCount').value) || 2;
+            const vehicleData = { name: document.getElementById('setupName').value, enabledResources, isDefault: true, personCount };
+            for (const key of enabledResources) {
+                const config = RESOURCE_CONFIG[key];
+                const capEl = document.getElementById(`setup_${config.capacityField}`);
+                if (capEl && capEl.value) vehicleData[config.capacityField] = parseFloat(capEl.value);
+                if (config.consumptionField) {
+                    const conEl = document.getElementById(`setup_${config.consumptionField}`);
+                    if (conEl && conEl.value) vehicleData[config.consumptionField] = parseFloat(conEl.value);
+                }
+            }
+            const toiletType = document.getElementById('setup_toiletType');
+            if (toiletType) {
+                vehicleData.toiletType = toiletType.value;
+                if (toiletType.value === 'ttt') {
+                    const solid = document.getElementById('setup_tttSolidCapacity');
+                    const liquid = document.getElementById('setup_tttLiquidCapacity');
+                    if (solid?.value) vehicleData.tttSolidCapacity = parseInt(solid.value);
+                    if (liquid?.value) vehicleData.tttLiquidCapacity = parseInt(liquid.value);
+                } else if (toiletType.value === 'clesana') {
+                    const bags = document.getElementById('setup_clesanaBagsCapacity');
+                    if (bags?.value) vehicleData.clesanaBagsCapacity = parseInt(bags.value);
+                } else if (toiletType.value === 'chemical') {
+                    const tank = document.getElementById('setup_chemicalTankCapacity');
+                    if (tank?.value) vehicleData.chemicalTankCapacity = parseInt(tank.value);
+                }
+            }
+            try {
+                if (currentVehicle && currentVehicle.id) {
+                    await fetchAPI(`/vehicles/${currentVehicle.id}`, { method: 'PUT', body: JSON.stringify(vehicleData) });
+                } else {
+                    await fetchAPI('/vehicles', { method: 'POST', body: JSON.stringify(vehicleData) });
+                }
+                await init();
+            } catch (error) { console.error('Save vehicle error:', error); }
+        }
+
+        function logout() { localStorage.removeItem('token'); window.location.href = 'index.html'; }
+
+        let consumers = [];
+
+        async function openConsumersModal() {
+            document.getElementById('consumersModal').classList.add('active');
+            await loadConsumers();
+        }
+
+        function closeConsumersModal() {
+            document.getElementById('consumersModal').classList.remove('active');
+        }
+
+        async function loadConsumers() {
+            if (!currentVehicle) return;
+            try {
+                const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
+                if (data) {
+                    consumers = data.consumers || [];
+                    renderConsumers();
+                    updateConsumersSummary(data);
+                }
+            } catch (error) { console.error('Load consumers error:', error); }
+        }
+
+        function renderConsumers() {
+            const list = document.getElementById('consumersList');
+            if (consumers.length === 0) {
+                list.innerHTML = '<p style="opacity: 0.7; text-align: center;">Noch keine Verbraucher angelegt</p>';
+                return;
+            }
+            list.innerHTML = consumers.map(c => `
+                <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 8px;">
+                    <span style="font-size: 24px;">${c.icon || '⚡'}</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${c.name}</div>
+                        <div style="font-size: 12px; opacity: 0.7;">${c.consumption_ah} Ah/Tag</div>
+                    </div>
+                    <button class="icon-btn" onclick="toggleConsumer(${c.id})" style="opacity: ${c.is_active ? 1 : 0.4};">${c.is_active ? '✅' : '⬜'}</button>
+                    <button class="icon-btn" onclick="deleteConsumer(${c.id})">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function updateConsumersSummary(data) {
+            const summary = document.getElementById('consumersSummary');
+            const batteryCapacity = currentVehicle.battery_capacity || 100;
+            const daysRemaining = data.totalConsumption > 0 ? (batteryCapacity / data.totalConsumption).toFixed(1) : '∞';
+            summary.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Aktive Verbraucher:</span>
+                    <strong>${data.activeCount}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span>Gesamtverbrauch:</span>
+                    <strong>${data.totalConsumption.toFixed(1)} Ah/Tag</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span>Reichweite bei 100%:</span>
+                    <strong>${daysRemaining} Tage</strong>
+                </div>
+            `;
+        }
+
+        async function addConsumer() {
+            const name = document.getElementById('newConsumerName').value.trim();
+            const ah = parseFloat(document.getElementById('newConsumerAh').value);
+            if (!name || !ah) { alert('Bitte Name und Verbrauch eingeben'); return; }
+            try {
+                await fetchAPI('/consumers', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, name, consumptionAh: ah })
+                });
+                document.getElementById('newConsumerName').value = '';
+                document.getElementById('newConsumerAh').value = '';
+                await loadConsumers();
+            } catch (error) { console.error('Add consumer error:', error); }
+        }
+
+        async function toggleConsumer(id) {
+            try {
+                await fetchAPI(`/consumers/${id}/toggle`, { method: 'PATCH' });
+                await loadConsumers();
+            } catch (error) { console.error('Toggle consumer error:', error); }
+        }
+
+        async function deleteConsumer(id) {
+            if (!confirm('Verbraucher wirklich löschen?')) return;
+            try {
+                await fetchAPI(`/consumers/${id}`, { method: 'DELETE' });
+                await loadConsumers();
+            } catch (error) { console.error('Delete consumer error:', error); }
+        }
+
+        init();
+    </script>
+</body>
+</html>

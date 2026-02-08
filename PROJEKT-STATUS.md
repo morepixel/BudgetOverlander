@@ -142,18 +142,21 @@ Automatische Schwierigkeits-Bewertung basierend auf:
 - ❌ Session-Management
 - ❌ OAuth (Google/Facebook)
 
-#### 3. Deployment (❌ Nicht konfiguriert)
-**Geplant:**
-- Backend: Hetzner/Railway
-- Frontend: Netlify
-- Domain: TBD
+#### 3. Deployment (✅ Eingerichtet & Funktioniert)
+**Status:** LIVE auf Hetzner Cloud
+- Backend: ✅ Hetzner Cloud (ubuntu-4gb-hel1-1)
+- Frontend: ✅ Hetzner Cloud (via Nginx)
+- Domain: ✅ budget.wirkstoff.com
+- GitHub Actions: ✅ Auto-Deployment bei git push
 
 **Dateien vorhanden:**
 - `DEPLOYMENT.md` - Deployment-Anleitung
+- `GITHUB-ACTIONS-SETUP.md` - GitHub Actions Setup-Guide
+- `.github/workflows/deploy-hetzner.yml` - Auto-Deployment Workflow
 - `HETZNER-FIX.md` - Hetzner-spezifische Fixes
-- `RAILWAY-DEPLOYMENT.md` - Railway-Anleitung
+- `RAILWAY-DEPLOYMENT.md` - Railway-Anleitung (Alternative)
 - `setup-hetzner.sh` - Setup-Script
-- `netlify.toml` - Netlify-Config
+- `netlify.toml` - Netlify-Config (Alternative)
 
 ---
 
@@ -277,12 +280,12 @@ Budget Overlander/
 - [ ] Cross-Browser-Testing
 - [ ] Error-Handling verbessern
 
-### Phase 2: Deployment-Vorbereitung (1 Tag)
-- [ ] Environment-Variablen konfigurieren
-- [ ] Production-Build erstellen
-- [ ] Hetzner-Server aufsetzen
-- [ ] Netlify-Deployment konfigurieren
-- [ ] Domain aufschalten
+### Phase 2: Deployment-Vorbereitung (✅ ABGESCHLOSSEN)
+- [x] Environment-Variablen konfigurieren
+- [x] Production-Build erstellen
+- [x] Hetzner-Server aufsetzen
+- [x] GitHub Actions Auto-Deployment eingerichtet
+- [x] Domain aufgeschaltet (budget.wirkstoff.com)
 
 ### Phase 3: Datenbank-Migration (1-2 Tage)
 - [ ] PostgreSQL aufsetzen
