@@ -1,0 +1,59 @@
+name: Deploy to Hetzner
+
+'on':
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Hetzner via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            echo "🚀 Starting deployment..."
+            
+            # Navigate to project directory
+            cd /var/www/budget-overlander
+            
+            # Pull latest code
+            echo "📥 Pulling latest code from GitHub..."
+            git pull origin main
+            
+            # Backend: Install dependencies
+            echo "📦 Installing backend dependencies..."
+            cd backend
+            npm install --production
+            
+            # Restart backend with PM2
+            echo "🔄 Restarting backend..."
+            pm2 restart budget-overlander-api || pm2 start server.js --name budget-overlander-api
+            
+            # Show PM2 status
+            pm2 status
+            
+            # Frontend: No build needed (static files)
+            echo "✅ Frontend updated (static files)"
+            
+            # Reload Nginx (optional)
+            echo "🔄 Reloading Nginx..."
+            sudo systemctl reload nginx
+            
+            echo "✅ Deployment completed successfully!"
+            
+      - name: Health Check
+        run: |
+          echo "🏥 Checking API health..."
+          sleep 5
+          curl -f http://budget.wirkstoff.com/api/health || exit 1
+          echo "✅ API is healthy!"
