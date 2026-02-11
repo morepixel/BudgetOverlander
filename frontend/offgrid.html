@@ -803,13 +803,19 @@
                 }
             }
             try {
+                document.body.insertAdjacentHTML('beforeend', `<div id="debug" style="position:fixed;bottom:0;left:0;right:0;background:#333;color:#0f0;padding:10px;font-size:12px;z-index:9999;">Speichere: ${JSON.stringify(vehicleData).substring(0,100)}...</div>`);
+                let result;
                 if (currentVehicle && currentVehicle.id) {
-                    await fetchAPI(`/vehicles/${currentVehicle.id}`, { method: 'PUT', body: JSON.stringify(vehicleData) });
+                    result = await fetchAPI(`/vehicles/${currentVehicle.id}`, { method: 'PUT', body: JSON.stringify(vehicleData) });
                 } else {
-                    await fetchAPI('/vehicles', { method: 'POST', body: JSON.stringify(vehicleData) });
+                    result = await fetchAPI('/vehicles', { method: 'POST', body: JSON.stringify(vehicleData) });
                 }
+                document.getElementById('debug').textContent = 'Gespeichert: ' + JSON.stringify(result);
+                setTimeout(() => document.getElementById('debug')?.remove(), 3000);
                 await init();
-            } catch (error) { console.error('Save vehicle error:', error); }
+            } catch (error) { 
+                document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;bottom:0;left:0;right:0;background:#900;color:#fff;padding:10px;font-size:12px;z-index:9999;">FEHLER: ${error.message}</div>`);
+            }
         }
 
         function logout() { localStorage.removeItem('token'); window.location.href = 'index.html'; }
