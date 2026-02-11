@@ -1047,9 +1047,10 @@
             const consumptionInput = document.getElementById('setup_powerConsumptionPerDay');
             const summaryEl = document.getElementById('setupConsumersSummary');
             if (!list) return;
+            if (!Array.isArray(setupConsumers)) setupConsumers = [];
             
             const activeCount = setupConsumers.filter(c => c.is_active).length;
-            const total = setupConsumers.filter(c => c.is_active).reduce((sum, c) => sum + (c.consumption_ah || 0), 0);
+            const total = setupConsumers.filter(c => c.is_active).reduce((sum, c) => sum + parseFloat(c.consumption_ah || 0), 0);
             const batteryCapacity = parseFloat(document.getElementById('setup_batteryCapacity')?.value) || (currentVehicle?.battery_capacity) || 100;
             const daysRemaining = total > 0 ? (batteryCapacity / total).toFixed(1) : '∞';
             
