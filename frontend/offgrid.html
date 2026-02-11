@@ -545,16 +545,20 @@
         }
 
         const RESOURCE_CONFIG = {
-            water: { icon: '💧', name: 'Wasser', unit: 'L', color: '#3498db', capacityField: 'freshWaterCapacity', consumptionField: 'waterConsumptionPerDay', inverted: false },
-            power: { icon: '🔋', name: 'Batterie', unit: 'Ah', color: '#f39c12', capacityField: 'batteryCapacity', consumptionField: 'powerConsumptionPerDay', inverted: false },
-            fuel: { icon: '⛽', name: 'Treibstoff', unit: 'L', color: '#e74c3c', capacityField: 'fuelTankCapacity', consumptionField: 'fuelConsumption', inverted: false },
-            gas: { icon: '🔥', name: 'Gas', unit: 'kg', color: '#9b59b6', capacityField: 'gasCapacity', consumptionField: 'gasConsumptionPerDay', inverted: false },
-            greywater: { icon: '🚿', name: 'Abwasser', unit: 'L', color: '#95a5a6', capacityField: 'greyWaterCapacity', consumptionField: null, inverted: true },
-            toilet: { icon: '🚽', name: 'Toilette', unit: '', color: '#1abc9c', capacityField: 'toiletCapacity', consumptionField: null, inverted: true, hasType: true, types: ['ttt', 'clesana', 'chemical'] },
-            food: { icon: '🍽️', name: 'Essen', unit: 'Tage', color: '#e67e22', capacityField: 'foodCapacity', consumptionField: null, inverted: false },
-            drinks: { icon: '🥤', name: 'Getränke', unit: 'L', color: '#3498db', capacityField: 'drinksCapacity', consumptionField: null, inverted: false },
-            beer: { icon: '🍺', name: 'Bier', unit: 'Flaschen', color: '#f1c40f', capacityField: 'beerCapacity', consumptionField: 'beerConsumptionPerDay', inverted: false }
+            water: { icon: '💧', key: 'water', unit: 'L', color: '#3498db', capacityField: 'freshWaterCapacity', consumptionField: 'waterConsumptionPerDay', inverted: false },
+            power: { icon: '🔋', key: 'power', unit: 'Ah', color: '#f39c12', capacityField: 'batteryCapacity', consumptionField: 'powerConsumptionPerDay', inverted: false },
+            fuel: { icon: '⛽', key: 'fuel', unit: 'L', color: '#e74c3c', capacityField: 'fuelTankCapacity', consumptionField: 'fuelConsumption', inverted: false },
+            gas: { icon: '🔥', key: 'gas', unit: 'kg', color: '#9b59b6', capacityField: 'gasCapacity', consumptionField: 'gasConsumptionPerDay', inverted: false },
+            greywater: { icon: '🚿', key: 'greywater', unit: 'L', color: '#95a5a6', capacityField: 'greyWaterCapacity', consumptionField: null, inverted: true },
+            toilet: { icon: '🚽', key: 'toilet', unit: '', color: '#1abc9c', capacityField: 'toiletCapacity', consumptionField: null, inverted: true, hasType: true, types: ['ttt', 'clesana', 'chemical'] },
+            food: { icon: '🍽️', key: 'food', unit: 'Tage', color: '#e67e22', capacityField: 'foodCapacity', consumptionField: null, inverted: false },
+            drinks: { icon: '🥤', key: 'drinks', unit: 'L', color: '#3498db', capacityField: 'drinksCapacity', consumptionField: null, inverted: false },
+            beer: { icon: '🍺', key: 'beer', unit: 'Flaschen', color: '#f1c40f', capacityField: 'beerCapacity', consumptionField: 'beerConsumptionPerDay', inverted: false }
         };
+
+        function getResourceName(key) {
+            return t(`resources.${key}`) || key;
+        }
 
         let currentVehicle = null;
         let currentLevels = null;
@@ -718,7 +722,7 @@
                     <label class="category-toggle">
                         <input type="checkbox" id="toggle_${key}" ${checked} onchange="toggleCategory('${key}')">
                         <span class="category-toggle-icon">${config.icon}</span>
-                        <span class="category-toggle-label">${config.name}</span>
+                        <span class="category-toggle-label">${getResourceName(key)}</span>
                     </label>
                 `;
             }
@@ -740,7 +744,7 @@
                 if (key === 'toilet') {
                     container.innerHTML += `
                         <div class="setup-section">
-                            <div class="setup-section-title">${config.icon} ${config.name}</div>
+                            <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
                             <div class="form-group">
                                 <label class="form-label">Toiletten-Typ</label>
                                 <select class="form-input" id="setup_toiletType" onchange="updateToiletFields()">
@@ -756,7 +760,7 @@
                 } else if (key === 'power') {
                     container.innerHTML += `
                         <div class="setup-section">
-                            <div class="setup-section-title">${config.icon} ${config.name}</div>
+                            <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
                             <div class="input-row">
                                 <div class="form-group">
                                     <label class="form-label">Kapazität (${config.unit})</label>
@@ -786,7 +790,7 @@
                 } else {
                     container.innerHTML += `
                         <div class="setup-section">
-                            <div class="setup-section-title">${config.icon} ${config.name}</div>
+                            <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
                             <div class="input-row">
                                 <div class="form-group">
                                     <label class="form-label">Kapazität (${config.unit})</label>
@@ -928,7 +932,7 @@
                             <span class="resource-icon">${config.icon}</span>
                             <span class="resource-percentage">${Math.round(pct)}%</span>
                         </div>
-                        <div class="resource-name">${config.name}</div>
+                        <div class="resource-name">${getResourceName(key)}</div>
                         <div class="resource-bar-bg">
                             <div class="resource-bar ${key}" style="width: ${pct}%"></div>
                         </div>
@@ -1028,7 +1032,7 @@
                         <span class="resource-percentage">${Math.round(pct)}%</span>
                         <button class="icon-btn" onclick="event.stopPropagation(); openConsumersModal();" style="font-size:14px;margin-left:8px;">⚙️</button>
                     </div>
-                    <div class="resource-name">${config.name}</div>
+                    <div class="resource-name">${getResourceName('power')}</div>
                     <div class="resource-bar-bg">
                         <div class="resource-bar power" style="width: ${pct}%"></div>
                     </div>
@@ -1146,7 +1150,7 @@
         function openResourceModal(type) {
             currentResourceType = type;
             const config = RESOURCE_CONFIG[type];
-            document.getElementById('modalTitle').textContent = `${config.icon} ${config.name}`;
+            document.getElementById('modalTitle').textContent = `${config.icon} ${getResourceName(currentResourceType)}`;
             const pct = currentLevels[`${type}_percentage`] || 0;
             document.getElementById('modalSlider').value = pct;
             document.getElementById('modalSliderValue').textContent = `${Math.round(pct)}%`;
