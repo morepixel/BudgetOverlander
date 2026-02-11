@@ -526,6 +526,35 @@
                         </div>
                     `;
                     setTimeout(updateToiletFields, 0);
+                } else if (key === 'power') {
+                    container.innerHTML += `
+                        <div class="setup-section">
+                            <div class="setup-section-title">${config.icon} ${config.name}</div>
+                            <div class="input-row">
+                                <div class="form-group">
+                                    <label class="form-label">Kapazität (${config.unit})</label>
+                                    <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Verbrauch/Tag (berechnet)</label>
+                                    <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="aus Verbrauchern" step="0.1" readonly style="opacity:0.7;">
+                                </div>
+                            </div>
+                            <div style="margin-top:12px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <label class="form-label" style="margin:0;">Verbraucher</label>
+                                    <span id="setupConsumersTotal" style="font-size:12px;opacity:0.7;">0 Ah/Tag</span>
+                                </div>
+                                <div id="setupConsumersList" style="max-height:150px;overflow-y:auto;margin-bottom:8px;"></div>
+                                <div class="input-row" style="gap:8px;">
+                                    <input type="text" class="form-input" id="setupNewConsumerName" placeholder="z.B. Kühlschrank" style="flex:2;">
+                                    <input type="number" class="form-input" id="setupNewConsumerAh" placeholder="Ah/Tag" step="0.1" style="flex:1;">
+                                    <button class="btn btn-secondary" onclick="addSetupConsumer()" style="padding:8px 12px;">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(loadSetupConsumers, 0);
                 } else {
                     container.innerHTML += `
                         <div class="setup-section">
@@ -996,6 +1025,73 @@
                 await fetchAPI(`/consumers/${id}`, { method: 'DELETE' });
                 await loadConsumers();
             } catch (error) { console.error('Delete consumer error:', error); }
+        }
+
+        let setupConsumers = [];
+
+        async function loadSetupConsumers() {
+            if (!currentVehicle) return;
+            try {
+                const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
+                if (data) {
+                    setupConsumers = data.consumers || [];
+                    renderSetupConsumers();
+                }
+            } catch (error) { console.error('Load setup consumers error:', error); }
+        }
+
+        function renderSetupConsumers() {
+            const list = document.getElementById('setupConsumersList');
+            const totalEl = document.getElementById('setupConsumersTotal');
+            const consumptionInput = document.getElementById('setup_powerConsumptionPerDay');
+            if (!list) return;
+            
+            const total = setupConsumers.filter(c => c.is_active).reduce((sum, c) => sum + (c.consumption_ah || 0), 0);
+            if (totalEl) totalEl.textContent = `${total.toFixed(1)} Ah/Tag`;
+            if (consumptionInput) consumptionInput.value = total.toFixed(2);
+            
+            if (setupConsumers.length === 0) {
+                list.innerHTML = '<p style="opacity: 0.5; text-align: center; font-size: 12px; margin: 8px 0;">Keine Verbraucher</p>';
+                return;
+            }
+            list.innerHTML = setupConsumers.map(c => `
+                <div style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 4px; font-size: 13px;">
+                    <button class="icon-btn" onclick="toggleSetupConsumer(${c.id})" style="font-size:12px;padding:2px;">${c.is_active ? '✅' : '⬜'}</button>
+                    <span style="flex: 1;">${c.name}</span>
+                    <span style="opacity: 0.7;">${c.consumption_ah} Ah</span>
+                    <button class="icon-btn" onclick="deleteSetupConsumer(${c.id})" style="font-size:12px;padding:2px;">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        async function addSetupConsumer() {
+            const name = document.getElementById('setupNewConsumerName').value.trim();
+            const ah = parseFloat(document.getElementById('setupNewConsumerAh').value);
+            if (!name || !ah) { alert('Bitte Name und Verbrauch eingeben'); return; }
+            try {
+                await fetchAPI('/consumers', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, name, consumptionAh: ah })
+                });
+                document.getElementById('setupNewConsumerName').value = '';
+                document.getElementById('setupNewConsumerAh').value = '';
+                await loadSetupConsumers();
+            } catch (error) { console.error('Add setup consumer error:', error); }
+        }
+
+        async function toggleSetupConsumer(id) {
+            try {
+                await fetchAPI(`/consumers/${id}/toggle`, { method: 'PATCH' });
+                await loadSetupConsumers();
+            } catch (error) { console.error('Toggle setup consumer error:', error); }
+        }
+
+        async function deleteSetupConsumer(id) {
+            if (!confirm('Verbraucher löschen?')) return;
+            try {
+                await fetchAPI(`/consumers/${id}`, { method: 'DELETE' });
+                await loadSetupConsumers();
+            } catch (error) { console.error('Delete setup consumer error:', error); }
         }
 
         let customResources = [];
