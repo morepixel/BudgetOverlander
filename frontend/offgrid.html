@@ -466,7 +466,7 @@
             document.getElementById('setupScreen').classList.add('active');
             renderCategoryToggles();
             renderResourceDetails();
-            if (currentVehicle) prefillSetup();
+            if (currentVehicle) setTimeout(prefillSetup, 50);
         }
 
         function cancelSetup() {
