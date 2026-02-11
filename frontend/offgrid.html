@@ -649,10 +649,19 @@
 
         function toSnakeCase(str) { return str.replace(/([A-Z])/g, '_$1').toLowerCase(); }
 
-        function updateUI() {
+        async function updateUI() {
             if (!currentVehicle || !currentLevels) return;
             document.getElementById('vehicleName').textContent = currentVehicle.name || 'Mein Fahrzeug';
-            document.getElementById('vehicleDetails').textContent = `${enabledResources.length} Ressourcen aktiv`;
+            
+            // Zähle auch Custom Resources
+            let customCount = 0;
+            try {
+                const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                customCount = customRes?.length || 0;
+            } catch (e) {}
+            const totalResources = enabledResources.length + customCount;
+            document.getElementById('vehicleDetails').textContent = `${totalResources} Ressourcen aktiv`;
+            
             renderResourceCards();
             renderQuickActions();
         }
