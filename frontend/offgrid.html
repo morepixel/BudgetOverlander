@@ -531,7 +531,7 @@
                         <input type="number" class="form-input" id="newCustomCapacity" placeholder="Max" step="0.1">
                     </div>
                     <div class="form-group" style="flex: 1;">
-                        <label>Verbrauch/Tag</label>
+                        <label>pro Person/Tag</label>
                         <input type="number" class="form-input" id="newCustomConsumption" placeholder="Optional" step="0.1">
                     </div>
                 </div>
@@ -965,7 +965,7 @@
                                 </div>
                                 ${config.consumptionField ? `
                                 <div class="form-group">
-                                    <label class="form-label">Verbrauch/Tag</label>
+                                    <label class="form-label">pro Person/Tag</label>
                                     <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="z.B. 15" step="0.1">
                                 </div>
                                 ` : ''}
@@ -1058,7 +1058,8 @@
                 customCount = customRes?.length || 0;
             } catch (e) {}
             const totalResources = enabledResources.length + customCount;
-            document.getElementById('vehicleDetails').textContent = `${totalResources} Ressourcen aktiv`;
+            const personCount = currentVehicle.person_count || 2;
+            document.getElementById('vehicleDetails').textContent = `${personCount} Personen • ${totalResources} Ressourcen`;
             
             renderResourceCards();
             renderQuickActions();
@@ -1123,7 +1124,9 @@
                             if (pct < 20) statusClass = 'critical';
                             else if (pct < 40) statusClass = 'warning';
                         }
-                        const daysRemaining = r.consumption_per_day ? (r.current_level / r.consumption_per_day).toFixed(1) : null;
+                        const customPersonCount = currentVehicle.person_count || 2;
+                        const customTotalConsumption = r.consumption_per_day ? r.consumption_per_day * customPersonCount : null;
+                        const daysRemaining = customTotalConsumption ? (r.current_level / customTotalConsumption).toFixed(1) : null;
                         grid.innerHTML += `
                             <div class="resource-card ${statusClass}" onclick="openCustomResourcesModal()" style="position:relative;">
                                 <div class="resource-header">
@@ -1629,7 +1632,9 @@
             list.innerHTML = customResources.map(r => {
                 const pct = r.current_percentage || 0;
                 const color = r.is_inverted ? (pct > 75 ? '#e74c3c' : pct > 50 ? '#f39c12' : '#27ae60') : (pct < 25 ? '#e74c3c' : pct < 50 ? '#f39c12' : '#27ae60');
-                const daysRemaining = r.consumption_per_day ? (r.current_level / r.consumption_per_day).toFixed(1) : null;
+                const modalPersonCount = currentVehicle.person_count || 2;
+                const modalTotalConsumption = r.consumption_per_day ? r.consumption_per_day * modalPersonCount : null;
+                const daysRemaining = modalTotalConsumption ? (r.current_level / modalTotalConsumption).toFixed(1) : null;
                 return `
                 <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 8px;">
                     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">

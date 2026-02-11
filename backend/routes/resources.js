@@ -385,10 +385,11 @@ function calculateRemaining(vehicle, levels) {
   
   const persons = vehicle.person_count || 2;
 
-  // 1. Wasser (pro Person ca. 5L/Tag für Trinken+Kochen+Waschen)
+  // 1. Wasser - Verbrauch pro Person × Anzahl Personen
   if (levels.water_level != null) {
-    const consumption = vehicle.water_consumption_per_day || (5 * persons);
-    result.water_days_remaining = Math.round(levels.water_level / consumption * 10) / 10;
+    const consumptionPerPerson = vehicle.water_consumption_per_day || 5; // Default: 5L pro Person/Tag
+    const totalConsumption = consumptionPerPerson * persons;
+    result.water_days_remaining = Math.round(levels.water_level / totalConsumption * 10) / 10;
   }
 
   // 2. Strom
@@ -403,17 +404,19 @@ function calculateRemaining(vehicle, levels) {
     result.fuel_km_remaining = Math.round(levels.fuel_level / consumption * 100);
   }
 
-  // 4. Gas
+  // 4. Gas - Verbrauch pro Person × Anzahl Personen
   if (levels.gas_level != null) {
-    const consumption = vehicle.gas_consumption_per_day || 0.5;
-    result.gas_days_remaining = Math.round(levels.gas_level / consumption * 10) / 10;
+    const consumptionPerPerson = vehicle.gas_consumption_per_day || 0.25; // Default: 0.25kg pro Person/Tag
+    const totalConsumption = consumptionPerPerson * persons;
+    result.gas_days_remaining = Math.round(levels.gas_level / totalConsumption * 10) / 10;
   }
 
-  // 5. Abwasser (invertiert: Tage bis voll)
+  // 5. Abwasser (invertiert: Tage bis voll) - Verbrauch pro Person × Anzahl Personen
   if (levels.greywater_level != null && vehicle.grey_water_capacity) {
-    const consumption = vehicle.water_consumption_per_day || (5 * persons);
+    const consumptionPerPerson = vehicle.water_consumption_per_day || 5;
+    const totalConsumption = consumptionPerPerson * persons;
     const remaining = vehicle.grey_water_capacity - levels.greywater_level;
-    result.greywater_days_remaining = Math.round(remaining / consumption * 10) / 10;
+    result.greywater_days_remaining = Math.round(remaining / totalConsumption * 10) / 10;
   }
 
   // 6. Toilette - je nach Typ (ca. 6 Gänge pro Person pro Tag)
@@ -452,10 +455,11 @@ function calculateRemaining(vehicle, levels) {
     result.drinks_days_remaining = Math.round(levels.drinks_level / consumption * 10) / 10;
   }
 
-  // 9. Bier
+  // 9. Bier - Verbrauch pro Person × Anzahl Personen
   if (levels.beer_level != null) {
-    const consumption = vehicle.beer_consumption_per_day || 2;
-    result.beer_days_remaining = Math.round(levels.beer_level / consumption * 10) / 10;
+    const consumptionPerPerson = vehicle.beer_consumption_per_day || 1; // Default: 1 Flasche pro Person/Tag
+    const totalConsumption = consumptionPerPerson * persons;
+    result.beer_days_remaining = Math.round(levels.beer_level / totalConsumption * 10) / 10;
   }
 
   return result;

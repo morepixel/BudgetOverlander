@@ -45,7 +45,7 @@
     "subtitle": "Select your resources and enter capacities",
     "vehicleName": "Vehicle Name",
     "capacity": "Capacity",
-    "consumptionPerDay": "Consumption/Day",
+    "consumptionPerDay": "per Person/Day",
     "selectResources": "Select Resources",
     "personCount": "Persons",
     "categories": "Categories",
