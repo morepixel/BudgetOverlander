@@ -893,7 +893,19 @@
         function renderResourceDetails() {
             const container = document.getElementById('resourceDetails');
             container.innerHTML = '';
+            let resourceIndex = 0;
             for (const key of enabledResources) {
+                // Ad-Banner nach der 2. Ressource (z.B. nach Batterie)
+                if (resourceIndex === 2 && !isPremium) {
+                    container.innerHTML += `
+                        <div class="ad-container ad-banner" style="margin: 16px 0;">
+                            <div class="ad-label">Anzeige</div>
+                            <div class="ad-demo-text">📢 Google AdSense Banner</div>
+                            <div class="ad-demo-size">320x100 (Large Mobile Banner)</div>
+                        </div>
+                    `;
+                }
+                resourceIndex++;
                 const config = RESOURCE_CONFIG[key];
                 
                 if (key === 'toilet') {
