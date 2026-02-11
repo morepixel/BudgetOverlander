@@ -665,6 +665,10 @@
                     renderToiletCard(grid);
                     continue;
                 }
+                if (key === 'power') {
+                    await renderPowerCard(grid);
+                    continue;
+                }
                 const config = RESOURCE_CONFIG[key];
                 const levelField = `${key}_level`;
                 const pctField = `${key}_percentage`;
@@ -682,10 +686,8 @@
                     else if (pct < 40) statusClass = 'warning';
                 }
                 const remainingText = remaining != null ? (key === 'fuel' ? `~${remaining} km` : `~${remaining} Tage`) : '--';
-                const consumersBtn = key === 'power' ? `<button class="icon-btn" onclick="event.stopPropagation(); openConsumersModal();" style="position:absolute;bottom:8px;right:8px;font-size:14px;">⚙️</button>` : '';
                 grid.innerHTML += `
                     <div class="resource-card ${statusClass}" onclick="openResourceModal('${key}')" style="position:relative;">
-                        ${consumersBtn}
                         <div class="resource-header">
                             <span class="resource-icon">${config.icon}</span>
                             <span class="resource-percentage">${Math.round(pct)}%</span>
@@ -740,6 +742,63 @@
                         <div style="font-size:32px;opacity:0.5;">➕</div>
                         <div style="font-size:12px;opacity:0.7;">Eigene Ressource</div>
                     </div>
+                </div>
+            `;
+        }
+
+        async function renderPowerCard(grid) {
+            const config = RESOURCE_CONFIG.power;
+            const level = currentLevels.power_level || 0;
+            const pct = currentLevels.power_percentage || 0;
+            const remaining = currentLevels.power_days_remaining;
+            const capacity = currentVehicle.battery_capacity || 0;
+            let statusClass = pct < 20 ? 'critical' : pct < 40 ? 'warning' : '';
+            const remainingText = remaining != null ? `~${remaining} Tage` : '--';
+            
+            // Verbraucher laden
+            let consumersHtml = '';
+            try {
+                const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
+                const consumersList = data?.consumers || [];
+                const activeConsumers = consumersList.filter(c => c.is_active);
+                const totalConsumption = activeConsumers.reduce((sum, c) => sum + parseFloat(c.consumption_ah || 0), 0);
+                
+                if (consumersList.length > 0) {
+                    consumersHtml = `
+                        <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                                <span style="opacity:0.7;">Verbraucher</span>
+                                <span>${totalConsumption.toFixed(1)} Ah/Tag</span>
+                            </div>
+                            <div style="max-height:80px;overflow-y:auto;font-size:11px;">
+                                ${consumersList.slice(0, 4).map(c => `
+                                    <div style="display:flex;align-items:center;gap:4px;padding:2px 0;opacity:${c.is_active ? 1 : 0.5};">
+                                        <span>${c.is_active ? '✅' : '⬜'}</span>
+                                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</span>
+                                        <span>${c.consumption_ah} Ah</span>
+                                    </div>
+                                `).join('')}
+                                ${consumersList.length > 4 ? `<div style="opacity:0.5;text-align:center;">+${consumersList.length - 4} weitere</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) { /* Verbraucher nicht geladen */ }
+            
+            grid.innerHTML += `
+                <div class="resource-card ${statusClass}" onclick="openResourceModal('power')" style="position:relative;">
+                    <button class="icon-btn" onclick="event.stopPropagation(); openConsumersModal();" style="position:absolute;bottom:8px;right:8px;font-size:14px;">⚙️</button>
+                    <div class="resource-header">
+                        <span class="resource-icon">${config.icon}</span>
+                        <span class="resource-percentage">${Math.round(pct)}%</span>
+                    </div>
+                    <div class="resource-name">${config.name}</div>
+                    <div class="resource-bar-bg">
+                        <div class="resource-bar power" style="width: ${pct}%"></div>
+                    </div>
+                    <div class="resource-remaining">${remainingText}</div>
+                    <div class="resource-value">${Math.round(level)} / ${capacity} ${config.unit}</div>
+                    ${consumersHtml}
                 </div>
             `;
         }
