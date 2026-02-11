@@ -41,15 +41,22 @@
     "close": "Schließen"
   },
   "setup": {
-    "title": "Fahrzeug-Setup",
+    "title": "Fahrzeug einrichten",
+    "subtitle": "Wähle deine Ressourcen und gib die Kapazitäten ein",
     "vehicleName": "Fahrzeugname",
     "capacity": "Kapazität",
     "consumptionPerDay": "Verbrauch/Tag",
     "selectResources": "Ressourcen auswählen",
-    "personCount": "Personenanzahl"
+    "personCount": "Personen",
+    "categories": "Kategorien",
+    "details": "Details",
+    "activeResources": "Aktive Ressourcen",
+    "createVehicle": "Fahrzeug einrichten"
   },
   "consumers": {
     "title": "Verbraucher",
+    "manage": "Verbraucher verwalten",
+    "new": "Neuer Verbraucher",
     "name": "Name",
     "consumptionAh": "Verbrauch (Ah/Tag)",
     "active": "Aktive Verbraucher",
@@ -60,6 +67,7 @@
   },
   "customResources": {
     "title": "Eigene Ressourcen",
+    "new": "Neue Ressource erstellen",
     "add": "Eigene Ressource hinzufügen",
     "icon": "Symbol",
     "unit": "Einheit"
@@ -70,11 +78,22 @@
     "unknown": "--"
   },
   "messages": {
+    "loading": "Lade Daten...",
     "saved": "Gespeichert",
     "deleted": "Gelöscht",
     "error": "Fehler",
     "confirmDelete": "Wirklich löschen?",
-    "noVehicle": "Kein Fahrzeug gefunden"
+    "noVehicle": "Kein Fahrzeug gefunden",
+    "noVehicleTitle": "Kein Fahrzeug eingerichtet",
+    "noVehicleText": "Richte zuerst dein Fahrzeug ein."
+  },
+  "modal": {
+    "level": "Füllstand",
+    "empty": "Leer",
+    "full": "Voll"
+  },
+  "quickActions": {
+    "title": "Schnellaktionen"
   },
   "auth": {
     "login": "Anmelden",

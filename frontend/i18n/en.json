@@ -1,6 +1,7 @@
 {
   "app": {
     "title": "DaysLeft",
+    "subtitle": "Your off-grid autonomy at a glance",
     "resourcesActive": "{count} resources active"
   },
   "nav": {
@@ -41,14 +42,21 @@
   },
   "setup": {
     "title": "Vehicle Setup",
+    "subtitle": "Select your resources and enter capacities",
     "vehicleName": "Vehicle Name",
     "capacity": "Capacity",
     "consumptionPerDay": "Consumption/Day",
     "selectResources": "Select Resources",
-    "personCount": "Number of People"
+    "personCount": "Persons",
+    "categories": "Categories",
+    "details": "Details",
+    "activeResources": "Active Resources",
+    "createVehicle": "Set up vehicle"
   },
   "consumers": {
     "title": "Consumers",
+    "manage": "Manage Consumers",
+    "new": "New Consumer",
     "name": "Name",
     "consumptionAh": "Consumption (Ah/Day)",
     "active": "Active Consumers",
@@ -59,6 +67,7 @@
   },
   "customResources": {
     "title": "Custom Resources",
+    "new": "Create new resource",
     "add": "Add Custom Resource",
     "icon": "Icon",
     "unit": "Unit"
@@ -69,11 +78,22 @@
     "unknown": "--"
   },
   "messages": {
+    "loading": "Loading data...",
     "saved": "Saved",
     "deleted": "Deleted",
     "error": "Error",
     "confirmDelete": "Really delete?",
-    "noVehicle": "No vehicle found"
+    "noVehicle": "No vehicle found",
+    "noVehicleTitle": "No vehicle set up",
+    "noVehicleText": "Please set up your vehicle first."
+  },
+  "modal": {
+    "level": "Level",
+    "empty": "Empty",
+    "full": "Full"
+  },
+  "quickActions": {
+    "title": "Quick Actions"
   },
   "auth": {
     "login": "Login",
