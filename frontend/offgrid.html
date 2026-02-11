@@ -271,6 +271,49 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="customResourcesModal">
+        <div class="modal" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <span class="modal-title">📦 Eigene Ressourcen</span>
+                <button class="modal-close" onclick="closeCustomResourcesModal()">✕</button>
+            </div>
+            <div id="customResourcesList"></div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div class="setup-section-title">Neue Ressource erstellen</div>
+                <div class="input-row">
+                    <div class="form-group" style="flex: 0.5;">
+                        <label>Icon</label>
+                        <input type="text" class="form-input" id="newCustomIcon" value="📦" maxlength="2">
+                    </div>
+                    <div class="form-group" style="flex: 2;">
+                        <label>Name</label>
+                        <input type="text" class="form-input" id="newCustomName" placeholder="z.B. Hundefutter">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="form-group" style="flex: 1;">
+                        <label>Einheit</label>
+                        <input type="text" class="form-input" id="newCustomUnit" placeholder="kg, L, Stück" value="Stück">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Kapazität</label>
+                        <input type="number" class="form-input" id="newCustomCapacity" placeholder="Max" step="0.1">
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Verbrauch/Tag</label>
+                        <input type="number" class="form-input" id="newCustomConsumption" placeholder="Optional" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="newCustomInverted"> Invertiert (je voller desto schlechter, z.B. Müll)
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="addCustomResource()">Ressource erstellen</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:3001/api' : '/api';
@@ -584,7 +627,7 @@
             renderQuickActions();
         }
 
-        function renderResourceCards() {
+        async function renderResourceCards() {
             const grid = document.getElementById('resourcesGrid');
             grid.innerHTML = '';
             for (const key of enabledResources) {
@@ -626,6 +669,49 @@
                     </div>
                 `;
             }
+            
+            // Custom Resources laden und anzeigen
+            try {
+                const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                if (customRes && customRes.length > 0) {
+                    for (const r of customRes) {
+                        const pct = r.current_percentage || 0;
+                        let statusClass = '';
+                        if (r.is_inverted) {
+                            if (pct > 80) statusClass = 'critical inverted';
+                            else if (pct > 60) statusClass = 'warning inverted';
+                        } else {
+                            if (pct < 20) statusClass = 'critical';
+                            else if (pct < 40) statusClass = 'warning';
+                        }
+                        const daysRemaining = r.consumption_per_day ? (r.current_level / r.consumption_per_day).toFixed(1) : null;
+                        grid.innerHTML += `
+                            <div class="resource-card ${statusClass}" onclick="openCustomResourcesModal()" style="position:relative;">
+                                <div class="resource-header">
+                                    <span class="resource-icon">${r.icon}</span>
+                                    <span class="resource-percentage">${Math.round(pct)}%</span>
+                                </div>
+                                <div class="resource-name">${r.name}</div>
+                                <div class="resource-bar-bg">
+                                    <div class="resource-bar" style="width: ${pct}%; background: #9b59b6;"></div>
+                                </div>
+                                <div class="resource-remaining">${daysRemaining ? `~${daysRemaining} Tage` : '--'}</div>
+                                <div class="resource-value">${Math.round(r.current_level || 0)} / ${r.capacity} ${r.unit}</div>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (e) { /* Custom resources not loaded */ }
+            
+            // Button zum Hinzufügen neuer Custom Resources
+            grid.innerHTML += `
+                <div class="resource-card" onclick="openCustomResourcesModal()" style="display:flex;align-items:center;justify-content:center;border:2px dashed rgba(255,255,255,0.3);background:transparent;cursor:pointer;">
+                    <div style="text-align:center;">
+                        <div style="font-size:32px;opacity:0.5;">➕</div>
+                        <div style="font-size:12px;opacity:0.7;">Eigene Ressource</div>
+                    </div>
+                </div>
+            `;
         }
 
         function renderToiletCard(grid) {
@@ -910,6 +996,97 @@
                 await fetchAPI(`/consumers/${id}`, { method: 'DELETE' });
                 await loadConsumers();
             } catch (error) { console.error('Delete consumer error:', error); }
+        }
+
+        let customResources = [];
+
+        async function openCustomResourcesModal() {
+            document.getElementById('customResourcesModal').classList.add('active');
+            await loadCustomResources();
+        }
+
+        function closeCustomResourcesModal() {
+            document.getElementById('customResourcesModal').classList.remove('active');
+        }
+
+        async function loadCustomResources() {
+            if (!currentVehicle) return;
+            try {
+                customResources = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                renderCustomResources();
+            } catch (error) { console.error('Load custom resources error:', error); }
+        }
+
+        function renderCustomResources() {
+            const list = document.getElementById('customResourcesList');
+            if (!customResources || customResources.length === 0) {
+                list.innerHTML = '<p style="opacity: 0.7; text-align: center;">Noch keine eigenen Ressourcen angelegt</p>';
+                return;
+            }
+            list.innerHTML = customResources.map(r => {
+                const pct = r.current_percentage || 0;
+                const color = r.is_inverted ? (pct > 75 ? '#e74c3c' : pct > 50 ? '#f39c12' : '#27ae60') : (pct < 25 ? '#e74c3c' : pct < 50 ? '#f39c12' : '#27ae60');
+                const daysRemaining = r.consumption_per_day ? (r.current_level / r.consumption_per_day).toFixed(1) : null;
+                return `
+                <div style="padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <span style="font-size: 24px;">${r.icon}</span>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600;">${r.name}</div>
+                            <div style="font-size: 12px; opacity: 0.7;">${r.current_level || 0} / ${r.capacity} ${r.unit}${daysRemaining ? ` • ${daysRemaining} Tage` : ''}</div>
+                        </div>
+                        <button class="icon-btn" onclick="deleteCustomResource(${r.id})">🗑️</button>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden;">
+                        <div style="background: ${color}; height: 100%; width: ${pct}%; transition: width 0.3s;"></div>
+                    </div>
+                    <input type="range" min="0" max="${r.capacity}" step="0.1" value="${r.current_level || 0}" 
+                        style="width: 100%; margin-top: 8px;" onchange="updateCustomResourceLevel(${r.id}, this.value)">
+                </div>
+            `}).join('');
+        }
+
+        async function addCustomResource() {
+            const icon = document.getElementById('newCustomIcon').value || '📦';
+            const name = document.getElementById('newCustomName').value.trim();
+            const unit = document.getElementById('newCustomUnit').value || 'Stück';
+            const capacity = parseFloat(document.getElementById('newCustomCapacity').value);
+            const consumption = parseFloat(document.getElementById('newCustomConsumption').value) || null;
+            const isInverted = document.getElementById('newCustomInverted').checked;
+            
+            if (!name || !capacity) { alert('Bitte Name und Kapazität eingeben'); return; }
+            
+            try {
+                await fetchAPI('/custom-resources', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, name, icon, unit, capacity, consumptionPerDay: consumption, isInverted })
+                });
+                document.getElementById('newCustomName').value = '';
+                document.getElementById('newCustomCapacity').value = '';
+                document.getElementById('newCustomConsumption').value = '';
+                document.getElementById('newCustomInverted').checked = false;
+                await loadCustomResources();
+                await init();
+            } catch (error) { console.error('Add custom resource error:', error); }
+        }
+
+        async function updateCustomResourceLevel(id, level) {
+            try {
+                await fetchAPI(`/custom-resources/${id}/level`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ level: parseFloat(level) })
+                });
+                await loadCustomResources();
+            } catch (error) { console.error('Update custom resource level error:', error); }
+        }
+
+        async function deleteCustomResource(id) {
+            if (!confirm('Ressource wirklich löschen?')) return;
+            try {
+                await fetchAPI(`/custom-resources/${id}`, { method: 'DELETE' });
+                await loadCustomResources();
+                await init();
+            } catch (error) { console.error('Delete custom resource error:', error); }
         }
 
         init();

@@ -189,7 +189,32 @@ CREATE INDEX IF NOT EXISTS idx_current_levels_vehicle ON current_levels(vehicle_
 CREATE INDEX IF NOT EXISTS idx_current_levels_user ON current_levels(user_id);
 
 -- =============================================
--- 4. POWER CONSUMERS TABELLE (Verbraucher für Batterie)
+-- 4. CUSTOM RESOURCES TABELLE (Benutzerdefinierte Ressourcen)
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS custom_resources (
+    id SERIAL PRIMARY KEY,
+    vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    
+    name VARCHAR(100) NOT NULL,              -- z.B. "Hundefutter", "Medikamente"
+    icon VARCHAR(10) DEFAULT '📦',            -- Emoji für Anzeige
+    unit VARCHAR(20) DEFAULT 'Stück',        -- Einheit: Stück, kg, L, Tage
+    capacity DECIMAL(10,2) NOT NULL,         -- Maximale Kapazität
+    consumption_per_day DECIMAL(6,2),        -- Verbrauch pro Tag (optional)
+    current_level DECIMAL(10,2),             -- Aktueller Stand
+    current_percentage DECIMAL(5,2),         -- Prozent
+    is_inverted BOOLEAN DEFAULT false,       -- true = je voller desto schlechter (wie Abwasser)
+    
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_custom_resources_vehicle ON custom_resources(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_custom_resources_user ON custom_resources(user_id);
+
+-- =============================================
+-- 5. POWER CONSUMERS TABELLE (Verbraucher für Batterie)
 -- =============================================
 
 CREATE TABLE IF NOT EXISTS power_consumers (

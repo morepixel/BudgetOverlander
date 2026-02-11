@@ -23,6 +23,7 @@ import park4nightRouter from './routes/park4night.js';
 import photosRouter from './routes/photos.js';
 import resourcesRouter from './routes/resources.js';
 import consumersRouter from './routes/consumers.js';
+import customResourcesRouter from './routes/custom-resources.js';
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ app.use('/api/park4night', park4nightRouter);
 app.use('/api/photos', photosRouter);
 app.use('/api/resources', resourcesRouter);
 app.use('/api/consumers', consumersRouter);
+app.use('/api/custom-resources', customResourcesRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {
