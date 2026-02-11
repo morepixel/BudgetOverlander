@@ -1,6 +1,7 @@
 {
   "app": {
     "title": "DaysLeft",
+    "subtitle": "Deine Autarkie im Blick",
     "resourcesActive": "{count} Ressourcen aktiv"
   },
   "nav": {

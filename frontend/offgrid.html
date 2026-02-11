@@ -123,14 +123,151 @@
         .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
         .tab { flex: 1; padding: 10px; text-align: center; background: rgba(255,255,255,0.1); border: none; border-radius: 10px; color: white; cursor: pointer; font-size: 14px; }
         .tab.active { background: #4CAF50; }
+
+        /* Animated Logo */
+        .animated-logo {
+            width: 120px;
+            height: 50px;
+            position: relative;
+            overflow: hidden;
+            background: #D2B48C;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .animated-logo .logo-sky {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 28px;
+            background: #87CEEB;
+        }
+        .animated-logo .logo-sun {
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            width: 12px;
+            height: 12px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+        .animated-logo .logo-mountains {
+            position: absolute;
+            bottom: 22px;
+            left: 0;
+            width: 100%;
+            height: 15px;
+        }
+        .animated-logo .logo-mountain {
+            position: absolute;
+            bottom: 0;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 15px solid #8B7355;
+        }
+        .animated-logo .logo-text-inner {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 700;
+            color: #000;
+            white-space: nowrap;
+            z-index: 0;
+            letter-spacing: 0.5px;
+        }
+        .animated-logo .logo-truck {
+            position: absolute;
+            bottom: 22px;
+            left: -25px;
+            width: 20px;
+            height: 12px;
+            z-index: 10;
+            animation: driveTruck 4s linear infinite;
+        }
+        @keyframes driveTruck {
+            0% { left: -25px; }
+            100% { left: 125px; }
+        }
+        .animated-logo .truck-cabin {
+            background: #2c3e50;
+            width: 14px;
+            height: 8px;
+            border-radius: 1px;
+            position: absolute;
+            bottom: 3px;
+        }
+        .animated-logo .truck-cargo {
+            background: #34495e;
+            width: 6px;
+            height: 6px;
+            border-radius: 1px;
+            position: absolute;
+            bottom: 3px;
+            left: 14px;
+        }
+        .animated-logo .truck-window {
+            background: #3498db;
+            width: 5px;
+            height: 4px;
+            position: absolute;
+            bottom: 7px;
+            left: 2px;
+            border-radius: 1px;
+        }
+        .animated-logo .truck-wheel {
+            position: absolute;
+            bottom: 0;
+            width: 5px;
+            height: 5px;
+            background: #222;
+            border-radius: 50%;
+            border: 1px solid #555;
+        }
+        .animated-logo .dust {
+            position: absolute;
+            bottom: 0;
+            width: 3px;
+            height: 3px;
+            background: rgba(210, 180, 140, 0.6);
+            border-radius: 50%;
+            animation: dustCloud 0.8s ease-out infinite;
+        }
+        @keyframes dustCloud {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-5px) scale(1.5); }
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="header">
             <div class="logo">
-                <span class="logo-icon">⚡</span>
-                <span class="logo-text">DaysLeft</span>
+                <div class="animated-logo">
+                    <div class="logo-sky"></div>
+                    <div class="logo-sun"></div>
+                    <div class="logo-mountains">
+                        <div class="logo-mountain" style="left: 10px;"></div>
+                        <div class="logo-mountain" style="left: 35px; border-bottom-width: 12px; border-left-width: 12px; border-right-width: 12px;"></div>
+                        <div class="logo-mountain" style="left: 60px; border-bottom-width: 10px; border-left-width: 10px; border-right-width: 10px;"></div>
+                    </div>
+                    <div class="logo-text-inner">DaysLeft</div>
+                    <div class="logo-truck">
+                        <div class="truck-cabin"></div>
+                        <div class="truck-cargo"></div>
+                        <div class="truck-window"></div>
+                        <div class="truck-wheel" style="left: 1px;"></div>
+                        <div class="truck-wheel" style="left: 8px;"></div>
+                        <div class="truck-wheel" style="left: 15px;"></div>
+                        <div class="dust" style="left: -3px;"></div>
+                        <div class="dust" style="left: -6px; animation-delay: 0.2s;"></div>
+                        <div class="dust" style="left: -9px; animation-delay: 0.4s;"></div>
+                    </div>
+                </div>
             </div>
             <div class="header-actions">
                 <button class="icon-btn" onclick="openSettingsModal()" title="Sprache">🌐</button>
@@ -141,19 +278,39 @@
 
         <div id="loadingState" class="loading">
             <div class="spinner"></div>
-            <p>Lade Daten...</p>
+            <p data-i18n="messages.loading">Lade Daten...</p>
         </div>
 
         <div id="loginState" style="display: none; text-align: center; padding: 40px 20px;">
-            <div style="font-size: 64px; margin-bottom: 20px;">⚡</div>
+            <div class="animated-logo" style="margin: 0 auto 20px; transform: scale(1.5);">
+                <div class="logo-sky"></div>
+                <div class="logo-sun"></div>
+                <div class="logo-mountains">
+                    <div class="logo-mountain" style="left: 10px;"></div>
+                    <div class="logo-mountain" style="left: 35px; border-bottom-width: 12px; border-left-width: 12px; border-right-width: 12px;"></div>
+                    <div class="logo-mountain" style="left: 60px; border-bottom-width: 10px; border-left-width: 10px; border-right-width: 10px;"></div>
+                </div>
+                <div class="logo-text-inner">DaysLeft</div>
+                <div class="logo-truck">
+                    <div class="truck-cabin"></div>
+                    <div class="truck-cargo"></div>
+                    <div class="truck-window"></div>
+                    <div class="truck-wheel" style="left: 1px;"></div>
+                    <div class="truck-wheel" style="left: 8px;"></div>
+                    <div class="truck-wheel" style="left: 15px;"></div>
+                    <div class="dust" style="left: -3px;"></div>
+                    <div class="dust" style="left: -6px; animation-delay: 0.2s;"></div>
+                    <div class="dust" style="left: -9px; animation-delay: 0.4s;"></div>
+                </div>
+            </div>
             <h1 style="font-size: 28px; margin-bottom: 8px;">DaysLeft</h1>
-            <p style="opacity: 0.8; margin-bottom: 30px;">Deine Autarkie im Blick</p>
+            <p style="opacity: 0.8; margin-bottom: 30px;" data-i18n="app.subtitle">Deine Autarkie im Blick</p>
             
             <div class="form-group">
-                <input type="email" class="form-input" id="loginEmail" placeholder="E-Mail" style="text-align: center;">
+                <input type="email" class="form-input" id="loginEmail" placeholder="E-Mail" data-i18n-placeholder="auth.email" style="text-align: center;">
             </div>
             <div class="form-group">
-                <input type="password" class="form-input" id="loginPassword" placeholder="Passwort" style="text-align: center;">
+                <input type="password" class="form-input" id="loginPassword" placeholder="Passwort" data-i18n-placeholder="auth.password" style="text-align: center;">
             </div>
             
             <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom: 10px;" data-i18n="auth.login">Einloggen</button>
@@ -169,9 +326,9 @@
 
         <div id="noVehicleState" class="no-vehicle" style="display: none;">
             <div class="no-vehicle-icon">🚐</div>
-            <div class="no-vehicle-title">Kein Fahrzeug eingerichtet</div>
-            <div class="no-vehicle-text">Richte zuerst dein Fahrzeug ein.</div>
-            <button class="btn btn-primary" onclick="showSetup()">Fahrzeug einrichten</button>
+            <div class="no-vehicle-title" data-i18n="messages.noVehicleTitle">Kein Fahrzeug eingerichtet</div>
+            <div class="no-vehicle-text" data-i18n="messages.noVehicleText">Richte zuerst dein Fahrzeug ein.</div>
+            <button class="btn btn-primary" onclick="showSetup()" data-i18n="setup.createVehicle">Fahrzeug einrichten</button>
         </div>
 
         <div id="dashboardState" style="display: none;">
@@ -189,35 +346,35 @@
             <div class="resources-grid" id="resourcesGrid"></div>
 
             <div class="quick-actions">
-                <div class="quick-actions-title">Schnellaktionen</div>
+                <div class="quick-actions-title" data-i18n="quickActions.title">Schnellaktionen</div>
                 <div class="quick-actions-grid" id="quickActionsGrid"></div>
             </div>
         </div>
 
         <div id="setupScreen" class="setup-screen">
-            <div class="setup-title">Fahrzeug einrichten</div>
-            <div class="setup-subtitle">Wähle deine Ressourcen und gib die Kapazitäten ein</div>
+            <div class="setup-title" data-i18n="setup.title">Fahrzeug einrichten</div>
+            <div class="setup-subtitle" data-i18n="setup.subtitle">Wähle deine Ressourcen und gib die Kapazitäten ein</div>
 
             <div class="tabs">
-                <button class="tab active" onclick="switchSetupTab('categories')">Kategorien</button>
-                <button class="tab" onclick="switchSetupTab('details')">Details</button>
+                <button class="tab active" onclick="switchSetupTab('categories')" data-i18n="setup.categories">Kategorien</button>
+                <button class="tab" onclick="switchSetupTab('details')" data-i18n="setup.details">Details</button>
             </div>
 
             <form id="vehicleForm" onsubmit="saveVehicle(event)">
                 <div id="categoriesTab">
                     <div class="input-row">
                         <div class="form-group" style="flex:2;">
-                            <label class="form-label">Fahrzeugname</label>
+                            <label class="form-label" data-i18n="setup.vehicleName">Fahrzeugname</label>
                             <input type="text" class="form-input" id="setupName" placeholder="z.B. Mein Fuso" required>
                         </div>
                         <div class="form-group" style="flex:1;">
-                            <label class="form-label">Personen</label>
+                            <label class="form-label" data-i18n="setup.personCount">Personen</label>
                             <input type="number" class="form-input" id="setupPersonCount" placeholder="2" min="1" max="10" value="2">
                         </div>
                     </div>
 
                     <div class="setup-section">
-                        <div class="setup-section-title">Aktive Ressourcen</div>
+                        <div class="setup-section-title" data-i18n="setup.activeResources">Aktive Ressourcen</div>
                         <div id="categoryToggles"></div>
                     </div>
                 </div>
@@ -226,8 +383,8 @@
                     <div id="resourceDetails"></div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Speichern</button>
-                <button type="button" class="btn btn-secondary" style="margin-top: 10px;" onclick="cancelSetup()">Abbrechen</button>
+                <button type="submit" class="btn btn-primary" style="margin-top: 16px;" data-i18n="actions.save">Speichern</button>
+                <button type="button" class="btn btn-secondary" style="margin-top: 10px;" onclick="cancelSetup()" data-i18n="actions.cancel">Abbrechen</button>
             </form>
         </div>
     </div>
@@ -240,31 +397,31 @@
             </div>
             <div class="slider-container">
                 <div class="slider-header">
-                    <span>Füllstand</span>
+                    <span data-i18n="modal.level">Füllstand</span>
                     <span class="slider-value" id="modalSliderValue">50%</span>
                 </div>
                 <input type="range" id="modalSlider" min="0" max="100" value="50" oninput="updateSliderValue()">
             </div>
             <div class="btn-grid">
-                <button class="btn btn-secondary" onclick="setLevel(0)">Leer</button>
+                <button class="btn btn-secondary" onclick="setLevel(0)" data-i18n="modal.empty">Leer</button>
                 <button class="btn btn-secondary" onclick="setLevel(25)">25%</button>
                 <button class="btn btn-secondary" onclick="setLevel(50)">50%</button>
                 <button class="btn btn-secondary" onclick="setLevel(75)">75%</button>
-                <button class="btn btn-secondary" onclick="setLevel(100)">Voll</button>
+                <button class="btn btn-secondary" onclick="setLevel(100)" data-i18n="modal.full">Voll</button>
             </div>
-            <button class="btn btn-primary" onclick="saveResourceLevel()">Speichern</button>
+            <button class="btn btn-primary" onclick="saveResourceLevel()" data-i18n="actions.save">Speichern</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="consumersModal">
         <div class="modal" style="max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <span class="modal-title">🔋 Verbraucher verwalten</span>
+                <span class="modal-title">🔋 <span data-i18n="consumers.manage">Verbraucher verwalten</span></span>
                 <button class="modal-close" onclick="closeConsumersModal()">✕</button>
             </div>
             <div id="consumersList"></div>
             <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div class="setup-section-title">Neuer Verbraucher</div>
+                <div class="setup-section-title" data-i18n="consumers.new">Neuer Verbraucher</div>
                 <div class="input-row">
                     <div class="form-group" style="flex: 2;">
                         <input type="text" class="form-input" id="newConsumerName" placeholder="z.B. Kühlschrank">
@@ -273,7 +430,7 @@
                         <input type="number" class="form-input" id="newConsumerAh" placeholder="Ah/Tag" step="0.1">
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="addConsumer()">Hinzufügen</button>
+                <button class="btn btn-primary" onclick="addConsumer()" data-i18n="actions.add">Hinzufügen</button>
             </div>
             <div id="consumersSummary" style="margin-top: 16px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;"></div>
         </div>
@@ -282,12 +439,12 @@
     <div class="modal-overlay" id="customResourcesModal">
         <div class="modal" style="max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
-                <span class="modal-title">📦 Eigene Ressourcen</span>
+                <span class="modal-title">📦 <span data-i18n="customResources.title">Eigene Ressourcen</span></span>
                 <button class="modal-close" onclick="closeCustomResourcesModal()">✕</button>
             </div>
             <div id="customResourcesList"></div>
             <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div class="setup-section-title">Neue Ressource erstellen</div>
+                <div class="setup-section-title" data-i18n="customResources.new">Neue Ressource erstellen</div>
                 <div class="input-row">
                     <div class="form-group" style="flex: 0.5;">
                         <label>Icon</label>
