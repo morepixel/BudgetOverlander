@@ -191,6 +191,20 @@ router.get('/current', authenticateToken, async (req, res) => {
       levels = insertResult.rows[0];
     }
 
+    // Fix: Wenn Level 0 aber Percentage > 0, berechne Level aus Percentage und Kapazität
+    if (levels.water_level === 0 && levels.water_percentage > 0 && vehicle.fresh_water_capacity) {
+      levels.water_level = Math.round(vehicle.fresh_water_capacity * levels.water_percentage / 100);
+    }
+    if (levels.power_level === 0 && levels.power_percentage > 0 && vehicle.battery_capacity) {
+      levels.power_level = Math.round(vehicle.battery_capacity * levels.power_percentage / 100);
+    }
+    if (levels.fuel_level === 0 && levels.fuel_percentage > 0 && vehicle.fuel_tank_capacity) {
+      levels.fuel_level = Math.round(vehicle.fuel_tank_capacity * levels.fuel_percentage / 100);
+    }
+    if (levels.gas_level === 0 && levels.gas_percentage > 0 && vehicle.gas_capacity) {
+      levels.gas_level = Math.round(vehicle.gas_capacity * levels.gas_percentage / 100);
+    }
+
     // Berechne Tage/km verbleibend
     const calculated = calculateRemaining(vehicle, levels);
 
