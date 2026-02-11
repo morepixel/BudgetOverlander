@@ -241,6 +241,44 @@
             0% { opacity: 1; transform: translateY(0) scale(1); }
             100% { opacity: 0; transform: translateY(-5px) scale(1.5); }
         }
+
+        /* Google AdSense Demo Styles */
+        .ad-container {
+            background: rgba(255,255,255,0.05);
+            border: 2px dashed rgba(255,255,255,0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            text-align: center;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .ad-container.ad-banner {
+            min-height: 60px;
+            padding: 12px;
+        }
+        .ad-container.ad-rectangle {
+            min-height: 250px;
+        }
+        .ad-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.5;
+            margin-bottom: 8px;
+        }
+        .ad-demo-text {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        .ad-demo-size {
+            font-size: 11px;
+            opacity: 0.4;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
@@ -322,6 +360,13 @@
                     <button class="btn btn-secondary" onclick="setLanguage('en')" style="padding:8px 16px;">🇬🇧 EN</button>
                 </div>
             </div>
+
+            <!-- DEMO: Google AdSense - Banner im Login-Bereich -->
+            <div class="ad-container ad-banner" id="adLoginBanner" style="margin-top: 20px;">
+                <div class="ad-label">Anzeige</div>
+                <div class="ad-demo-text">📢 Google AdSense</div>
+                <div class="ad-demo-size">320x50 (Mobile Banner)</div>
+            </div>
         </div>
 
         <div id="noVehicleState" class="no-vehicle" style="display: none;">
@@ -345,9 +390,23 @@
 
             <div class="resources-grid" id="resourcesGrid"></div>
 
+            <!-- DEMO: Google AdSense - Banner zwischen Ressourcen und Quick Actions -->
+            <div class="ad-container ad-banner" id="adBannerTop">
+                <div class="ad-label">Anzeige</div>
+                <div class="ad-demo-text">📢 Google AdSense Banner</div>
+                <div class="ad-demo-size">320x50 / 320x100 (Mobile Banner)</div>
+            </div>
+
             <div class="quick-actions">
                 <div class="quick-actions-title" data-i18n="quickActions.title">Schnellaktionen</div>
                 <div class="quick-actions-grid" id="quickActionsGrid"></div>
+            </div>
+
+            <!-- DEMO: Google AdSense - Rectangle Ad am Ende -->
+            <div class="ad-container ad-rectangle" id="adRectangleBottom">
+                <div class="ad-label">Anzeige</div>
+                <div class="ad-demo-text">📢 Google AdSense Rectangle</div>
+                <div class="ad-demo-size">300x250 (Medium Rectangle)</div>
             </div>
         </div>
 
@@ -482,9 +541,15 @@
     <div class="modal-overlay" id="settingsModal">
         <div class="modal">
             <div class="modal-header">
-                <span class="modal-title">⚙️ <span data-i18n="settings.title">Einstellungen</span></span>
+                <span class="modal-title">⚙️ <span data-i18n="settings.title">Einstellungen</span> <span id="premiumBadge" style="display:none;background:#f1c40f;color:#000;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:8px;">⭐ PREMIUM</span></span>
                 <button class="modal-close" onclick="closeSettingsModal()">✕</button>
             </div>
+            
+            <div class="setup-section" id="premiumSection">
+                <div class="setup-section-title">⭐ Premium</div>
+                <div style="text-align:center;padding:12px;">Lade...</div>
+            </div>
+            
             <div class="setup-section">
                 <div class="setup-section-title" data-i18n="settings.language">Sprache</div>
                 <div style="display:flex;gap:8px;">
@@ -565,6 +630,7 @@
         let currentLevels = null;
         let currentResourceType = null;
         let enabledResources = ['water', 'power', 'fuel', 'gas'];
+        let isPremium = false;
 
         function getToken() { return localStorage.getItem('token'); }
 
@@ -597,6 +663,9 @@
                 return; 
             }
             try {
+                // Premium-Status laden
+                await checkPremiumStatus();
+                
                 const data = await fetchAPI('/resources/current');
                 if (!data || !data.vehicle) { showNoVehicle(); return; }
                 currentVehicle = data.vehicle;
@@ -607,6 +676,84 @@
             } catch (error) {
                 console.error('Init error:', error);
                 showNoVehicle();
+            }
+        }
+
+        async function checkPremiumStatus() {
+            try {
+                const data = await fetchAPI('/premium/status');
+                isPremium = data?.isPremium || false;
+                updateAdsVisibility();
+                updatePremiumUI();
+            } catch (e) {
+                isPremium = false;
+            }
+        }
+
+        function updateAdsVisibility() {
+            const ads = document.querySelectorAll('.ad-container');
+            ads.forEach(ad => {
+                ad.style.display = isPremium ? 'none' : 'flex';
+            });
+        }
+
+        function updatePremiumUI() {
+            const premiumBadge = document.getElementById('premiumBadge');
+            const premiumSection = document.getElementById('premiumSection');
+            if (premiumBadge) premiumBadge.style.display = isPremium ? 'inline' : 'none';
+            if (premiumSection) {
+                premiumSection.innerHTML = isPremium 
+                    ? `<div style="text-align:center;padding:16px;background:rgba(76,175,80,0.2);border-radius:12px;"><div style="font-size:24px;margin-bottom:8px;">⭐</div><div style="font-weight:600;">Premium aktiv</div><div style="font-size:12px;opacity:0.7;">Keine Werbung</div></div>`
+                    : renderPremiumOptions();
+            }
+        }
+
+        function renderPremiumOptions() {
+            return `
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div style="font-size:24px;margin-bottom:8px;">🚫➡️⭐</div>
+                    <div style="font-weight:600;">Werbefrei werden</div>
+                    <div style="font-size:12px;opacity:0.7;">Unterstütze die App & entferne Werbung</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button class="btn btn-primary" onclick="purchasePremium('lifetime')" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>⭐ Einmalig - Für immer</span>
+                        <span style="font-weight:700;">9,99 €</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="purchasePremium('yearly')" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>📅 Jährlich</span>
+                        <span>4,99 €/Jahr</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="purchasePremium('monthly')" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>📆 Monatlich</span>
+                        <span>0,99 €/Monat</span>
+                    </button>
+                </div>
+                <div style="font-size:11px;opacity:0.5;text-align:center;margin-top:12px;">Zahlung über Apple Pay / Google Pay (Demo)</div>
+            `;
+        }
+
+        async function purchasePremium(type) {
+            // Demo: Direkt aktivieren (später durch echte Payment-Integration ersetzen)
+            if (!confirm(`Premium ${type} für Demo aktivieren?`)) return;
+            
+            try {
+                const result = await fetchAPI('/premium/activate', {
+                    method: 'POST',
+                    body: JSON.stringify({ premiumType: type, paymentId: 'demo-' + Date.now() })
+                });
+                
+                if (result?.success) {
+                    isPremium = true;
+                    updateAdsVisibility();
+                    updatePremiumUI();
+                    alert('Premium erfolgreich aktiviert! Werbung wurde entfernt.');
+                    closeSettingsModal();
+                } else {
+                    alert('Fehler: ' + (result?.error || 'Unbekannt'));
+                }
+            } catch (e) {
+                alert('Fehler beim Aktivieren: ' + e.message);
             }
         }
 
@@ -1241,6 +1388,7 @@
         function openSettingsModal() {
             document.getElementById('settingsModal').classList.add('active');
             updateLangButtons();
+            updatePremiumUI();
         }
 
         function closeSettingsModal() {

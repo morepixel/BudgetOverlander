@@ -38,10 +38,33 @@ CREATE TABLE IF NOT EXISTS trip_plans (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Premium fields for users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_since TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_until TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_type VARCHAR(50);
+
+-- Premium transactions table
+CREATE TABLE IF NOT EXISTS premium_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    transaction_type VARCHAR(50) NOT NULL,
+    premium_type VARCHAR(50) NOT NULL,
+    amount DECIMAL(10,2),
+    currency VARCHAR(3) DEFAULT 'EUR',
+    payment_provider VARCHAR(50),
+    payment_id VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT NOW(),
+    completed_at TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_premium ON users(is_premium);
 CREATE INDEX IF NOT EXISTS idx_trip_plans_user ON trip_plans(user_id);
 CREATE INDEX IF NOT EXISTS idx_trip_plans_created ON trip_plans(created_at);
+CREATE INDEX IF NOT EXISTS idx_premium_transactions_user ON premium_transactions(user_id);
 
 -- Grant permissions
 GRANT ALL PRIVILEGES ON TABLE users TO overlander;
