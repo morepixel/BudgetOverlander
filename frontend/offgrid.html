@@ -787,10 +787,10 @@
             
             grid.innerHTML += `
                 <div class="resource-card ${statusClass}" onclick="openResourceModal('power')" style="position:relative;">
-                    <button class="icon-btn" onclick="event.stopPropagation(); openConsumersModal();" style="position:absolute;bottom:8px;right:8px;font-size:14px;">⚙️</button>
                     <div class="resource-header">
                         <span class="resource-icon">${config.icon}</span>
                         <span class="resource-percentage">${Math.round(pct)}%</span>
+                        <button class="icon-btn" onclick="event.stopPropagation(); openConsumersModal();" style="font-size:14px;margin-left:8px;">⚙️</button>
                     </div>
                     <div class="resource-name">${config.name}</div>
                     <div class="resource-bar-bg">
