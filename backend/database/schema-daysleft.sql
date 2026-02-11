@@ -1,4 +1,4 @@
--- Offgrid Compass Database Schema
+-- DaysLeft Database Schema
 -- Erweitert die bestehende vehicles-Tabelle und fügt Ressourcen-Tracking hinzu
 
 -- =============================================

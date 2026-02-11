@@ -32,7 +32,7 @@
 
 ---
 
-### Konzept 3: Offgrid Compass
+### Konzept 3: DaysLeft
 **Tagline:** "Wie lange reichen deine Ressourcen?"
 
 **Was:** Ressourcen-Tracker für Wasser, Strom, Diesel, Gas mit Versorgungsstellen-Karte.
@@ -49,7 +49,7 @@
 
 ### Bewertungsskala: 1 (schlecht) bis 5 (sehr gut)
 
-| Kriterium | Gewicht | Quietcamp | Big Rig Router | Offgrid Compass |
+| Kriterium | Gewicht | Quietcamp | Big Rig Router | DaysLeft |
 |-----------|---------|-----------|----------------|-----------------|
 | **MARKT** |
 | Marktgröße | 15% | ⭐⭐⭐⭐⭐ (5) | ⭐⭐⭐ (3) | ⭐⭐ (2) |
@@ -100,7 +100,7 @@
 | Produkt-Risiko | 5% | 4 | 0.20 |
 | **TOTAL** | **100%** | | **3.20** |
 
-### Offgrid Compass
+### DaysLeft
 | Kriterium | Gewicht | Score | Gewichtet |
 |-----------|---------|-------|-----------|
 | Marktgröße | 15% | 2 | 0.30 |
@@ -121,7 +121,7 @@
 
 | Platz | Konzept | Score | Tendenz |
 |-------|---------|-------|---------|
-| 🥇 1 | **Offgrid Compass** | **3.55** | Nische dominieren |
+| 🥇 1 | **DaysLeft** | **3.55** | Nische dominieren |
 | 🥈 2 | **Quietcamp** | **3.40** | Breiter Markt, harte Konkurrenz |
 | 🥉 3 | **Big Rig Router** | **3.20** | Solide, aber etablierte Konkurrenz |
 
@@ -171,7 +171,7 @@
 
 ---
 
-### Offgrid Compass - Die Nische
+### DaysLeft - Die Nische
 
 **Stärken:**
 - ✅ Kaum direkte Konkurrenz
@@ -202,13 +202,13 @@
 |---------|------------|-----------|-----------|
 | **Quietcamp** | 1.000 User, 0€ | 10.000 User, 30k€/Jahr | 100.000 User, 300k€/Jahr |
 | **Big Rig Router** | 500 User, 10k€/Jahr | 5.000 User, 150k€/Jahr | 50.000 User, 1.5M€/Jahr |
-| **Offgrid Compass** | 200 User, 14k€/Jahr | 2.000 User, 140k€/Jahr | 10.000 User, 700k€/Jahr |
+| **DaysLeft** | 200 User, 14k€/Jahr | 2.000 User, 140k€/Jahr | 10.000 User, 700k€/Jahr |
 
 ---
 
 ## 🎯 Empfehlung
 
-### Für DICH empfehle ich: **Offgrid Compass**
+### Für DICH empfehle ich: **DaysLeft**
 
 **Warum?**
 
@@ -220,11 +220,11 @@
 
 ### Alternative: **Hybrid-Ansatz**
 
-Kombiniere Offgrid Compass mit Big Rig Router:
+Kombiniere DaysLeft mit Big Rig Router:
 
 > "Dein Fahrzeug-Cockpit: Ressourcen + Routing in einer App"
 
-- Ressourcen-Tracking (Offgrid Compass)
+- Ressourcen-Tracking (DaysLeft)
 - PLUS: Fahrzeug-Constraints beim Routing
 - PLUS: "Route zur nächsten Wasserstation die mein Fahrzeug erreichen kann"
 
@@ -244,14 +244,14 @@ Kombiniere Offgrid Compass mit Big Rig Router:
 - Starke etablierte Konkurrenz
 - "Better CoPilot" ist kein Pitch
 
-### Offgrid Compass 🚩
+### DaysLeft 🚩
 - Kleiner Markt (Ceiling begrenzt)
 - Technisch komplex (Sensoren, Offline)
 - Längere Entwicklungszeit
 
 ---
 
-## 🚀 Nächste Schritte (wenn Offgrid Compass)
+## 🚀 Nächste Schritte (wenn DaysLeft)
 
 1. **Woche 1:** 10 Interviews mit Langzeit-Overlandern
 2. **Woche 2:** Landing Page + Waitlist
@@ -263,7 +263,7 @@ Kombiniere Offgrid Compass mit Big Rig Router:
 
 ## 📊 Finale Übersicht
 
-| Kriterium | 🏕️ Quietcamp | 🚛 Big Rig Router | ⚡ Offgrid Compass |
+| Kriterium | 🏕️ Quietcamp | 🚛 Big Rig Router | ⚡ DaysLeft |
 |-----------|--------------|-------------------|-------------------|
 | Score | 3.40 | 3.20 | **3.55** |
 | Erfolgswahrscheinlichkeit | 25% | 30% | **45%** |

@@ -1,4 +1,4 @@
-# Konzept 3: Offgrid Compass
+# Konzept 3: DaysLeft
 
 > "Wie lange reichen deine Ressourcen?"
 
@@ -340,7 +340,7 @@ App lernt DEIN Verhalten:
 
 ## 🆚 Vergleich mit Konzept 1 & 2
 
-| Aspekt | Quietcamp | Big Rig Router | **Offgrid Compass** |
+| Aspekt | Quietcamp | Big Rig Router | **DaysLeft** |
 |--------|-----------|----------------|---------------------|
 | **Problem** | Overtourism | Fahrzeug passt nicht | Ressourcen-Management |
 | **Dringlichkeit** | Nice-to-have | Must-have | Must-have (Langzeit) |
@@ -354,14 +354,14 @@ App lernt DEIN Verhalten:
 
 ---
 
-## ✅ Pro Offgrid Compass
+## ✅ Pro DaysLeft
 - **Kaum Konkurrenz** - Wirklich neues Produkt
 - **Klarer Mehrwert** - "Nie wieder Unsicherheit"
 - **Hardware-Potential** - Zusätzliche Revenue-Quelle
 - **Loyale Zielgruppe** - Overlander sind Community
 - **Erweiterbar** - Boot, Tiny House, Prepper
 
-## ❌ Contra Offgrid Compass
+## ❌ Contra DaysLeft
 - **Kleinste Zielgruppe** der 3 Konzepte
 - **Technisch komplex** - Sensoren, Bluetooth, Offline
 - **Längste MVP-Zeit** - 8-12 Wochen
@@ -369,7 +369,7 @@ App lernt DEIN Verhalten:
 
 ---
 
-## 🤔 Wann macht Offgrid Compass Sinn?
+## 🤔 Wann macht DaysLeft Sinn?
 
 ✅ Wenn du langfristig denkst (2-3 Jahre Horizont)
 ✅ Wenn du technische Herausforderungen magst

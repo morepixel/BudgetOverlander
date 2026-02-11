@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#2d5a27">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>Offgrid Compass</title>
+    <title>DaysLeft</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -130,10 +130,11 @@
         <div class="header">
             <div class="logo">
                 <span class="logo-icon">⚡</span>
-                <span class="logo-text">Offgrid Compass</span>
+                <span class="logo-text">DaysLeft</span>
             </div>
             <div class="header-actions">
-                <button class="icon-btn" onclick="showSetup()" title="Einstellungen">⚙️</button>
+                <button class="icon-btn" onclick="openSettingsModal()" title="Sprache">🌐</button>
+                <button class="icon-btn" onclick="showSetup()" title="Fahrzeug-Setup">⚙️</button>
                 <button class="icon-btn" onclick="logout()" title="Logout">🚪</button>
             </div>
         </div>
@@ -145,7 +146,7 @@
 
         <div id="loginState" style="display: none; text-align: center; padding: 40px 20px;">
             <div style="font-size: 64px; margin-bottom: 20px;">⚡</div>
-            <h1 style="font-size: 28px; margin-bottom: 8px;">Offgrid Compass</h1>
+            <h1 style="font-size: 28px; margin-bottom: 8px;">DaysLeft</h1>
             <p style="opacity: 0.8; margin-bottom: 30px;">Deine Autarkie im Blick</p>
             
             <div class="form-group">
@@ -155,8 +156,15 @@
                 <input type="password" class="form-input" id="loginPassword" placeholder="Passwort" style="text-align: center;">
             </div>
             
-            <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom: 10px;">Einloggen</button>
-            <button class="btn btn-secondary" onclick="doRegister()">Neuen Account erstellen</button>
+            <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom: 10px;" data-i18n="auth.login">Einloggen</button>
+            <button class="btn btn-secondary" onclick="doRegister()" data-i18n="auth.register">Neuen Account erstellen</button>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="display:flex;gap:8px;justify-content:center;">
+                    <button class="btn btn-secondary" onclick="setLanguage('de')" style="padding:8px 16px;">🇩🇪 DE</button>
+                    <button class="btn btn-secondary" onclick="setLanguage('en')" style="padding:8px 16px;">🇬🇧 EN</button>
+                </div>
+            </div>
         </div>
 
         <div id="noVehicleState" class="no-vehicle" style="display: none;">
@@ -314,9 +322,70 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">⚙️ <span data-i18n="settings.title">Einstellungen</span></span>
+                <button class="modal-close" onclick="closeSettingsModal()">✕</button>
+            </div>
+            <div class="setup-section">
+                <div class="setup-section-title" data-i18n="settings.language">Sprache</div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn" id="langDe" onclick="setLanguage('de')" style="flex:1;">🇩🇪 Deutsch</button>
+                    <button class="btn" id="langEn" onclick="setLanguage('en')" style="flex:1;">🇬🇧 English</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="closeSettingsModal()" style="margin-top:16px;" data-i18n="actions.close">Schließen</button>
+        </div>
+    </div>
+
     <script>
         const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:3001/api' : '/api';
+
+        // i18n - Mehrsprachigkeit
+        let currentLang = localStorage.getItem('language') || 'de';
+        let translations = {};
+
+        async function loadTranslations() {
+            try {
+                const response = await fetch(`/i18n/${currentLang}.json`);
+                translations = await response.json();
+            } catch (e) {
+                console.error('Translations load error:', e);
+                translations = {};
+            }
+        }
+
+        function t(key, params = {}) {
+            const keys = key.split('.');
+            let value = translations;
+            for (const k of keys) {
+                value = value?.[k];
+            }
+            if (typeof value !== 'string') return key;
+            return value.replace(/\{(\w+)\}/g, (_, p) => params[p] ?? '');
+        }
+
+        async function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', lang);
+            document.documentElement.lang = lang;
+            await loadTranslations();
+            applyTranslations();
+        }
+
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.textContent = t(key);
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = t(key);
+            });
+            if (currentVehicle) updateUI();
+        }
 
         const RESOURCE_CONFIG = {
             water: { icon: '💧', name: 'Wasser', unit: 'L', color: '#3498db', capacityField: 'freshWaterCapacity', consumptionField: 'waterConsumptionPerDay', inverted: false },
@@ -359,6 +428,7 @@
         }
 
         async function init() {
+            await loadTranslations();
             const token = getToken();
             if (!token) { 
                 showLogin(); 
@@ -1005,6 +1075,22 @@
         function logout() { localStorage.removeItem('token'); window.location.href = 'index.html'; }
 
         let consumers = [];
+
+        function openSettingsModal() {
+            document.getElementById('settingsModal').classList.add('active');
+            updateLangButtons();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function updateLangButtons() {
+            const deBtn = document.getElementById('langDe');
+            const enBtn = document.getElementById('langEn');
+            if (deBtn) deBtn.className = currentLang === 'de' ? 'btn btn-primary' : 'btn btn-secondary';
+            if (enBtn) enBtn.className = currentLang === 'en' ? 'btn btn-primary' : 'btn btn-secondary';
+        }
 
         async function openConsumersModal() {
             document.getElementById('consumersModal').classList.add('active');

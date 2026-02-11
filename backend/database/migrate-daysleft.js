@@ -20,13 +20,13 @@ const pool = new Pool({
 });
 
 async function runMigration() {
-    console.log('🚀 Starting Offgrid Compass Migration...\n');
+    console.log('🚀 Starting DaysLeft Migration...\n');
     
     try {
-        const schemaPath = path.join(__dirname, 'schema-offgrid-compass.sql');
+        const schemaPath = path.join(__dirname, 'schema-daysleft.sql');
         const schema = fs.readFileSync(schemaPath, 'utf8');
         
-        console.log('📄 Reading schema-offgrid-compass.sql...');
+        console.log('📄 Reading schema-daysleft.sql...');
         
         await pool.query(schema);
         

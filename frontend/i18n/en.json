@@ -1,0 +1,105 @@
+{
+  "app": {
+    "title": "DaysLeft",
+    "resourcesActive": "{count} resources active"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "resources": {
+    "water": "Water",
+    "power": "Battery",
+    "fuel": "Fuel",
+    "gas": "Gas",
+    "greywater": "Grey Water",
+    "toilet": "Toilet",
+    "food": "Food",
+    "drinks": "Drinks",
+    "beer": "Beer"
+  },
+  "units": {
+    "days": "days",
+    "km": "km",
+    "liters": "L",
+    "ah": "Ah",
+    "kg": "kg",
+    "uses": "uses"
+  },
+  "actions": {
+    "refill": "Refill",
+    "use": "Use",
+    "empty": "Empty",
+    "reset": "Reset",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "add": "Add",
+    "edit": "Edit",
+    "close": "Close"
+  },
+  "setup": {
+    "title": "Vehicle Setup",
+    "vehicleName": "Vehicle Name",
+    "capacity": "Capacity",
+    "consumptionPerDay": "Consumption/Day",
+    "selectResources": "Select Resources",
+    "personCount": "Number of People"
+  },
+  "consumers": {
+    "title": "Consumers",
+    "name": "Name",
+    "consumptionAh": "Consumption (Ah/Day)",
+    "active": "Active Consumers",
+    "total": "Total Consumption",
+    "rangeAt100": "Range at 100%",
+    "noConsumers": "No consumers",
+    "addPlaceholder": "e.g. Refrigerator"
+  },
+  "customResources": {
+    "title": "Custom Resources",
+    "add": "Add Custom Resource",
+    "icon": "Icon",
+    "unit": "Unit"
+  },
+  "remaining": {
+    "days": "~{value} days",
+    "km": "~{value} km",
+    "unknown": "--"
+  },
+  "messages": {
+    "saved": "Saved",
+    "deleted": "Deleted",
+    "error": "Error",
+    "confirmDelete": "Really delete?",
+    "noVehicle": "No vehicle found"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "language": "Language",
+    "loginFailed": "Login failed",
+    "registerFailed": "Registration failed"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "german": "German",
+    "english": "English",
+    "profile": "Profile",
+    "vehicle": "Vehicle"
+  },
+  "toilet": {
+    "ttt": "Composting",
+    "clesana": "Clesana",
+    "cassette": "Cassette",
+    "solid": "Solid",
+    "liquid": "Liquid",
+    "bags": "Bags",
+    "used": "Used"
+  }
+}

@@ -47,7 +47,7 @@ router.post('/', authenticateToken, async (req, res) => {
       fuelConsumptionOnroad,
       fuelConsumptionOffroad,
       isDefault,
-      // Offgrid Compass Felder
+      // DaysLeft Felder
       freshWaterCapacity,
       greyWaterCapacity,
       waterConsumptionPerDay,

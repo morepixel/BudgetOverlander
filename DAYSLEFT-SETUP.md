@@ -1,4 +1,4 @@
-# Offgrid Compass - Technisches Setup & TODO
+# DaysLeft - Technisches Setup & TODO
 
 > Basierend auf der Budget Overlander Infrastruktur
 

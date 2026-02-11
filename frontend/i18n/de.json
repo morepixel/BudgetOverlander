@@ -1,0 +1,105 @@
+{
+  "app": {
+    "title": "DaysLeft",
+    "resourcesActive": "{count} Ressourcen aktiv"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  },
+  "resources": {
+    "water": "Wasser",
+    "power": "Batterie",
+    "fuel": "Treibstoff",
+    "gas": "Gas",
+    "greywater": "Abwasser",
+    "toilet": "Toilette",
+    "food": "Proviant",
+    "drinks": "Getränke",
+    "beer": "Bier"
+  },
+  "units": {
+    "days": "Tage",
+    "km": "km",
+    "liters": "L",
+    "ah": "Ah",
+    "kg": "kg",
+    "uses": "Nutzungen"
+  },
+  "actions": {
+    "refill": "Auffüllen",
+    "use": "Verbrauchen",
+    "empty": "Entleeren",
+    "reset": "Zurücksetzen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "add": "Hinzufügen",
+    "edit": "Bearbeiten",
+    "close": "Schließen"
+  },
+  "setup": {
+    "title": "Fahrzeug-Setup",
+    "vehicleName": "Fahrzeugname",
+    "capacity": "Kapazität",
+    "consumptionPerDay": "Verbrauch/Tag",
+    "selectResources": "Ressourcen auswählen",
+    "personCount": "Personenanzahl"
+  },
+  "consumers": {
+    "title": "Verbraucher",
+    "name": "Name",
+    "consumptionAh": "Verbrauch (Ah/Tag)",
+    "active": "Aktive Verbraucher",
+    "total": "Gesamtverbrauch",
+    "rangeAt100": "Reichweite bei 100%",
+    "noConsumers": "Keine Verbraucher",
+    "addPlaceholder": "z.B. Kühlschrank"
+  },
+  "customResources": {
+    "title": "Eigene Ressourcen",
+    "add": "Eigene Ressource hinzufügen",
+    "icon": "Symbol",
+    "unit": "Einheit"
+  },
+  "remaining": {
+    "days": "~{value} Tage",
+    "km": "~{value} km",
+    "unknown": "--"
+  },
+  "messages": {
+    "saved": "Gespeichert",
+    "deleted": "Gelöscht",
+    "error": "Fehler",
+    "confirmDelete": "Wirklich löschen?",
+    "noVehicle": "Kein Fahrzeug gefunden"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "language": "Sprache",
+    "loginFailed": "Anmeldung fehlgeschlagen",
+    "registerFailed": "Registrierung fehlgeschlagen"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "language": "Sprache",
+    "german": "Deutsch",
+    "english": "Englisch",
+    "profile": "Profil",
+    "vehicle": "Fahrzeug"
+  },
+  "toilet": {
+    "ttt": "Trockentrenn",
+    "clesana": "Clesana",
+    "cassette": "Kassette",
+    "solid": "Feststoff",
+    "liquid": "Urin",
+    "bags": "Beutel",
+    "used": "Benutzt"
+  }
+}

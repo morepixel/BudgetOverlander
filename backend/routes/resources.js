@@ -1,4 +1,4 @@
-// Resources Routes - Ressourcen-Tracking für Offgrid Compass
+// Resources Routes - Ressourcen-Tracking für DaysLeft
 import express from 'express';
 import pool from '../database/db-postgres.js';
 import { authenticateToken } from './auth.js';
