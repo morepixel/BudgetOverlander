@@ -10,6 +10,8 @@ import fs from 'fs';
 import authRouter from './routes/auth.js';
 import vehiclesRouter from './routes/vehicles.js';
 import resourcesRouter from './routes/resources.js';
+import consumersRouter from './routes/consumers.js';
+import customResourcesRouter from './routes/custom-resources.js';
 
 dotenv.config();
 
@@ -33,6 +35,8 @@ app.use((req, res, next) => {
 app.use('/api/auth', authRouter);
 app.use('/api/vehicles', vehiclesRouter);
 app.use('/api/resources', resourcesRouter);
+app.use('/api/consumers', consumersRouter);
+app.use('/api/custom-resources', customResourcesRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {

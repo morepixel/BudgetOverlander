@@ -1389,7 +1389,21 @@
                 }
             }
             
-            // Custom Resources deaktiviert
+            // Custom Resources hinzufügen
+            try {
+                const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                if (customRes && customRes.length > 0) {
+                    const personCount = currentVehicle.person_count || 2;
+                    for (const r of customRes) {
+                        if (r.is_inverted) continue;
+                        const totalConsumption = r.consumption_per_day ? r.consumption_per_day * personCount : null;
+                        if (totalConsumption && r.current_level) {
+                            const days = r.current_level / totalConsumption;
+                            resourceDays.push({ key: `custom_${r.id}`, icon: r.icon, name: r.name, days: parseFloat(days.toFixed(1)) });
+                        }
+                    }
+                }
+            } catch (e) {}
             
             // Nach Tagen sortieren (aufsteigend = kritischste zuerst)
             resourceDays.sort((a, b) => a.days - b.days);
@@ -1434,8 +1448,13 @@
             if (!currentVehicle || !currentLevels) return;
             document.getElementById('vehicleName').textContent = currentVehicle.name || 'Mein Fahrzeug';
             
-            // Custom Resources deaktiviert
-            const totalResources = enabledResources.length;
+            // Zähle auch Custom Resources
+            let customCount = 0;
+            try {
+                const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                customCount = customRes?.length || 0;
+            } catch (e) {}
+            const totalResources = enabledResources.length + customCount;
             const personCount = currentVehicle.person_count || 2;
             document.getElementById('vehicleDetails').textContent = `${personCount} Personen • ${totalResources} Ressourcen`;
             
@@ -1504,7 +1523,50 @@
                 `;
             }
             
-            // Custom Resources Feature deaktiviert
+            // Custom Resources laden und anzeigen
+            try {
+                const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                if (customRes && customRes.length > 0) {
+                    for (const r of customRes) {
+                        const pct = r.current_percentage || 0;
+                        let statusClass = '';
+                        if (r.is_inverted) {
+                            if (pct > 80) statusClass = 'critical inverted';
+                            else if (pct > 60) statusClass = 'warning inverted';
+                        } else {
+                            if (pct < 20) statusClass = 'critical';
+                            else if (pct < 40) statusClass = 'warning';
+                        }
+                        const customPersonCount = currentVehicle.person_count || 2;
+                        const customTotalConsumption = r.consumption_per_day ? r.consumption_per_day * customPersonCount : null;
+                        const daysRemaining = customTotalConsumption ? (r.current_level / customTotalConsumption).toFixed(1) : null;
+                        grid.innerHTML += `
+                            <div class="resource-card ${statusClass}" data-resource="custom-${r.id}" onclick="openCustomResourcesModal()" style="position:relative;">
+                                <div class="resource-header">
+                                    <span class="resource-icon">${r.icon}</span>
+                                    <span class="resource-percentage">${Math.round(pct)}%</span>
+                                </div>
+                                <div class="resource-name">${r.name}</div>
+                                <div class="resource-bar-bg">
+                                    <div class="resource-bar" style="width: ${pct}%; background: #9b59b6;"></div>
+                                </div>
+                                <div class="resource-remaining">${daysRemaining ? `~${daysRemaining} Tage` : '--'}</div>
+                                <div class="resource-value">${Math.round(r.current_level || 0)} / ${r.capacity} ${r.unit}</div>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (e) { /* Custom resources not loaded */ }
+            
+            // Button zum Hinzufügen neuer Custom Resources
+            grid.innerHTML += `
+                <div class="resource-card" onclick="openCustomResourcesModal()" style="display:flex;align-items:center;justify-content:center;border:2px dashed rgba(255,255,255,0.3);background:transparent;cursor:pointer;">
+                    <div style="text-align:center;">
+                        <div style="font-size:32px;opacity:0.5;">➕</div>
+                        <div style="font-size:12px;opacity:0.7;">Eigene Ressource</div>
+                    </div>
+                </div>
+            `;
         }
 
         async function renderPowerCard(grid) {
@@ -1516,8 +1578,36 @@
             let statusClass = pct < 20 ? 'critical' : pct < 40 ? 'warning' : '';
             const remainingText = remaining != null ? `~${remaining} Tage` : '--';
             
-            // Verbraucher-Feature deaktiviert
+            // Verbraucher laden
             let consumersHtml = '';
+            let totalConsumption = 0;
+            try {
+                const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
+                const consumersList = data?.consumers || [];
+                const activeConsumers = consumersList.filter(c => c.is_active);
+                totalConsumption = activeConsumers.reduce((sum, c) => sum + parseFloat(c.consumption_ah || 0), 0);
+                
+                if (consumersList.length > 0) {
+                    consumersHtml = `
+                        <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                                <span style="opacity:0.7;">⚡ Verbrauch</span>
+                                <span style="color:#e74c3c;">-${totalConsumption.toFixed(1)} Ah/Tag</span>
+                            </div>
+                            <div style="max-height:60px;overflow-y:auto;font-size:11px;">
+                                ${consumersList.slice(0, 3).map(c => `
+                                    <div style="display:flex;align-items:center;gap:4px;padding:2px 0;opacity:${c.is_active ? 1 : 0.5};">
+                                        <span>${c.is_active ? '✅' : '⬜'}</span>
+                                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</span>
+                                        <span>${c.consumption_ah} Ah</span>
+                                    </div>
+                                `).join('')}
+                                ${consumersList.length > 3 ? `<div style="opacity:0.5;text-align:center;">+${consumersList.length - 3} weitere</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) { /* Verbraucher nicht geladen */ }
             
             // Solar-Ertrag berechnen
             let solarHtml = '';
