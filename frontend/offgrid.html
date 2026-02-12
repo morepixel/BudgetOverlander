@@ -542,7 +542,7 @@
     </div>
 
     <div class="modal-overlay" id="resourceModal">
-        <div class="modal">
+        <div class="modal" style="max-height: 90vh; overflow-y: auto;">
             <div class="modal-header">
                 <span class="modal-title" id="modalTitle">Ressource anpassen</span>
                 <button class="modal-close" onclick="closeResourceModal()">✕</button>
@@ -562,6 +562,18 @@
                 <button class="btn btn-secondary" onclick="setLevel(100)" data-i18n="modal.full">Voll</button>
             </div>
             <button class="btn btn-primary" onclick="saveResourceLevel()" data-i18n="actions.save">Speichern</button>
+            
+            <!-- Verbraucher-Bereich nur für Power -->
+            <div id="modalConsumersSection" style="display:none; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div class="setup-section-title" style="margin-bottom:12px;">⚡ Verbraucher verwalten</div>
+                <div id="modalConsumersList"></div>
+                <div style="margin-top: 12px; display:flex; gap:8px;">
+                    <input type="text" class="form-input" id="modalNewConsumerName" placeholder="z.B. Kühlschrank" style="flex:2;">
+                    <input type="number" class="form-input" id="modalNewConsumerAh" placeholder="Ah/Tag" step="0.1" style="flex:1;">
+                    <button class="btn btn-secondary" onclick="addModalConsumer()" style="padding:8px 12px;">➕</button>
+                </div>
+                <div id="modalConsumersSummary" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;"></div>
+            </div>
         </div>
     </div>
 
@@ -594,9 +606,18 @@
                 <span class="modal-title">📦 <span data-i18n="customResources.title">Eigene Ressourcen</span></span>
                 <button class="modal-close" onclick="closeCustomResourcesModal()">✕</button>
             </div>
-            <div id="customResourcesList"></div>
-            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div class="setup-section-title" data-i18n="customResources.new">Neue Ressource erstellen</div>
+            <!-- Tabs -->
+            <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid rgba(255,255,255,0.1);">
+                <button class="custom-res-tab active" id="tabExisting" onclick="switchCustomResTab('existing')" style="flex:1;padding:12px;background:transparent;border:none;color:white;font-weight:600;cursor:pointer;border-bottom:2px solid #4CAF50;margin-bottom:-2px;">📋 Alle</button>
+                <button class="custom-res-tab" id="tabNew" onclick="switchCustomResTab('new')" style="flex:1;padding:12px;background:transparent;border:none;color:white;font-weight:600;cursor:pointer;opacity:0.6;">➕ Neu anlegen</button>
+            </div>
+            <!-- Tab: Existing -->
+            <div id="customResTabExisting">
+                <div id="customResourcesList"></div>
+            </div>
+            <!-- Tab: New -->
+            <div id="customResTabNew" style="display:none;">
+                <div class="setup-section-title">Neue Ressource erstellen</div>
                 <div class="input-row">
                     <div class="form-group" style="flex: 0.5;">
                         <label>Icon</label>
@@ -1619,7 +1640,6 @@
                     <div class="resource-header">
                         <span class="resource-icon">${config.icon}</span>
                         <span class="resource-percentage">${Math.round(pct)}%</span>
-                        <button class="icon-btn" onclick="event.stopPropagation(); openConsumersModal();" style="font-size:14px;margin-left:8px;">⚙️</button>
                     </div>
                     <div class="resource-name">${getResourceName('power')}</div>
                     <div class="resource-bar-bg">
@@ -1797,10 +1817,107 @@
             const pct = currentLevels[`${type}_percentage`] || 0;
             document.getElementById('modalSlider').value = pct;
             document.getElementById('modalSliderValue').textContent = `${Math.round(pct)}%`;
+            
+            // Verbraucher-Bereich nur bei Power anzeigen
+            const consumersSection = document.getElementById('modalConsumersSection');
+            if (type === 'power') {
+                consumersSection.style.display = 'block';
+                loadModalConsumers();
+            } else {
+                consumersSection.style.display = 'none';
+            }
+            
             document.getElementById('resourceModal').classList.add('active');
         }
+        
+        async function loadModalConsumers() {
+            if (!currentVehicle) return;
+            try {
+                const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
+                if (data) {
+                    consumers = data.consumers || [];
+                    renderModalConsumers();
+                    updateModalConsumersSummary(data);
+                }
+            } catch (error) { console.error('Load modal consumers error:', error); }
+        }
+        
+        function renderModalConsumers() {
+            const list = document.getElementById('modalConsumersList');
+            if (consumers.length === 0) {
+                list.innerHTML = '<p style="opacity: 0.7; text-align: center; font-size:13px;">Noch keine Verbraucher angelegt</p>';
+                return;
+            }
+            list.innerHTML = consumers.map(c => `
+                <div style="display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 6px;">
+                    <span style="font-size: 20px;">${c.icon || '⚡'}</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; font-size:14px;">${c.name}</div>
+                        <div style="font-size: 11px; opacity: 0.7;">${c.consumption_ah} Ah/Tag</div>
+                    </div>
+                    <button class="icon-btn" onclick="toggleModalConsumer(${c.id})" style="width:36px;height:36px;opacity: ${c.is_active ? 1 : 0.4};">${c.is_active ? '✅' : '⬜'}</button>
+                    <button class="icon-btn" onclick="deleteModalConsumer(${c.id})" style="width:36px;height:36px;">🗑️</button>
+                </div>
+            `).join('');
+        }
+        
+        function updateModalConsumersSummary(data) {
+            const summary = document.getElementById('modalConsumersSummary');
+            const batteryCapacity = currentVehicle.battery_capacity || 100;
+            const daysRemaining = data.totalConsumption > 0 ? (batteryCapacity / data.totalConsumption).toFixed(1) : '∞';
+            summary.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size:13px;">
+                    <span>Aktive Verbraucher:</span>
+                    <strong>${data.activeCount}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size:13px;">
+                    <span>Gesamtverbrauch:</span>
+                    <strong>${data.totalConsumption.toFixed(1)} Ah/Tag</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size:13px;">
+                    <span>Reichweite bei 100%:</span>
+                    <strong>${daysRemaining} Tage</strong>
+                </div>
+            `;
+        }
+        
+        async function addModalConsumer() {
+            const name = document.getElementById('modalNewConsumerName').value.trim();
+            const ah = parseFloat(document.getElementById('modalNewConsumerAh').value);
+            if (!name || !ah) { alert('Bitte Name und Verbrauch eingeben'); return; }
+            try {
+                await fetchAPI('/consumers', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, name, consumptionAh: ah })
+                });
+                document.getElementById('modalNewConsumerName').value = '';
+                document.getElementById('modalNewConsumerAh').value = '';
+                await loadModalConsumers();
+            } catch (error) { console.error('Add modal consumer error:', error); }
+        }
+        
+        async function toggleModalConsumer(id) {
+            try {
+                await fetchAPI(`/consumers/${id}/toggle`, { method: 'PATCH' });
+                await loadModalConsumers();
+            } catch (error) { console.error('Toggle modal consumer error:', error); }
+        }
+        
+        async function deleteModalConsumer(id) {
+            if (!confirm('Verbraucher wirklich löschen?')) return;
+            try {
+                await fetchAPI(`/consumers/${id}`, { method: 'DELETE' });
+                await loadModalConsumers();
+            } catch (error) { console.error('Delete modal consumer error:', error); }
+        }
 
-        function closeResourceModal() { document.getElementById('resourceModal').classList.remove('active'); }
+        function closeResourceModal() { 
+            document.getElementById('resourceModal').classList.remove('active');
+            // UI aktualisieren wenn Power Modal geschlossen wird (wegen Verbraucher-Änderungen)
+            if (currentResourceType === 'power') {
+                updateUI();
+            }
+        }
         function updateSliderValue() { document.getElementById('modalSliderValue').textContent = `${document.getElementById('modalSlider').value}%`; }
         function setLevel(pct) { document.getElementById('modalSlider').value = pct; updateSliderValue(); }
 
@@ -2224,6 +2341,29 @@
                 customResources = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
                 renderCustomResources();
             } catch (error) { console.error('Load custom resources error:', error); }
+        }
+
+        function switchCustomResTab(tab) {
+            const tabExisting = document.getElementById('tabExisting');
+            const tabNew = document.getElementById('tabNew');
+            const contentExisting = document.getElementById('customResTabExisting');
+            const contentNew = document.getElementById('customResTabNew');
+            
+            if (tab === 'existing') {
+                tabExisting.style.borderBottom = '2px solid #4CAF50';
+                tabExisting.style.opacity = '1';
+                tabNew.style.borderBottom = 'none';
+                tabNew.style.opacity = '0.6';
+                contentExisting.style.display = 'block';
+                contentNew.style.display = 'none';
+            } else {
+                tabNew.style.borderBottom = '2px solid #4CAF50';
+                tabNew.style.opacity = '1';
+                tabExisting.style.borderBottom = 'none';
+                tabExisting.style.opacity = '0.6';
+                contentExisting.style.display = 'none';
+                contentNew.style.display = 'block';
+            }
         }
 
         function renderCustomResources() {
