@@ -1,7 +1,0 @@
-[build]
-  publish = "frontend"
-  
-[[redirects]]
-  from = "/"
-  to = "/trip-planner.html"
-  status = 200

@@ -10,7 +10,23 @@
   "engines": {
     "node": "18.x"
   },
-  "keywords": ["overlander", "vanlife", "resources", "water", "power", "fuel", "autarky"],
+  "keywords": [
+    "overlander",
+    "vanlife",
+    "resources",
+    "water",
+    "power",
+    "fuel",
+    "autarky"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/morepixel/BudgetOverlander.git"
+  },
+  "bugs": {
+    "url": "https://github.com/morepixel/BudgetOverlander/issues"
+  },
+  "homepage": "https://github.com/morepixel/BudgetOverlander#readme"
 }
