@@ -833,10 +833,14 @@
         }
 
         async function checkPremiumStatus() {
-            // Premium-Feature deaktiviert
-            isPremium = false;
-            updateAdsVisibility();
-            updatePremiumUI();
+            try {
+                const data = await fetchAPI('/premium/status');
+                isPremium = data?.isPremium || false;
+                updateAdsVisibility();
+                updatePremiumUI();
+            } catch (e) {
+                isPremium = false;
+            }
         }
 
         function updateAdsVisibility() {
