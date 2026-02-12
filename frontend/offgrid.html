@@ -1463,25 +1463,35 @@
             let greyStatus = greyPct > 80 ? 'critical' : greyPct > 60 ? 'warning' : '';
             
             grid.innerHTML += `
-                <div class="resource-card" style="position:relative;">
-                    <div class="resource-header">
-                        <span class="resource-icon">💧</span>
-                        <span class="resource-name" style="flex:1;">Wasser</span>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-top:8px;">
-                        <div style="flex:1;text-align:center;" onclick="openResourceModal('water')">
-                            <div style="font-size:11px;opacity:0.7;">Frisch</div>
-                            <div style="font-size:18px;font-weight:700;color:${waterStatus === 'critical' ? '#e74c3c' : waterStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(waterPct)}%</div>
-                            <div class="resource-bar-bg"><div class="resource-bar water" style="width:${waterPct}%"></div></div>
-                            <div style="font-size:10px;opacity:0.7;margin-top:4px;">${waterDays != null ? `~${waterDays}d` : '--'}</div>
-                            <div style="font-size:9px;opacity:0.5;">${Math.round(waterLevel)}/${waterCap}L</div>
+                <div class="resource-card" style="position:relative;display:flex;flex-direction:column;gap:12px;">
+                    <!-- Frischwasser -->
+                    <div onclick="openResourceModal('water')" style="cursor:pointer;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="font-size:18px;">💧</span>
+                                <span style="font-weight:600;">Frischwasser</span>
+                            </div>
+                            <span style="font-size:20px;font-weight:700;color:${waterStatus === 'critical' ? '#e74c3c' : waterStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(waterPct)}%</span>
                         </div>
-                        <div style="flex:1;text-align:center;" onclick="openResourceModal('greywater')">
-                            <div style="font-size:11px;opacity:0.7;">Grau</div>
-                            <div style="font-size:18px;font-weight:700;color:${greyStatus === 'critical' ? '#e74c3c' : greyStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(greyPct)}%</div>
-                            <div class="resource-bar-bg"><div class="resource-bar greywater" style="width:${greyPct}%"></div></div>
-                            <div style="font-size:10px;opacity:0.7;margin-top:4px;">${greyPct > 80 ? '⚠️ Voll' : greyPct > 60 ? '🔶 Bald' : '✓'}</div>
-                            <div style="font-size:9px;opacity:0.5;">${Math.round(greyLevel)}/${greyCap}L</div>
+                        <div class="resource-bar-bg"><div class="resource-bar water" style="width:${waterPct}%"></div></div>
+                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;opacity:0.7;">
+                            <span>${waterDays != null ? `~${waterDays} Tage` : '--'}</span>
+                            <span>${Math.round(waterLevel)} / ${waterCap} L</span>
+                        </div>
+                    </div>
+                    <!-- Grauwasser -->
+                    <div onclick="openResourceModal('greywater')" style="cursor:pointer;border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="font-size:18px;">🚿</span>
+                                <span style="font-weight:600;">Grauwasser</span>
+                            </div>
+                            <span style="font-size:20px;font-weight:700;color:${greyStatus === 'critical' ? '#e74c3c' : greyStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(greyPct)}%</span>
+                        </div>
+                        <div class="resource-bar-bg"><div class="resource-bar greywater" style="width:${greyPct}%"></div></div>
+                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;opacity:0.7;">
+                            <span>${greyPct > 80 ? '⚠️ Fast voll' : greyPct > 60 ? '🔶 Bald leeren' : '✓ OK'}</span>
+                            <span>${Math.round(greyLevel)} / ${greyCap} L</span>
                         </div>
                     </div>
                 </div>
