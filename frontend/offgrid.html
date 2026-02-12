@@ -34,7 +34,8 @@
         .vehicle-icon { font-size: 28px; }
         .vehicle-name { font-size: 18px; font-weight: 600; }
         .vehicle-details { font-size: 14px; opacity: 0.8; }
-        .resources-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .resources-grid { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: auto; gap: 12px; margin-bottom: 20px; }
+        .resource-card.span-2 { grid-row: span 2; }
         .resource-card {
             background: rgba(255,255,255,0.1); border-radius: 16px; padding: 16px;
             cursor: pointer; transition: transform 0.2s, background 0.2s;
@@ -1250,7 +1251,14 @@
         async function renderResourceCards() {
             const grid = document.getElementById('resourcesGrid');
             grid.innerHTML = '';
-            for (const key of enabledResources) {
+            
+            // Optimierte Reihenfolge: Wasser zuerst, dann Power (span-2), dann Grauwasser
+            const sortedResources = [...enabledResources].sort((a, b) => {
+                const order = { water: 0, power: 1, greywater: 2 };
+                return (order[a] ?? 99) - (order[b] ?? 99);
+            });
+            
+            for (const key of sortedResources) {
                 if (key === 'toilet') {
                     renderToiletCard(grid);
                     continue;
@@ -1258,14 +1266,6 @@
                 if (key === 'power') {
                     await renderPowerCard(grid);
                     continue;
-                }
-                // Wasser + Grauwasser kombiniert anzeigen
-                if (key === 'water' && enabledResources.includes('greywater')) {
-                    renderWaterCard(grid);
-                    continue;
-                }
-                if (key === 'greywater' && enabledResources.includes('water')) {
-                    continue; // Wird schon in renderWaterCard angezeigt
                 }
                 const config = RESOURCE_CONFIG[key];
                 const levelField = `${key}_level`;
@@ -1427,7 +1427,7 @@
             }
             
             grid.innerHTML += `
-                <div class="resource-card ${statusClass}" onclick="openResourceModal('power')" style="position:relative;">
+                <div class="resource-card span-2 ${statusClass}" onclick="openResourceModal('power')" style="position:relative;">
                     <div class="resource-header">
                         <span class="resource-icon">${config.icon}</span>
                         <span class="resource-percentage">${Math.round(pct)}%</span>
