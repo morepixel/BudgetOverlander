@@ -61,6 +61,37 @@
         .resource-bar.beer { background: #f1c40f; }
         .resource-remaining { font-size: 12px; opacity: 0.9; }
         .resource-value { font-size: 11px; opacity: 0.7; }
+        .autarky-dashboard {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(45, 90, 39, 0.4) 100%);
+            border-radius: 16px; padding: 16px; margin-bottom: 20px;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        .autarky-main {
+            display: flex; align-items: center; gap: 16px; margin-bottom: 12px;
+        }
+        .autarky-days {
+            font-size: 48px; font-weight: 700; color: #4CAF50; line-height: 1;
+        }
+        .autarky-days.warning { color: #f39c12; }
+        .autarky-days.critical { color: #e74c3c; }
+        .autarky-label {
+            font-size: 14px; opacity: 0.9;
+        }
+        .autarky-bottleneck {
+            font-size: 12px; background: rgba(0,0,0,0.2); padding: 8px 12px;
+            border-radius: 8px; margin-bottom: 12px;
+        }
+        .autarky-bottleneck-icon { margin-right: 6px; }
+        .autarky-critical-list {
+            display: flex; flex-direction: column; gap: 6px;
+        }
+        .autarky-critical-item {
+            display: flex; align-items: center; gap: 8px; font-size: 12px;
+            background: rgba(0,0,0,0.15); padding: 8px 12px; border-radius: 8px;
+        }
+        .autarky-critical-item.warning { border-left: 3px solid #f39c12; }
+        .autarky-critical-item.critical { border-left: 3px solid #e74c3c; }
+        .autarky-critical-days { font-weight: 600; margin-left: auto; }
         .quick-actions { background: rgba(255,255,255,0.1); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
         .quick-actions-title { font-size: 14px; opacity: 0.8; margin-bottom: 12px; }
         .quick-actions-grid { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -388,6 +419,18 @@
                 <span>▶</span>
             </div>
 
+            <div class="autarky-dashboard" id="autarkyDashboard">
+                <div class="autarky-main">
+                    <div class="autarky-days" id="autarkyDays">--</div>
+                    <div class="autarky-label">Tage<br>Autarkie</div>
+                </div>
+                <div class="autarky-bottleneck" id="autarkyBottleneck">
+                    <span class="autarky-bottleneck-icon">⚠️</span>
+                    <span id="autarkyBottleneckText">Berechne...</span>
+                </div>
+                <div class="autarky-critical-list" id="autarkyCriticalList"></div>
+            </div>
+
             <div class="resources-grid" id="resourcesGrid"></div>
 
             <!-- DEMO: Google AdSense - Banner zwischen Ressourcen und Quick Actions -->
@@ -678,6 +721,12 @@
                 currentVehicle = data.vehicle;
                 currentLevels = data.levels;
                 enabledResources = currentVehicle.enabled_resources || ['water', 'power', 'fuel', 'gas'];
+                
+                // Wetterdaten für Solar laden wenn Standort vorhanden
+                if (userLocation && currentVehicle.solar_power) {
+                    fetchWeatherAndSolar().catch(() => {});
+                }
+                
                 showDashboard();
                 updateUI();
             } catch (error) {
@@ -938,6 +987,32 @@
                                     <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="aus Verbrauchern" step="0.1" readonly style="opacity:0.7;">
                                 </div>
                             </div>
+                            
+                            <div style="margin-top:16px;padding:12px;background:rgba(255,193,7,0.1);border:1px solid rgba(255,193,7,0.3);border-radius:8px;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                                    <span style="font-size:20px;">☀️</span>
+                                    <label class="form-label" style="margin:0;font-weight:600;">Solar-Anlage</label>
+                                </div>
+                                <div class="input-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Solar-Leistung (Wp)</label>
+                                        <input type="number" class="form-input" id="setup_solarPower" placeholder="z.B. 200" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Ertrag/Tag (Ah)</label>
+                                        <input type="number" class="form-input" id="setup_solarYield" placeholder="geschätzt" readonly style="opacity:0.7;">
+                                    </div>
+                                </div>
+                                <div style="margin-top:10px;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                                        <label class="form-label" style="margin:0;">Standort für Wetterprognose</label>
+                                        <button class="btn btn-secondary" onclick="requestLocation()" style="padding:6px 12px;font-size:12px;" id="locationBtn">📍 Standort</button>
+                                    </div>
+                                    <div id="locationInfo" style="font-size:12px;opacity:0.7;margin-top:6px;"></div>
+                                    <div id="solarForecast" style="margin-top:10px;display:none;"></div>
+                                </div>
+                            </div>
+                            
                             <div style="margin-top:12px;">
                                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
                                     <label class="form-label" style="margin:0;">Verbraucher</label>
@@ -954,6 +1029,7 @@
                         </div>
                     `;
                     setTimeout(loadSetupConsumers, 0);
+                    setTimeout(loadSolarData, 0);
                 } else {
                     container.innerHTML += `
                         <div class="setup-section">
@@ -1047,6 +1123,98 @@
 
         function toSnakeCase(str) { return str.replace(/([A-Z])/g, '_$1').toLowerCase(); }
 
+        async function updateAutarkyDashboard() {
+            if (!currentVehicle || !currentLevels) return;
+            
+            const resourceDays = [];
+            
+            // Standard-Ressourcen sammeln (nur die mit Tages-Verbrauch)
+            for (const key of enabledResources) {
+                const config = RESOURCE_CONFIG[key];
+                if (config.inverted) continue; // Inverted resources (greywater, toilet) ausschließen
+                if (key === 'fuel') continue; // Fuel hat km statt Tage
+                
+                let days = null;
+                if (key === 'toilet') {
+                    const toiletType = currentVehicle.toilet_type || 'ttt';
+                    if (toiletType === 'ttt') {
+                        const solidDays = currentLevels.ttt_solid_days;
+                        const liquidDays = currentLevels.ttt_liquid_days;
+                        if (solidDays != null && liquidDays != null) {
+                            days = Math.min(solidDays, liquidDays);
+                        }
+                    } else if (toiletType === 'clesana') {
+                        days = currentLevels.clesana_days;
+                    } else if (toiletType === 'chemical') {
+                        days = currentLevels.chemical_days;
+                    }
+                    if (days != null) {
+                        resourceDays.push({ key, icon: '🚽', name: 'Toilette', days: parseFloat(days) });
+                    }
+                } else {
+                    const remainField = `${key}_days_remaining`;
+                    days = currentLevels[remainField];
+                    if (days != null) {
+                        resourceDays.push({ key, icon: config.icon, name: getResourceName(key), days: parseFloat(days) });
+                    }
+                }
+            }
+            
+            // Custom Resources hinzufügen
+            try {
+                const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                if (customRes && customRes.length > 0) {
+                    const personCount = currentVehicle.person_count || 2;
+                    for (const r of customRes) {
+                        if (r.is_inverted) continue;
+                        const totalConsumption = r.consumption_per_day ? r.consumption_per_day * personCount : null;
+                        if (totalConsumption && r.current_level) {
+                            const days = r.current_level / totalConsumption;
+                            resourceDays.push({ key: `custom_${r.id}`, icon: r.icon, name: r.name, days: parseFloat(days.toFixed(1)) });
+                        }
+                    }
+                }
+            } catch (e) {}
+            
+            // Nach Tagen sortieren (aufsteigend = kritischste zuerst)
+            resourceDays.sort((a, b) => a.days - b.days);
+            
+            // Dashboard aktualisieren
+            const daysEl = document.getElementById('autarkyDays');
+            const bottleneckTextEl = document.getElementById('autarkyBottleneckText');
+            const criticalListEl = document.getElementById('autarkyCriticalList');
+            
+            if (resourceDays.length === 0) {
+                daysEl.textContent = '--';
+                daysEl.className = 'autarky-days';
+                bottleneckTextEl.textContent = 'Keine Verbrauchsdaten';
+                criticalListEl.innerHTML = '';
+                return;
+            }
+            
+            // Minimale Tage = Bottleneck
+            const minDays = resourceDays[0].days;
+            const bottleneck = resourceDays[0];
+            
+            daysEl.textContent = Math.floor(minDays);
+            daysEl.className = 'autarky-days' + (minDays < 2 ? ' critical' : minDays < 5 ? ' warning' : '');
+            
+            bottleneckTextEl.innerHTML = `<strong>${bottleneck.icon} ${bottleneck.name}</strong> begrenzt auf ~${bottleneck.days.toFixed(1)} Tage`;
+            
+            // Top 3 kritischste Ressourcen anzeigen
+            const top3 = resourceDays.slice(0, 3);
+            criticalListEl.innerHTML = top3.map(r => {
+                const statusClass = r.days < 2 ? 'critical' : r.days < 5 ? 'warning' : '';
+                return `
+                    <div class="autarky-critical-item ${statusClass}">
+                        <span>${r.icon}</span>
+                        <span>${r.name}</span>
+                        <span class="autarky-critical-days">~${r.days.toFixed(1)} Tage</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
         async function updateUI() {
             if (!currentVehicle || !currentLevels) return;
             document.getElementById('vehicleName').textContent = currentVehicle.name || 'Mein Fahrzeug';
@@ -1061,6 +1229,7 @@
             const personCount = currentVehicle.person_count || 2;
             document.getElementById('vehicleDetails').textContent = `${personCount} Personen • ${totalResources} Ressourcen`;
             
+            await updateAutarkyDashboard();
             renderResourceCards();
             renderQuickActions();
         }
@@ -1167,33 +1336,74 @@
             
             // Verbraucher laden
             let consumersHtml = '';
+            let totalConsumption = 0;
             try {
                 const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
                 const consumersList = data?.consumers || [];
                 const activeConsumers = consumersList.filter(c => c.is_active);
-                const totalConsumption = activeConsumers.reduce((sum, c) => sum + parseFloat(c.consumption_ah || 0), 0);
+                totalConsumption = activeConsumers.reduce((sum, c) => sum + parseFloat(c.consumption_ah || 0), 0);
                 
                 if (consumersList.length > 0) {
                     consumersHtml = `
                         <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
                             <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
-                                <span style="opacity:0.7;">Verbraucher</span>
-                                <span>${totalConsumption.toFixed(1)} Ah/Tag</span>
+                                <span style="opacity:0.7;">⚡ Verbrauch</span>
+                                <span style="color:#e74c3c;">-${totalConsumption.toFixed(1)} Ah/Tag</span>
                             </div>
-                            <div style="max-height:80px;overflow-y:auto;font-size:11px;">
-                                ${consumersList.slice(0, 4).map(c => `
+                            <div style="max-height:60px;overflow-y:auto;font-size:11px;">
+                                ${consumersList.slice(0, 3).map(c => `
                                     <div style="display:flex;align-items:center;gap:4px;padding:2px 0;opacity:${c.is_active ? 1 : 0.5};">
                                         <span>${c.is_active ? '✅' : '⬜'}</span>
                                         <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</span>
                                         <span>${c.consumption_ah} Ah</span>
                                     </div>
                                 `).join('')}
-                                ${consumersList.length > 4 ? `<div style="opacity:0.5;text-align:center;">+${consumersList.length - 4} weitere</div>` : ''}
+                                ${consumersList.length > 3 ? `<div style="opacity:0.5;text-align:center;">+${consumersList.length - 3} weitere</div>` : ''}
                             </div>
                         </div>
                     `;
                 }
             } catch (e) { /* Verbraucher nicht geladen */ }
+            
+            // Solar-Ertrag berechnen
+            let solarHtml = '';
+            const solarWp = currentVehicle.solar_power || 0;
+            if (solarWp > 0) {
+                let estimatedSolarAh = 0;
+                let solarStatus = '☀️';
+                
+                if (userLocation && weatherData?.daily) {
+                    const sunshineHours = (weatherData.daily.sunshine_duration?.[0] || 0) / 3600;
+                    const efficiency = 0.7;
+                    const voltage = 12;
+                    estimatedSolarAh = (solarWp * sunshineHours * efficiency * 0.15) / voltage;
+                    const code = weatherData.daily.weathercode?.[0] || 0;
+                    if (code >= 61) solarStatus = '🌧️';
+                    else if (code >= 45) solarStatus = '🌫️';
+                    else if (code >= 3) solarStatus = '☁️';
+                    else if (code >= 1) solarStatus = '⛅';
+                } else {
+                    // Fallback ohne Wetterdaten: ~4h Sonne angenommen
+                    estimatedSolarAh = (solarWp * 4 * 0.7 * 0.15) / 12;
+                }
+                
+                const netBalance = estimatedSolarAh - totalConsumption;
+                const balanceColor = netBalance >= 0 ? '#4CAF50' : '#e74c3c';
+                const balanceSign = netBalance >= 0 ? '+' : '';
+                
+                solarHtml = `
+                    <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                            <span style="opacity:0.7;">${solarStatus} Solar (${solarWp}Wp)</span>
+                            <span style="color:#4CAF50;">+${estimatedSolarAh.toFixed(1)} Ah/Tag</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;padding:4px 8px;background:rgba(0,0,0,0.2);border-radius:4px;">
+                            <span>Bilanz</span>
+                            <span style="color:${balanceColor};">${balanceSign}${netBalance.toFixed(1)} Ah/Tag</span>
+                        </div>
+                    </div>
+                `;
+            }
             
             grid.innerHTML += `
                 <div class="resource-card ${statusClass}" onclick="openResourceModal('power')" style="position:relative;">
@@ -1209,6 +1419,7 @@
                     <div class="resource-remaining">${remainingText}</div>
                     <div class="resource-value">${Math.round(level)} / ${capacity} ${config.unit}</div>
                     ${consumersHtml}
+                    ${solarHtml}
                 </div>
             `;
         }
@@ -1371,6 +1582,10 @@
                     if (conEl && conEl.value) vehicleData[config.consumptionField] = parseFloat(conEl.value);
                 }
             }
+            // Solar-Leistung speichern
+            const solarPowerEl = document.getElementById('setup_solarPower');
+            if (solarPowerEl?.value) vehicleData.solarPower = parseInt(solarPowerEl.value);
+            
             const toiletType = document.getElementById('setup_toiletType');
             if (toiletType) {
                 vehicleData.toiletType = toiletType.value;
@@ -1513,6 +1728,132 @@
                 await loadConsumers();
             } catch (error) { console.error('Delete consumer error:', error); }
         }
+
+        // ========== SOLAR & STANDORT FUNKTIONEN ==========
+        let userLocation = JSON.parse(localStorage.getItem('userLocation') || 'null');
+        let weatherData = null;
+
+        function loadSolarData() {
+            const solarInput = document.getElementById('setup_solarPower');
+            if (solarInput && currentVehicle?.solar_power) {
+                solarInput.value = currentVehicle.solar_power;
+            }
+            if (userLocation) {
+                updateLocationDisplay();
+                fetchWeatherAndSolar();
+            }
+        }
+
+        async function requestLocation() {
+            const btn = document.getElementById('locationBtn');
+            const info = document.getElementById('locationInfo');
+            if (!navigator.geolocation) {
+                if (info) info.textContent = 'Geolocation nicht unterstützt';
+                return;
+            }
+            if (btn) btn.textContent = '⏳ Suche...';
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                    localStorage.setItem('userLocation', JSON.stringify(userLocation));
+                    updateLocationDisplay();
+                    await fetchWeatherAndSolar();
+                },
+                (err) => {
+                    if (info) info.textContent = 'Standort-Zugriff verweigert';
+                    if (btn) btn.textContent = '📍 Standort';
+                },
+                { enableHighAccuracy: false, timeout: 10000 }
+            );
+        }
+
+        function updateLocationDisplay() {
+            const btn = document.getElementById('locationBtn');
+            const info = document.getElementById('locationInfo');
+            if (btn) btn.textContent = '✅ Standort aktiv';
+            if (info && userLocation) {
+                info.textContent = `📍 ${userLocation.lat.toFixed(4)}, ${userLocation.lon.toFixed(4)}`;
+            }
+        }
+
+        async function fetchWeatherAndSolar() {
+            if (!userLocation) return;
+            const forecastEl = document.getElementById('solarForecast');
+            const yieldEl = document.getElementById('setup_solarYield');
+            
+            try {
+                // Open-Meteo API für Wetter und Sonnenstrahlung (kostenlos, kein API-Key nötig)
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&daily=sunshine_duration,shortwave_radiation_sum,weathercode&timezone=auto&forecast_days=3`;
+                const res = await fetch(url);
+                const data = await res.json();
+                weatherData = data;
+                
+                // Solarertrag berechnen
+                const solarWp = parseFloat(document.getElementById('setup_solarPower')?.value) || currentVehicle?.solar_power || 0;
+                if (solarWp > 0 && data.daily) {
+                    const today = data.daily;
+                    const sunshineHours = (today.sunshine_duration?.[0] || 0) / 3600; // Sekunden -> Stunden
+                    const radiation = today.shortwave_radiation_sum?.[0] || 0; // kWh/m²
+                    
+                    // Einfache Schätzung: Wp * Sonnenstunden * Effizienzfaktor (0.7) / 12V = Ah
+                    // Alternativ: Basierend auf Strahlungssumme
+                    const efficiency = 0.7; // Panel-Effizienz, Verluste
+                    const voltage = 12; // Systemspannung
+                    const estimatedAh = (solarWp * sunshineHours * efficiency * 0.15) / voltage;
+                    
+                    if (yieldEl) yieldEl.value = estimatedAh.toFixed(1);
+                    
+                    // Wettercode zu Icon
+                    const weatherIcons = {
+                        0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+                        45: '🌫️', 48: '🌫️',
+                        51: '🌧️', 53: '🌧️', 55: '🌧️',
+                        61: '🌧️', 63: '🌧️', 65: '🌧️',
+                        71: '🌨️', 73: '🌨️', 75: '🌨️',
+                        80: '🌦️', 81: '🌦️', 82: '🌦️',
+                        95: '⛈️', 96: '⛈️', 99: '⛈️'
+                    };
+                    
+                    if (forecastEl) {
+                        forecastEl.style.display = 'block';
+                        forecastEl.innerHTML = `
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;">
+                                <div style="font-weight:600;margin-bottom:8px;">☀️ Solar-Prognose</div>
+                                <div style="display:flex;gap:8px;">
+                                    ${today.time.slice(0, 3).map((date, i) => {
+                                        const code = today.weathercode?.[i] || 0;
+                                        const icon = weatherIcons[code] || '🌤️';
+                                        const sun = ((today.sunshine_duration?.[i] || 0) / 3600).toFixed(1);
+                                        const dayAh = (solarWp * parseFloat(sun) * efficiency * 0.15) / voltage;
+                                        return `
+                                            <div style="flex:1;text-align:center;padding:8px;background:rgba(255,255,255,0.05);border-radius:6px;">
+                                                <div style="font-size:11px;opacity:0.7;">${new Date(date).toLocaleDateString('de', {weekday:'short'})}</div>
+                                                <div style="font-size:24px;">${icon}</div>
+                                                <div style="font-size:12px;">${sun}h ☀️</div>
+                                                <div style="font-size:13px;font-weight:600;color:#f39c12;">~${dayAh.toFixed(0)} Ah</div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <div style="font-size:11px;opacity:0.6;margin-top:8px;text-align:center;">
+                                    Basierend auf ${solarWp}Wp Solar-Anlage
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (e) {
+                console.error('Weather fetch error:', e);
+                if (forecastEl) forecastEl.innerHTML = '<div style="opacity:0.5;">Wetterdaten nicht verfügbar</div>';
+            }
+        }
+
+        // Solar-Input onChange -> Neu berechnen
+        document.addEventListener('input', (e) => {
+            if (e.target.id === 'setup_solarPower' && userLocation) {
+                fetchWeatherAndSolar();
+            }
+        });
 
         let setupConsumers = [];
 
