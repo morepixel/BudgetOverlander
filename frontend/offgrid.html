@@ -41,6 +41,35 @@
             cursor: pointer; transition: transform 0.2s, background 0.2s;
         }
         .resource-card:hover { transform: scale(1.02); background: rgba(255,255,255,0.15); }
+        /* iOS-Style Edit Mode */
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-1deg); }
+            50% { transform: rotate(1deg); }
+        }
+        .edit-mode .resource-card {
+            animation: wiggle 0.15s ease-in-out infinite;
+            cursor: grab;
+        }
+        .edit-mode .resource-card:active { cursor: grabbing; }
+        .edit-mode .resource-card.dragging {
+            opacity: 0.5;
+            animation: none;
+            transform: scale(1.05);
+        }
+        .edit-mode .resource-card .drag-handle {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(0,0,0,0.3); border-radius: 50%;
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px;
+        }
+        .edit-mode-btn {
+            position: fixed; bottom: 80px; right: 16px;
+            background: rgba(76,175,80,0.9); border: none; border-radius: 50%;
+            width: 50px; height: 50px; font-size: 20px;
+            cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .edit-mode-btn.active { background: rgba(244,67,54,0.9); }
         .resource-card.warning { background: rgba(255, 193, 7, 0.2); border: 2px solid rgba(255, 193, 7, 0.5); }
         .resource-card.critical { background: rgba(220, 53, 69, 0.2); border: 2px solid rgba(220, 53, 69, 0.5); }
         .resource-card.inverted.warning { background: rgba(220, 53, 69, 0.2); border: 2px solid rgba(220, 53, 69, 0.5); }
@@ -127,8 +156,11 @@
         .slider-container { padding: 10px 0; }
         .slider-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .slider-value { font-weight: 700; color: #4CAF50; }
-        input[type="range"] { width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); -webkit-appearance: none; appearance: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #4CAF50; cursor: pointer; }
+        input[type="range"] { width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); -webkit-appearance: none; appearance: none; margin: 0; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #4CAF50; cursor: pointer; margin-top: -6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); }
+        input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #4CAF50; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); }
         .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
         .btn-primary { background: #4CAF50; color: white; }
         .btn-primary:hover { background: #45a049; }
@@ -440,6 +472,9 @@
             </div>
 
             <div class="resources-grid" id="resourcesGrid"></div>
+            
+            <!-- Edit Mode Button -->
+            <button class="edit-mode-btn" id="editModeBtn" onclick="toggleEditMode()">✏️</button>
 
             <!-- DEMO: Google AdSense - Banner zwischen Ressourcen und Quick Actions -->
             <div class="ad-container ad-banner" id="adBannerTop">
@@ -565,7 +600,28 @@
                 <div class="input-row">
                     <div class="form-group" style="flex: 0.5;">
                         <label>Icon</label>
-                        <input type="text" class="form-input" id="newCustomIcon" value="📦" maxlength="2">
+                        <select class="form-input" id="newCustomIcon" style="font-size:18px;">
+                            <option value="📦">📦 Paket</option>
+                            <option value="🐕">🐕 Hund</option>
+                            <option value="🐈">🐈 Katze</option>
+                            <option value="🧴">🧴 Hygiene</option>
+                            <option value="💊">💊 Medizin</option>
+                            <option value="🧻">🧻 Papier</option>
+                            <option value="🧹">🧹 Reinigung</option>
+                            <option value="🔋">🔋 Batterie</option>
+                            <option value="⛽">⛽ Benzin</option>
+                            <option value="🪵">🪵 Holz</option>
+                            <option value="🧊">🧊 Eis</option>
+                            <option value="☕">☕ Kaffee</option>
+                            <option value="🍺">🍺 Bier</option>
+                            <option value="🥛">🥛 Milch</option>
+                            <option value="🥚">🥚 Eier</option>
+                            <option value="🍞">🍞 Brot</option>
+                            <option value="🥩">🥩 Fleisch</option>
+                            <option value="🧀">🧀 Käse</option>
+                            <option value="🗑️">🗑️ Müll</option>
+                            <option value="🎒">🎒 Rucksack</option>
+                        </select>
                     </div>
                     <div class="form-group" style="flex: 2;">
                         <label>Name</label>
@@ -689,6 +745,8 @@
         let currentResourceType = null;
         let enabledResources = ['water', 'power', 'fuel', 'gas'];
         let isPremium = false;
+        let isEditMode = false;
+        let customResourceOrder = JSON.parse(localStorage.getItem('resourceOrder') || 'null');
 
         function getToken() { return localStorage.getItem('token'); }
 
@@ -776,6 +834,128 @@
             isPremium = !isPremium;
             updateAdsVisibility();
             updatePremiumUI();
+        }
+
+        // === EDIT MODE & DRAG-AND-DROP ===
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const grid = document.getElementById('resourcesGrid');
+            const btn = document.getElementById('editModeBtn');
+            
+            if (isEditMode) {
+                grid.classList.add('edit-mode');
+                btn.classList.add('active');
+                btn.textContent = '✓';
+                initDragAndDrop();
+            } else {
+                grid.classList.remove('edit-mode');
+                btn.classList.remove('active');
+                btn.textContent = '✏️';
+                saveResourceOrder();
+            }
+        }
+
+        function initDragAndDrop() {
+            const grid = document.getElementById('resourcesGrid');
+            const cards = grid.querySelectorAll('.resource-card');
+            
+            cards.forEach(card => {
+                card.setAttribute('draggable', 'true');
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragend', handleDragEnd);
+                card.addEventListener('dragover', handleDragOver);
+                card.addEventListener('drop', handleDrop);
+                card.addEventListener('touchstart', handleTouchStart, { passive: false });
+                card.addEventListener('touchmove', handleTouchMove, { passive: false });
+                card.addEventListener('touchend', handleTouchEnd);
+            });
+        }
+
+        let draggedCard = null;
+        let touchStartY = 0;
+        let touchStartX = 0;
+
+        function handleDragStart(e) {
+            if (!isEditMode) return;
+            draggedCard = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedCard = null;
+        }
+
+        function handleDragOver(e) {
+            if (!isEditMode) return;
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+        }
+
+        function handleDrop(e) {
+            if (!isEditMode || !draggedCard || draggedCard === this) return;
+            e.preventDefault();
+            
+            const grid = document.getElementById('resourcesGrid');
+            const cards = [...grid.querySelectorAll('.resource-card')];
+            const draggedIdx = cards.indexOf(draggedCard);
+            const targetIdx = cards.indexOf(this);
+            
+            if (draggedIdx < targetIdx) {
+                this.parentNode.insertBefore(draggedCard, this.nextSibling);
+            } else {
+                this.parentNode.insertBefore(draggedCard, this);
+            }
+        }
+
+        // Touch-Support für Mobile
+        function handleTouchStart(e) {
+            if (!isEditMode) return;
+            draggedCard = this;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            this.classList.add('dragging');
+        }
+
+        function handleTouchMove(e) {
+            if (!isEditMode || !draggedCard) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            const targetCard = elementBelow?.closest('.resource-card');
+            
+            if (targetCard && targetCard !== draggedCard) {
+                const grid = document.getElementById('resourcesGrid');
+                const cards = [...grid.querySelectorAll('.resource-card')];
+                const draggedIdx = cards.indexOf(draggedCard);
+                const targetIdx = cards.indexOf(targetCard);
+                
+                if (draggedIdx < targetIdx) {
+                    targetCard.parentNode.insertBefore(draggedCard, targetCard.nextSibling);
+                } else {
+                    targetCard.parentNode.insertBefore(draggedCard, targetCard);
+                }
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (draggedCard) {
+                draggedCard.classList.remove('dragging');
+                draggedCard = null;
+            }
+        }
+
+        function saveResourceOrder() {
+            const grid = document.getElementById('resourcesGrid');
+            const cards = grid.querySelectorAll('.resource-card');
+            const order = [...cards].map(card => card.dataset.resource).filter(Boolean);
+            
+            if (order.length > 0) {
+                customResourceOrder = order;
+                localStorage.setItem('resourceOrder', JSON.stringify(order));
+            }
         }
 
         function renderPremiumOptions() {
@@ -1252,11 +1432,19 @@
             const grid = document.getElementById('resourcesGrid');
             grid.innerHTML = '';
             
-            // Optimierte Reihenfolge: Wasser zuerst, dann Power (span-2), dann Grauwasser
-            const sortedResources = [...enabledResources].sort((a, b) => {
-                const order = { water: 0, power: 1, greywater: 2 };
-                return (order[a] ?? 99) - (order[b] ?? 99);
-            });
+            // Gespeicherte oder optimierte Reihenfolge
+            let sortedResources;
+            if (customResourceOrder && customResourceOrder.length > 0) {
+                // Gespeicherte Reihenfolge verwenden, neue Ressourcen am Ende
+                sortedResources = [...customResourceOrder.filter(r => enabledResources.includes(r))];
+                enabledResources.forEach(r => { if (!sortedResources.includes(r)) sortedResources.push(r); });
+            } else {
+                // Standard: Wasser zuerst, dann Power (span-2), dann Grauwasser
+                sortedResources = [...enabledResources].sort((a, b) => {
+                    const order = { water: 0, power: 1, greywater: 2 };
+                    return (order[a] ?? 99) - (order[b] ?? 99);
+                });
+            }
             
             for (const key of sortedResources) {
                 if (key === 'toilet') {
@@ -1285,7 +1473,7 @@
                 }
                 const remainingText = remaining != null ? (key === 'fuel' ? `~${remaining} km` : `~${remaining} Tage`) : '--';
                 grid.innerHTML += `
-                    <div class="resource-card ${statusClass}" onclick="openResourceModal('${key}')" style="position:relative;">
+                    <div class="resource-card ${statusClass}" data-resource="${key}" onclick="openResourceModal('${key}')" style="position:relative;">
                         <div class="resource-header">
                             <span class="resource-icon">${config.icon}</span>
                             <span class="resource-percentage">${Math.round(pct)}%</span>
@@ -1318,7 +1506,7 @@
                         const customTotalConsumption = r.consumption_per_day ? r.consumption_per_day * customPersonCount : null;
                         const daysRemaining = customTotalConsumption ? (r.current_level / customTotalConsumption).toFixed(1) : null;
                         grid.innerHTML += `
-                            <div class="resource-card ${statusClass}" onclick="openCustomResourcesModal()" style="position:relative;">
+                            <div class="resource-card ${statusClass}" data-resource="custom-${r.id}" onclick="openCustomResourcesModal()" style="position:relative;">
                                 <div class="resource-header">
                                     <span class="resource-icon">${r.icon}</span>
                                     <span class="resource-percentage">${Math.round(pct)}%</span>
@@ -1427,7 +1615,7 @@
             }
             
             grid.innerHTML += `
-                <div class="resource-card span-2 ${statusClass}" onclick="openResourceModal('power')" style="position:relative;">
+                <div class="resource-card span-2 ${statusClass}" data-resource="power" onclick="openResourceModal('power')" style="position:relative;">
                     <div class="resource-header">
                         <span class="resource-icon">${config.icon}</span>
                         <span class="resource-percentage">${Math.round(pct)}%</span>
@@ -1509,7 +1697,7 @@
                 const solidDays = currentLevels.ttt_solid_days ?? '--';
                 const liquidDays = currentLevels.ttt_liquid_days ?? '--';
                 grid.innerHTML += `
-                    <div class="resource-card inverted" style="position:relative;">
+                    <div class="resource-card inverted" data-resource="toilet" style="position:relative;">
                         <div class="resource-header">
                             <span class="resource-icon">🚽</span>
                             <span class="resource-percentage">TTT</span>
@@ -1535,7 +1723,7 @@
                 const pct = Math.round((bagsRemaining / bagsCap) * 100);
                 const days = currentLevels.clesana_days ?? '--';
                 grid.innerHTML += `
-                    <div class="resource-card ${pct < 20 ? 'critical' : pct < 40 ? 'warning' : ''}" style="position:relative;">
+                    <div class="resource-card ${pct < 20 ? 'critical' : pct < 40 ? 'warning' : ''}" data-resource="toilet" style="position:relative;">
                         <div class="resource-header">
                             <span class="resource-icon">🚽</span>
                             <span class="resource-percentage">${bagsRemaining}</span>
