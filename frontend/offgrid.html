@@ -759,9 +759,15 @@
             if (premiumBadge) premiumBadge.style.display = isPremium ? 'inline' : 'none';
             if (premiumSection) {
                 premiumSection.innerHTML = isPremium 
-                    ? `<div style="text-align:center;padding:16px;background:rgba(76,175,80,0.2);border-radius:12px;"><div style="font-size:24px;margin-bottom:8px;">⭐</div><div style="font-weight:600;">Premium aktiv</div><div style="font-size:12px;opacity:0.7;">Keine Werbung</div></div>`
-                    : renderPremiumOptions();
+                    ? `<div style="text-align:center;padding:16px;background:rgba(76,175,80,0.2);border-radius:12px;"><div style="font-size:24px;margin-bottom:8px;">⭐</div><div style="font-weight:600;">Premium aktiv</div><div style="font-size:12px;opacity:0.7;">Keine Werbung</div><button class="btn btn-secondary" onclick="toggleDebugPremium()" style="margin-top:12px;padding:6px 12px;font-size:11px;opacity:0.6;">🐛 Debug: Premium deaktivieren</button></div>`
+                    : renderPremiumOptions() + `<button class="btn btn-secondary" onclick="toggleDebugPremium()" style="margin-top:12px;padding:6px 12px;font-size:11px;opacity:0.6;">🐛 Debug: Premium aktivieren</button>`;
             }
+        }
+
+        function toggleDebugPremium() {
+            isPremium = !isPremium;
+            updateAdsVisibility();
+            updatePremiumUI();
         }
 
         function renderPremiumOptions() {
