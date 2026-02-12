@@ -1,73 +1,38 @@
-# Budget Overlander - Overpass API Test
+# DaysLeft - Ressourcen-Tracker für Overlander
 
-Test-Script zur Evaluierung der Overpass-API für Offroad-Routen-Daten.
+> "Wie lange reichen deine Ressourcen?"
 
-## Was macht das Script?
+## Was ist DaysLeft?
 
-Das Script fragt die Overpass-API (OpenStreetMap) ab und holt Offroad-taugliche Wege im Umkreis von Freiburg im Breisgau.
+Eine Web-App die **alle Ressourcen deines Overlander-Fahrzeugs** trackt (Wasser, Strom, Diesel, Gas) und dir sagt wie lange du noch autark bleiben kannst.
 
-### Gefiltert wird nach:
-- **Highway-Typen**: track, unclassified, service, path (mit motor_vehicle erlaubt)
-- **Oberflächen**: gravel, dirt, ground, unpaved, fine_gravel, rock, sand
-- **Zugang**: Keine privaten oder gesperrten Wege
+## Features
 
-### Das Script liefert:
-- Anzahl gefundener Wege
-- Gesamtlänge aller Wege
-- Statistiken zu Highway-Typen, Oberflächen, Tracktypes, Smoothness
-- Beispiel-Wege mit allen Details
-- Rohdaten als JSON
-- Statistiken als JSON
+- **Fahrzeug-Profile**: Definiere dein Setup (Tank-Größen, Verbrauchswerte)
+- **Ressourcen-Tracking**: Wasser, Strom, Kraftstoff, Gas
+- **Autarkie-Berechnung**: Wie viele Tage kannst du noch autark bleiben?
+- **Quick-Actions**: Schnell Ressourcen auffrischen
+- **Verbrauchshistorie**: Lerne deinen tatsächlichen Verbrauch
 
 ## Installation
 
-Keine Dependencies nötig! Node.js 18+ reicht.
-
-## Verwendung
-
-### Basis-Verwendung:
 ```bash
-node test-overpass-api.js [query-size] [minLänge] [minFahrzeit]
+npm install
+npm start
 ```
 
-**Parameter:**
-- `query-size`: mini (3km), small (10km), medium (25km), large (50km)
-- `minLänge`: Mindestlänge in Metern (Standard: 500m)
-- `minFahrzeit`: Mindest-Fahrzeit in Minuten (Standard: 5 Min)
+## API Endpoints
 
-### Beispiele:
+- `POST /api/auth/register` - Registrierung
+- `POST /api/auth/login` - Login
+- `GET /api/vehicles` - Fahrzeuge abrufen
+- `POST /api/vehicles` - Fahrzeug anlegen
+- `GET /api/resources/current` - Aktuelle Füllstände
+- `POST /api/resources/log` - Ressourcen-Eintrag
 
-#### Schneller Test (Standard-Filter: 500m, 5 Min):
-```bash
-node test-overpass-api.js mini
-```
+## Tech Stack
 
-#### Realistische Touren (>2km, >10 Min):
-```bash
-node test-overpass-api.js small 2000 10
-```
-
-#### Längere Touren (>5km, >30 Min):
-```bash
-node test-overpass-api.js medium 5000 30
-```
-
-#### Sehr lange Touren (>10km, >60 Min):
-```bash
-node test-overpass-api.js large 10000 60
-```
-
-## Ausgabe
-
-Das Script erstellt:
-- `overpass-raw-{size}-{timestamp}.json` - Komplette API-Antwort
-- `overpass-stats-{size}-{timestamp}.json` - Berechnete Statistiken
-
-## Nächste Schritte
-
-Basierend auf den Test-Ergebnissen können wir:
-1. Scoring-System entwickeln (surface, tracktype, smoothness)
-2. Routen-Visualisierung auf Karte
-3. Budget-Kalkulation (Distanz, Spritverbrauch)
-4. GPX-Export für Navigation
-5. Filter nach Fahrzeug-Constraints (Gewicht, Breite, Höhe)
+- **Backend**: Node.js / Express
+- **Datenbank**: PostgreSQL
+- **Frontend**: Vanilla JS, Leaflet Maps
+- **Auth**: JWT

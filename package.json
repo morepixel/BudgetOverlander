@@ -1,19 +1,16 @@
 {
-  "name": "budget-overlander",
+  "name": "daysleft",
   "version": "1.0.0",
-  "description": "Budget Overlander - Offroad Route Planning Platform",
+  "description": "DaysLeft - Ressourcen-Tracker für Overlander",
   "type": "module",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js",
-    "test:small": "node test-overpass-api.js small",
-    "test:medium": "node test-overpass-api.js medium",
-    "test:large": "node test-overpass-api.js large"
+    "start": "node backend/server.js"
   },
   "engines": {
     "node": "18.x"
   },
-  "keywords": ["overpass", "openstreetmap", "offroad", "overlander", "route-planning"],
+  "keywords": ["overlander", "vanlife", "resources", "water", "power", "fuel", "autarky"],
   "author": "",
   "license": "MIT"
 }

@@ -1,4 +1,4 @@
-// Budget Overlander Backend API
+// DaysLeft Backend API
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -7,24 +7,9 @@ import { dirname, join } from 'path';
 import fs from 'fs';
 
 // Routes
-import regionsRouter from './routes/regions.js';
-import routesRouter from './routes/routes.js';
 import authRouter from './routes/auth.js';
 import vehiclesRouter from './routes/vehicles.js';
-import poisRouter from './routes/pois.js';
-import questsRouter from './routes/quests.js';
-import badgesRouter from './routes/badges.js';
-import profileRouter from './routes/profile.js';
-import accommodationsRouter from './routes/accommodations.js';
-import tripPlannerRouter from './routes/trip-planner.js';
-import geocodingRouter from './routes/geocoding.js';
-import aiRoutesRouter from './routes/ai-routes.js';
-import park4nightRouter from './routes/park4night.js';
-import photosRouter from './routes/photos.js';
 import resourcesRouter from './routes/resources.js';
-import consumersRouter from './routes/consumers.js';
-import customResourcesRouter from './routes/custom-resources.js';
-import premiumRouter from './routes/premium.js';
 
 dotenv.config();
 
@@ -46,23 +31,8 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRouter);
-app.use('/api/regions', regionsRouter);
-app.use('/api/routes', routesRouter);
 app.use('/api/vehicles', vehiclesRouter);
-app.use('/api/pois', poisRouter);
-app.use('/api/quests', questsRouter);
-app.use('/api/badges', badgesRouter);
-app.use('/api/profile', profileRouter);
-app.use('/api/accommodations', accommodationsRouter);
-app.use('/api/trip-planner', tripPlannerRouter);
-app.use('/api/geocoding', geocodingRouter);
-app.use('/api/ai', aiRoutesRouter);
-app.use('/api/park4night', park4nightRouter);
-app.use('/api/photos', photosRouter);
 app.use('/api/resources', resourcesRouter);
-app.use('/api/consumers', consumersRouter);
-app.use('/api/custom-resources', customResourcesRouter);
-app.use('/api/premium', premiumRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -87,7 +57,7 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Budget Overlander Backend läuft auf Port ${PORT}`);
+  console.log(`\n🚀 DaysLeft Backend läuft auf Port ${PORT}`);
   console.log(`📍 API: http://localhost:${PORT}/api`);
   console.log(`💚 Health: http://localhost:${PORT}/api/health\n`);
 });
