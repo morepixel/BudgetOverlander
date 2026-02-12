@@ -347,7 +347,7 @@
 </head>
 <body>
     <div class="app-container">
-        <div class="header">
+        <div class="header" id="mainHeader">
             <div class="logo">
                 <div class="animated-logo">
                     <div class="logo-sky"></div>
@@ -567,11 +567,21 @@
             <div id="modalConsumersSection" style="display:none; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.2);">
                 <div class="setup-section-title" style="margin-bottom:12px;">⚡ Verbraucher verwalten</div>
                 <div id="modalConsumersList"></div>
-                <div style="margin-top: 12px; display:flex; gap:8px;">
-                    <input type="text" class="form-input" id="modalNewConsumerName" placeholder="z.B. Kühlschrank" style="flex:2;">
-                    <input type="number" class="form-input" id="modalNewConsumerAh" placeholder="Ah/Tag" step="0.1" style="flex:1;">
-                    <button class="btn btn-secondary" onclick="addModalConsumer()" style="padding:8px 12px;">➕</button>
+                
+                <!-- Neuer Verbraucher -->
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div class="setup-section-title">Neuer Verbraucher</div>
+                    <div class="input-row" style="gap: 10px; margin-bottom: 12px;">
+                        <div class="form-group" style="flex: 2; margin-bottom: 0;">
+                            <input type="text" class="form-input" id="modalNewConsumerName" placeholder="z.B. Kühlschrank">
+                        </div>
+                        <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                            <input type="number" class="form-input" id="modalNewConsumerAh" placeholder="Ah/Tag" step="0.1">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addModalConsumer()" style="width: 100%;">Hinzufügen</button>
                 </div>
+                
                 <div id="modalConsumersSummary" style="margin-top: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 8px;"></div>
             </div>
         </div>
@@ -1029,6 +1039,7 @@
         }
 
         function showLogin() {
+            document.getElementById('mainHeader').style.display = 'none';
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('noVehicleState').style.display = 'none';
             document.getElementById('dashboardState').style.display = 'none';
@@ -1093,6 +1104,7 @@
         }
 
         function showNoVehicle() {
+            document.getElementById('mainHeader').style.display = 'flex';
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('loginState').style.display = 'none';
             document.getElementById('noVehicleState').style.display = 'block';
@@ -1101,6 +1113,7 @@
         }
 
         function showDashboard() {
+            document.getElementById('mainHeader').style.display = 'flex';
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('loginState').style.display = 'none';
             document.getElementById('noVehicleState').style.display = 'none';
@@ -1109,6 +1122,7 @@
         }
 
         function showSetup() {
+            document.getElementById('mainHeader').style.display = 'flex';
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('loginState').style.display = 'none';
             document.getElementById('noVehicleState').style.display = 'none';
@@ -1189,17 +1203,19 @@
                     `;
                     setTimeout(updateToiletFields, 0);
                 } else if (key === 'power') {
+                    const capValue = currentVehicle?.[toSnakeCase(config.capacityField)] || '';
+                    const conValue = currentVehicle?.[toSnakeCase(config.consumptionField)] || '';
                     container.innerHTML += `
                         <div class="setup-section">
                             <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
                             <div class="input-row">
                                 <div class="form-group">
                                     <label class="form-label">Kapazität (${config.unit})</label>
-                                    <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1">
+                                    <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1" value="${capValue}">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Verbrauch/Tag (berechnet)</label>
-                                    <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="aus Verbrauchern" step="0.1" readonly style="opacity:0.7;">
+                                    <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="aus Verbrauchern" step="0.1" readonly style="opacity:0.7;" value="${conValue}">
                                 </div>
                             </div>
                             
@@ -1211,7 +1227,7 @@
                                 <div class="input-row">
                                     <div class="form-group">
                                         <label class="form-label">Solar-Leistung (Wp)</label>
-                                        <input type="number" class="form-input" id="setup_solarPower" placeholder="z.B. 200" step="1">
+                                        <input type="number" class="form-input" id="setup_solarPower" placeholder="z.B. 200" step="1" value="${currentVehicle?.solar_power || ''}">
                                     </div>
                                     <div class="form-group">
                                         <label class="form-label">Ertrag/Tag (Ah)</label>
@@ -1246,18 +1262,20 @@
                     setTimeout(loadSetupConsumers, 0);
                     setTimeout(loadSolarData, 0);
                 } else {
+                    const capValue = currentVehicle?.[toSnakeCase(config.capacityField)] || '';
+                    const conValue = config.consumptionField ? (currentVehicle?.[toSnakeCase(config.consumptionField)] || '') : '';
                     container.innerHTML += `
                         <div class="setup-section">
                             <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
                             <div class="input-row">
                                 <div class="form-group">
                                     <label class="form-label">Kapazität (${config.unit})</label>
-                                    <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1">
+                                    <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1" value="${capValue}">
                                 </div>
                                 ${config.consumptionField ? `
                                 <div class="form-group">
                                     <label class="form-label">pro Person/Tag</label>
-                                    <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="z.B. 15" step="0.1">
+                                    <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="z.B. 15" step="0.1" value="${conValue}">
                                 </div>
                                 ` : ''}
                             </div>
