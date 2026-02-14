@@ -2,6 +2,21 @@
 -- Erweitert die bestehende vehicles-Tabelle und fügt Ressourcen-Tracking hinzu
 
 -- =============================================
+-- 0. BETA TESTERS TABELLE
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS beta_testers (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    name VARCHAR(100),
+    registered_at TIMESTAMP DEFAULT NOW(),
+    confirmed BOOLEAN DEFAULT false,
+    notes TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_beta_testers_email ON beta_testers(email);
+
+-- =============================================
 -- 1. VEHICLES TABELLE ERWEITERN
 -- =============================================
 
@@ -35,6 +50,8 @@ ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS gas_consumption_per_day DECIMAL(3,
 
 -- 5. ABWASSER (Grauwasser)
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS grey_water_capacity INTEGER;
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS greywater_linked_to_water BOOLEAN DEFAULT true;
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS greywater_link_factor INTEGER DEFAULT 90;
 
 -- 6. TOILETTE (3 Typen: ttt, clesana, chemical)
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS toilet_type VARCHAR(50); -- ttt, clesana, chemical
@@ -42,6 +59,8 @@ ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS toilet_type VARCHAR(50); -- ttt, c
 -- TTT (Trockentrenntoilette) - 2 Tanks
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_solid_capacity INTEGER; -- Feststoff-Tank in Liter
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_liquid_capacity INTEGER; -- Pipi-Tank in Liter
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_solid_ignore_autarky BOOLEAN DEFAULT FALSE; -- Feststoff bei Autarkie ignorieren (kann vergraben werden)
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_liquid_ignore_autarky BOOLEAN DEFAULT FALSE; -- Pipi bei Autarkie ignorieren (kann in Natur entleert werden)
 
 -- Clesana - Tüten
 ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS clesana_bags_capacity INTEGER; -- Anzahl Tüten

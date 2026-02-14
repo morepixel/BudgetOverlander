@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>DaysLeft Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .icon-preview {
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #333;
+            border-radius: 20px;
+        }
+        button {
+            margin: 10px 5px;
+            padding: 15px 30px;
+            font-size: 16px;
+            background: #2E7D32;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #1B5E20;
+        }
+        h2 { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>DaysLeft App Icon & Splash Generator</h1>
+    
+    <h2 style="margin-top:30px;border-bottom:1px solid #444;padding-bottom:10px;">App Icons</h2>
+    <div class="container">
+        <div class="icon-preview">
+            <h2>1024x1024 (App Store)</h2>
+            <canvas id="canvas1024" width="1024" height="1024"></canvas>
+            <br><button onclick="downloadIcon(1024)">Download 1024x1024</button>
+        </div>
+        <div class="icon-preview">
+            <h2>512x512</h2>
+            <canvas id="canvas512" width="512" height="512"></canvas>
+            <br><button onclick="downloadIcon(512)">Download 512x512</button>
+        </div>
+        <div class="icon-preview">
+            <h2>192x192 (Android)</h2>
+            <canvas id="canvas192" width="192" height="192"></canvas>
+            <br><button onclick="downloadIcon(192)">Download 192x192</button>
+        </div>
+    </div>
+    
+    <h2 style="margin-top:40px;border-bottom:1px solid #444;padding-bottom:10px;">Splash Screens</h2>
+    <div class="container">
+        <div class="icon-preview">
+            <h2>2732x2732 (iOS Universal)</h2>
+            <canvas id="splash2732" width="546" height="546" style="width:273px;height:273px;"></canvas>
+            <br><button onclick="downloadSplash(2732)">Download 2732x2732</button>
+        </div>
+        <div class="icon-preview">
+            <h2>1242x2688 (iPhone)</h2>
+            <canvas id="splash1242x2688" width="248" height="538" style="width:124px;height:269px;"></canvas>
+            <br><button onclick="downloadSplashRect(1242, 2688)">Download 1242x2688</button>
+        </div>
+        <div class="icon-preview">
+            <h2>1080x1920 (Android)</h2>
+            <canvas id="splash1080x1920" width="216" height="384" style="width:108px;height:192px;"></canvas>
+            <br><button onclick="downloadSplashRect(1080, 1920)">Download 1080x1920</button>
+        </div>
+    </div>
+
+    <script>
+        function drawIcon(ctx, size) {
+            const scale = size / 512;
+            ctx.save();
+            ctx.scale(scale, scale);
+            
+            // Abgerundetes Rechteck Clip (wie animated-logo)
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 512, 512, 50);
+            ctx.clip();
+            
+            // Wüstenboden/Sand (Haupthintergrund wie im Logo)
+            ctx.fillStyle = '#D2B48C';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Himmel (oben)
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, 512, 220);
+            
+            // Sonne
+            ctx.beginPath();
+            ctx.arc(440, 60, 50, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+            ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
+            ctx.shadowBlur = 30;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            
+            // Berge (wie im Logo)
+            ctx.fillStyle = '#8B7355';
+            // Berg links
+            ctx.beginPath();
+            ctx.moveTo(0, 280);
+            ctx.lineTo(100, 180);
+            ctx.lineTo(200, 280);
+            ctx.fill();
+            
+            // Berg mitte (größer)
+            ctx.beginPath();
+            ctx.moveTo(120, 280);
+            ctx.lineTo(256, 140);
+            ctx.lineTo(392, 280);
+            ctx.fill();
+            
+            // Berg rechts
+            ctx.beginPath();
+            ctx.moveTo(320, 280);
+            ctx.lineTo(420, 200);
+            ctx.lineTo(512, 260);
+            ctx.lineTo(512, 280);
+            ctx.fill();
+            
+            // FUSO Truck (exakt wie CSS logo-truck)
+            ctx.save();
+            ctx.translate(170, 240);
+            
+            // Truck Cabin (Fahrerhaus) - #2c3e50
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.roundRect(0, 20, 100, 55, 4);
+            ctx.fill();
+            
+            // Truck Cargo (Laderaum) - #34495e
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(100, 30, 45, 45);
+            
+            // Truck Window (Fenster) - #3498db
+            ctx.fillStyle = '#3498db';
+            ctx.beginPath();
+            ctx.roundRect(10, 28, 40, 28, 3);
+            ctx.fill();
+            
+            // Zweites Fenster
+            ctx.beginPath();
+            ctx.roundRect(55, 28, 35, 28, 3);
+            ctx.fill();
+            
+            // Räder
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(30, 80, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(115, 80, 22, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Felgen
+            ctx.fillStyle = '#555';
+            ctx.beginPath();
+            ctx.arc(30, 80, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(115, 80, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Text Hintergrund (unten)
+            ctx.fillStyle = 'rgba(0,0,0,0.75)';
+            ctx.fillRect(0, 400, 512, 112);
+            
+            // DaysLeft Text (wie logo-text-inner)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 72px Arial, Helvetica, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('DaysLeft', 256, 456);
+            
+            ctx.restore();
+        }
+        
+        function downloadIcon(size) {
+            const canvas = document.getElementById('canvas' + size);
+            const link = document.createElement('a');
+            link.download = 'daysleft-icon-' + size + 'x' + size + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        function drawSplash(ctx, width, height) {
+            // Hintergrund - Gradient von oben nach unten
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(0.5, '#16213e');
+            gradient.addColorStop(1, '#0f0f23');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // Logo zentriert zeichnen
+            const logoSize = Math.min(width, height) * 0.4;
+            const logoX = (width - logoSize) / 2;
+            const logoY = (height - logoSize) / 2 - height * 0.08;
+            
+            ctx.save();
+            ctx.translate(logoX, logoY);
+            const scale = logoSize / 512;
+            ctx.scale(scale, scale);
+            
+            // Abgerundetes Rechteck
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 512, 512, 50);
+            ctx.clip();
+            
+            // Sand Hintergrund
+            ctx.fillStyle = '#D2B48C';
+            ctx.fillRect(0, 0, 512, 512);
+            
+            // Himmel
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, 512, 220);
+            
+            // Sonne
+            ctx.beginPath();
+            ctx.arc(440, 60, 50, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFD700';
+            ctx.fill();
+            
+            // Berge
+            ctx.fillStyle = '#8B7355';
+            ctx.beginPath();
+            ctx.moveTo(0, 280);
+            ctx.lineTo(100, 180);
+            ctx.lineTo(200, 280);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(120, 280);
+            ctx.lineTo(256, 140);
+            ctx.lineTo(392, 280);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.moveTo(320, 280);
+            ctx.lineTo(420, 200);
+            ctx.lineTo(512, 260);
+            ctx.lineTo(512, 280);
+            ctx.fill();
+            
+            // FUSO Truck
+            ctx.save();
+            ctx.translate(170, 240);
+            
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.roundRect(0, 20, 100, 55, 4);
+            ctx.fill();
+            
+            ctx.fillStyle = '#34495e';
+            ctx.fillRect(100, 30, 45, 45);
+            
+            ctx.fillStyle = '#3498db';
+            ctx.beginPath();
+            ctx.roundRect(10, 28, 40, 28, 3);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(55, 28, 35, 28, 3);
+            ctx.fill();
+            
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.arc(30, 80, 22, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(115, 80, 22, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#555';
+            ctx.beginPath();
+            ctx.arc(30, 80, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(115, 80, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
+            
+            // Text Hintergrund
+            ctx.fillStyle = 'rgba(0,0,0,0.75)';
+            ctx.fillRect(0, 400, 512, 112);
+            
+            // DaysLeft Text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = 'bold 72px Arial, Helvetica, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('DaysLeft', 256, 456);
+            
+            ctx.restore();
+            
+            // Untertitel
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.font = '600 ' + (logoSize * 0.08) + 'px Arial, Helvetica, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Budget Overlander', width / 2, logoY + logoSize + logoSize * 0.15);
+        }
+        
+        function downloadSplash(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            drawSplash(ctx, size, size);
+            
+            const link = document.createElement('a');
+            link.download = 'daysleft-splash-' + size + 'x' + size + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        function downloadSplashRect(width, height) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            drawSplash(ctx, width, height);
+            
+            const link = document.createElement('a');
+            link.download = 'daysleft-splash-' + width + 'x' + height + '.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // Icons und Splash generieren
+        window.onload = function() {
+            // Icons
+            [1024, 512, 192].forEach(size => {
+                const canvas = document.getElementById('canvas' + size);
+                const ctx = canvas.getContext('2d');
+                drawIcon(ctx, size);
+            });
+            
+            // Splash Screens (Preview)
+            const splash2732 = document.getElementById('splash2732');
+            drawSplash(splash2732.getContext('2d'), 546, 546);
+            
+            const splash1242 = document.getElementById('splash1242x2688');
+            drawSplash(splash1242.getContext('2d'), 248, 538);
+            
+            const splash1080 = document.getElementById('splash1080x1920');
+            drawSplash(splash1080.getContext('2d'), 216, 384);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DaysLeft - Die App für Overlander und Camper. Behalte deine Autarkie im Blick: Wasser, Strom, Gas und mehr.">
+    <meta name="theme-color" content="#2d5a27">
+    <title>DaysLeft - Deine Autarkie im Blick</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #4CAF50;
+            --primary-dark: #2d5a27;
+            --bg-dark: #1a3a1a;
+            --bg-gradient: linear-gradient(135deg, #1a3a1a 0%, #2d5a27 100%);
+            --text-light: #ffffff;
+            --text-muted: rgba(255,255,255,0.8);
+        }
+        
+        html { scroll-behavior: smooth; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-light);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 24px;
+            background: rgba(26, 58, 26, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+        
+        .nav-logo-text {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        /* Animated Nav Logo */
+        .animated-logo-nav {
+            width: 100px;
+            height: 42px;
+            position: relative;
+            overflow: hidden;
+            background: #D2B48C;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .animated-logo-nav .logo-sky {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 22px;
+            background: linear-gradient(180deg, #5da4d4 0%, #87CEEB 100%);
+        }
+        .animated-logo-nav .logo-sun {
+            position: absolute;
+            top: 3px;
+            right: 6px;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+        }
+        .animated-logo-nav .logo-mountains {
+            position: absolute;
+            bottom: 18px;
+            left: 0;
+            width: 100%;
+            height: 12px;
+        }
+        .animated-logo-nav .logo-mountain {
+            position: absolute;
+            bottom: 0;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 12px solid #8B7355;
+        }
+        .animated-logo-nav .logo-text-inner {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            font-weight: 700;
+            color: #1a3a1a;
+            white-space: nowrap;
+        }
+        .animated-logo-nav .logo-truck {
+            position: absolute;
+            bottom: 18px;
+            left: -20px;
+            width: 16px;
+            height: 10px;
+            z-index: 10;
+            animation: driveTruckNav 3s linear infinite;
+        }
+        @keyframes driveTruckNav {
+            0% { left: -20px; }
+            100% { left: 110px; }
+        }
+        .animated-logo-nav .truck-cabin {
+            background: #2c3e50;
+            width: 10px;
+            height: 6px;
+            border-radius: 1px;
+            position: absolute;
+            bottom: 2px;
+        }
+        .animated-logo-nav .truck-cargo {
+            background: #34495e;
+            width: 5px;
+            height: 4px;
+            border-radius: 1px;
+            position: absolute;
+            bottom: 2px;
+            left: 10px;
+        }
+        .animated-logo-nav .truck-window {
+            background: #3498db;
+            width: 4px;
+            height: 3px;
+            position: absolute;
+            bottom: 5px;
+            left: 1px;
+            border-radius: 1px;
+        }
+        .animated-logo-nav .truck-wheel {
+            position: absolute;
+            bottom: 0;
+            width: 4px;
+            height: 4px;
+            background: #222;
+            border-radius: 50%;
+        }
+        .animated-logo-nav .dust {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            height: 2px;
+            background: rgba(210, 180, 140, 0.6);
+            border-radius: 50%;
+            animation: dustCloudNav 0.6s ease-out infinite;
+        }
+        @keyframes dustCloudNav {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-4px) scale(1.5); }
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+        
+        .nav-cta {
+            background: var(--primary);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 24px 80px;
+        }
+        
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+        
+        .hero-content h1 {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+        
+        .hero-content h1 span {
+            color: var(--primary);
+        }
+        
+        .hero-content p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            max-width: 500px;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+            border-color: rgba(255,255,255,0.3);
+        }
+        
+        /* Animated Logo (Hero) */
+        .animated-logo-large {
+            width: 280px;
+            height: 120px;
+            position: relative;
+            overflow: hidden;
+            background: #D2B48C;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        
+        .animated-logo-large .logo-sky {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(180deg, #5da4d4 0%, #87CEEB 100%);
+        }
+        
+        .animated-logo-large .logo-sun {
+            position: absolute;
+            top: 12px;
+            right: 20px;
+            width: 28px;
+            height: 28px;
+            background: #FFD700;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+        
+        .animated-logo-large .logo-mountains {
+            position: absolute;
+            bottom: 55px;
+            left: 0;
+            width: 100%;
+            height: 35px;
+        }
+        
+        .animated-logo-large .logo-mountain {
+            position: absolute;
+            bottom: 0;
+            width: 0;
+            height: 0;
+            border-left: 35px solid transparent;
+            border-right: 35px solid transparent;
+            border-bottom: 35px solid #8B7355;
+        }
+        
+        .animated-logo-large .logo-text-inner {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a3a1a;
+            white-space: nowrap;
+            z-index: 0;
+            letter-spacing: 1px;
+        }
+        
+        .animated-logo-large .logo-truck {
+            position: absolute;
+            bottom: 55px;
+            left: -60px;
+            width: 50px;
+            height: 30px;
+            z-index: 10;
+            animation: driveTruckLarge 5s linear infinite;
+        }
+        
+        @keyframes driveTruckLarge {
+            0% { left: -60px; }
+            100% { left: 300px; }
+        }
+        
+        .animated-logo-large .truck-cabin {
+            background: #2c3e50;
+            width: 35px;
+            height: 20px;
+            border-radius: 3px;
+            position: absolute;
+            bottom: 8px;
+        }
+        
+        .animated-logo-large .truck-cargo {
+            background: #34495e;
+            width: 15px;
+            height: 15px;
+            border-radius: 2px;
+            position: absolute;
+            bottom: 8px;
+            left: 35px;
+        }
+        
+        .animated-logo-large .truck-window {
+            background: #3498db;
+            width: 12px;
+            height: 10px;
+            position: absolute;
+            bottom: 18px;
+            left: 5px;
+            border-radius: 2px;
+        }
+        
+        .animated-logo-large .truck-wheel {
+            position: absolute;
+            bottom: 0;
+            width: 12px;
+            height: 12px;
+            background: #222;
+            border-radius: 50%;
+            border: 2px solid #555;
+        }
+        
+        .animated-logo-large .dust {
+            position: absolute;
+            bottom: 0;
+            width: 8px;
+            height: 8px;
+            background: rgba(210, 180, 140, 0.6);
+            border-radius: 50%;
+            animation: dustCloudLarge 0.8s ease-out infinite;
+        }
+        
+        @keyframes dustCloudLarge {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-12px) scale(2); }
+        }
+        
+        /* Phone Mockup */
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .phone-mockup {
+            width: 380px;
+            height: auto;
+            background: #111;
+            border-radius: 50px;
+            padding: 14px;
+            box-shadow: 0 30px 100px rgba(0,0,0,0.6);
+            position: relative;
+        }
+        
+        .phone-screen {
+            width: 100%;
+            border-radius: 32px;
+            overflow: hidden;
+        }
+        
+        .phone-screen img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 38px;
+        }
+        
+        /* Screenshot Slider */
+        .screenshot-slider {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .screenshot-slider .screenshot {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+        }
+        
+        .screenshot-slider .screenshot:first-child {
+            position: relative;
+        }
+        
+        .screenshot-slider .screenshot.active {
+            opacity: 1;
+        }
+        
+        .slider-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .slider-dots .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .slider-dots .dot:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .slider-dots .dot.active {
+            background: var(--primary);
+            transform: scale(1.2);
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 100px 24px;
+            background: rgba(0,0,0,0.2);
+        }
+        
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 60px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 32px;
+            transition: transform 0.3s, background 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255,255,255,0.08);
+        }
+        
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .feature-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        
+        /* Resources Section */
+        .resources {
+            padding: 100px 24px;
+        }
+        
+        .resources-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .resources-showcase {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .resource-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-weight: 500;
+        }
+        
+        .resource-badge-icon {
+            font-size: 24px;
+        }
+        
+        /* CTA Section */
+        .cta {
+            padding: 100px 24px;
+            background: rgba(76, 175, 80, 0.1);
+            text-align: center;
+        }
+        
+        .cta-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .cta h2 {
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .cta p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+        
+        /* Beta Tester Form */
+        .beta-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .spots-counter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        
+        .spots-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        
+        .spots-label {
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-align: left;
+        }
+        
+        .tester-form {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .tester-form .form-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .tester-form .form-input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        
+        .tester-form .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.15);
+        }
+        
+        .form-hint {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 12px;
+        }
+        
+        .tester-success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid var(--primary);
+            border-radius: 16px;
+            padding: 32px;
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 16px;
+        }
+        
+        .tester-success h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+        
+        .tester-error {
+            background: rgba(231, 76, 60, 0.2);
+            border: 2px solid #e74c3c;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 16px;
+            color: #ff6b6b;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .tester-form .form-input {
+                min-width: 100%;
+            }
+        }
+        
+        /* Footer */
+        footer {
+            padding: 40px 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+        
+        .footer-copy {
+            color: rgba(255,255,255,0.5);
+            font-size: 0.85rem;
+        }
+        
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+        }
+        
+        /* Responsive */
+        @media (max-width: 968px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            
+            .hero-content p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+            
+            .hero-buttons {
+                justify-content: center;
+            }
+            
+            .hero-visual {
+                order: -1;
+            }
+            
+            .phone-mockup {
+                width: 320px;
+                height: auto;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .nav-cta {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .hero {
+                padding-top: 100px;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="nav-logo">
+                <div class="animated-logo-nav">
+                    <div class="logo-sky"></div>
+                    <div class="logo-sun"></div>
+                    <div class="logo-mountains">
+                        <div class="logo-mountain" style="left: 8px;"></div>
+                        <div class="logo-mountain" style="left: 28px; border-bottom-width: 10px; border-left-width: 10px; border-right-width: 10px;"></div>
+                        <div class="logo-mountain" style="left: 50px; border-bottom-width: 8px; border-left-width: 8px; border-right-width: 8px;"></div>
+                    </div>
+                    <div class="logo-text-inner">DaysLeft</div>
+                    <div class="logo-truck">
+                        <div class="truck-cabin"></div>
+                        <div class="truck-cargo"></div>
+                        <div class="truck-window"></div>
+                        <div class="truck-wheel" style="left: 2px;"></div>
+                        <div class="truck-wheel" style="left: 10px;"></div>
+                        <div class="dust" style="left: -3px;"></div>
+                        <div class="dust" style="left: -6px; animation-delay: 0.2s;"></div>
+                    </div>
+                </div>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#resources">Ressourcen</a></li>
+                <li><a href="#beta">Wir suchen Tester!</a></li>
+            </ul>
+            <a href="#beta" class="nav-cta">Beta-Tester werden</a>
+            <button class="mobile-menu-btn">☰</button>
+        </div>
+    </nav>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Deine <span>Autarkie</span> immer im Blick</h1>
+                <p>DaysLeft zeigt dir, wie viele Tage du noch autark unterwegs sein kannst. Wasser, Strom, Gas - alles auf einen Blick.</p>
+                <div class="hero-buttons">
+                    <a href="#beta" class="btn btn-primary">
+                        🚀 Beta-Tester werden
+                    </a>
+                    <a href="#features" class="btn btn-secondary">
+                        Mehr erfahren
+                    </a>
+                </div>
+            </div>
+            
+            <div class="hero-visual">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="screenshot-slider">
+                            <img src="assets/app-screenshot.png" alt="DaysLeft Dashboard" class="screenshot active">
+                            <img src="assets/app-screenshot-1.png" alt="Fahrzeug einrichten" class="screenshot">
+                            <img src="assets/app-screenshot-2.png" alt="Batterie & Solar" class="screenshot">
+                            <img src="assets/app-screenshot-3.png" alt="Einstellungen" class="screenshot">
+                        </div>
+                    </div>
+                    <div class="slider-dots">
+                        <span class="dot active" data-index="0"></span>
+                        <span class="dot" data-index="1"></span>
+                        <span class="dot" data-index="2"></span>
+                        <span class="dot" data-index="3"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-container">
+            <h2 class="section-title">Alles was du brauchst</h2>
+            <p class="section-subtitle">DaysLeft wurde von Overlandern für Overlander entwickelt. Einfach, übersichtlich und auf das Wesentliche fokussiert.</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Autarkie-Dashboard</h3>
+                    <p>Sieh auf einen Blick, wie viele Tage du noch autark unterwegs sein kannst - basierend auf deinem Verbrauch.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💧</div>
+                    <h3>Ressourcen-Tracking</h3>
+                    <p>Verfolge Wasser, Strom, Gas, Kraftstoff, Grauwasser, Toilette und mehr - alles individuell konfigurierbar.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Verbraucher-Management</h3>
+                    <p>Erfasse deine elektrischen Verbraucher und berechne automatisch deinen täglichen Strombedarf.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🚐</div>
+                    <h3>Multi-Fahrzeug</h3>
+                    <p>Verwalte mehrere Fahrzeuge mit unterschiedlichen Konfigurationen - perfekt für verschiedene Reisemobile.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌡️</div>
+                    <h3>Wetter-Integration</h3>
+                    <p>Sieh das aktuelle Wetter an deinem Standort direkt im Dashboard - praktisch für die Reiseplanung.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Mehrsprachig</h3>
+                    <p>Verfügbar in Deutsch und Englisch - weitere Sprachen folgen. Reise ohne Sprachbarrieren.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Resources Section -->
+    <section class="resources" id="resources">
+        <div class="resources-container">
+            <h2 class="section-title">Alle Ressourcen im Griff</h2>
+            <p class="section-subtitle">Von Wasser bis Bier - tracke alles, was für deine Reise wichtig ist</p>
+            
+            <div class="resources-showcase">
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">💧</span>
+                    <span>Frischwasser</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">🔋</span>
+                    <span>Batterie</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">⛽</span>
+                    <span>Kraftstoff</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">🔥</span>
+                    <span>Gas</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">🚿</span>
+                    <span>Grauwasser</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">🚽</span>
+                    <span>Toilette</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">🍕</span>
+                    <span>Lebensmittel</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">🥤</span>
+                    <span>Getränke</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">🍺</span>
+                    <span>Bier</span>
+                </div>
+                <div class="resource-badge">
+                    <span class="resource-badge-icon">📦</span>
+                    <span>+ Eigene Ressourcen</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Beta Tester Section -->
+    <section class="cta" id="beta">
+        <div class="cta-container">
+            <div class="beta-badge">🎯 Limitiert auf 20 Plätze</div>
+            <h2>Werde Beta-Tester!</h2>
+            <p>Teste DaysLeft als einer der ersten 20 Nutzer kostenlos und hilf uns, die App noch besser zu machen.</p>
+            
+            <div class="spots-counter" id="spotsCounter">
+                <span class="spots-number" id="spotsRemaining">20</span>
+                <span class="spots-label">von 20 Plätzen<br>noch verfügbar</span>
+            </div>
+            
+            <form id="testerForm" class="tester-form">
+                <div class="form-row">
+                    <input type="text" id="testerName" placeholder="Dein Name (optional)" class="form-input">
+                    <input type="email" id="testerEmail" placeholder="Deine E-Mail *" class="form-input" required>
+                    <button type="submit" class="btn btn-primary">
+                        🚀 Als Tester anmelden
+                    </button>
+                </div>
+                <p class="form-hint">Keine Spam-Mails. Du erhältst nur Infos zum Beta-Test.</p>
+            </form>
+            
+            <div id="testerSuccess" class="tester-success" style="display: none;">
+                <div class="success-icon">🎉</div>
+                <h3>Willkommen im Beta-Team!</h3>
+                <p>Du bist dabei! Wir melden uns in Kürze bei dir.</p>
+                <p style="margin-top: 16px; opacity: 0.8;">Wir melden uns per E-Mail bei dir!</p>
+            </div>
+            
+            <div id="testerError" class="tester-error" style="display: none;"></div>
+        </div>
+    </section>
+    
+    <script>
+        const API_URL = 'https://budget.wirkstoff.com/api';
+        
+        // Verfügbare Plätze laden
+        async function loadSpots() {
+            try {
+                const res = await fetch(`${API_URL}/testers/spots`);
+                const data = await res.json();
+                document.getElementById('spotsRemaining').textContent = data.spots_remaining;
+                
+                if (data.spots_remaining === 0) {
+                    document.getElementById('testerForm').style.display = 'none';
+                    document.getElementById('testerError').style.display = 'block';
+                    document.getElementById('testerError').innerHTML = '<p>😔 Alle Plätze sind vergeben!</p><a href="offgrid.html" class="btn btn-secondary">App trotzdem testen</a>';
+                }
+            } catch (e) {
+                console.error('Spots laden fehlgeschlagen:', e);
+            }
+        }
+        
+        // Formular absenden
+        document.getElementById('testerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('testerEmail').value;
+            const name = document.getElementById('testerName').value;
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '⏳ Wird gesendet...';
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch(`${API_URL}/testers/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, name })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    document.getElementById('testerForm').style.display = 'none';
+                    document.getElementById('testerSuccess').style.display = 'block';
+                    document.getElementById('spotsRemaining').textContent = data.spots_remaining;
+                } else {
+                    document.getElementById('testerError').style.display = 'block';
+                    document.getElementById('testerError').textContent = data.error;
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                document.getElementById('testerError').style.display = 'block';
+                document.getElementById('testerError').textContent = 'Verbindungsfehler. Bitte versuche es später erneut.';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+        
+        // Beim Laden
+        loadSpots();
+        
+        // Screenshot Slider
+        const screenshots = document.querySelectorAll('.screenshot-slider .screenshot');
+        const dots = document.querySelectorAll('.slider-dots .dot');
+        let currentSlide = 0;
+        let slideInterval;
+        
+        function showSlide(index) {
+            screenshots.forEach((s, i) => {
+                s.classList.toggle('active', i === index);
+            });
+            dots.forEach((d, i) => {
+                d.classList.toggle('active', i === index);
+            });
+            currentSlide = index;
+        }
+        
+        function nextSlide() {
+            const next = (currentSlide + 1) % screenshots.length;
+            showSlide(next);
+        }
+        
+        // Auto-Slide alle 3.5 Sekunden
+        function startSlider() {
+            slideInterval = setInterval(nextSlide, 3500);
+        }
+        
+        // Dots klickbar machen
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                clearInterval(slideInterval);
+                showSlide(parseInt(dot.dataset.index));
+                startSlider();
+            });
+        });
+        
+        // Slider starten
+        startSlider();
+    </script>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-links">
+                <a href="#">Impressum</a>
+                <a href="#">Datenschutz</a>
+                <a href="#">AGB</a>
+                <a href="#">Kontakt</a>
+            </div>
+            <p class="footer-copy">© 2024 DaysLeft. Mit ❤️ für die Overlander-Community.</p>
+        </div>
+    </footer>
+</body>
+</html>

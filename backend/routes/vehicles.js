@@ -172,11 +172,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 
     // Dynamisches Update bauen
-    console.log('TTT Debug - updates:', JSON.stringify({
-      tttSolidIgnoreAutarky: updates.tttSolidIgnoreAutarky,
-      tttLiquidIgnoreAutarky: updates.tttLiquidIgnoreAutarky,
-      toiletType: updates.toiletType
-    }));
     const fields = [];
     const values = [];
     let paramCount = 1;

@@ -8,18 +8,28 @@
     <title>DaysLeft</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            min-height: 100%;
+            background: linear-gradient(135deg, #1a3a1a 0%, #2d5a27 100%);
+            background-attachment: fixed;
+            overscroll-behavior: none;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a3a1a 0%, #2d5a27 100%);
-            min-height: 100vh;
             color: #fff;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-            padding-left: env(safe-area-inset-left);
-            padding-right: env(safe-area-inset-right);
+            padding-bottom: env(safe-area-inset-bottom, 34px);
         }
-        .app-container { max-width: 500px; margin: 0 auto; padding: 20px; min-height: 100vh; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .app-container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        .header { 
+            display: flex; justify-content: space-between; align-items: center; 
+            max-width: 500px;
+            margin: 0 auto;
+            padding: calc(env(safe-area-inset-top, 47px) + 8px) 20px 8px 20px;
+        }
         .logo { display: flex; align-items: center; gap: 10px; }
         .logo-icon { font-size: 32px; }
         .logo-text { font-size: 20px; font-weight: 700; }
@@ -86,7 +96,7 @@
         .resource-bar { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .resource-bar.water { background: #3498db; }
         .resource-bar.power { background: #f39c12; }
-        .resource-bar.fuel { background: #e74c3c; }
+        .resource-bar.fuel { background: #ff7b7b; }
         .resource-bar.gas { background: #9b59b6; }
         .resource-bar.greywater { background: #95a5a6; }
         .resource-bar.toilet { background: #1abc9c; }
@@ -107,7 +117,7 @@
             font-size: 48px; font-weight: 700; color: #4CAF50; line-height: 1;
         }
         .autarky-days.warning { color: #f39c12; }
-        .autarky-days.critical { color: #e74c3c; }
+        .autarky-days.critical { color: #ff7b7b; }
         .autarky-label {
             font-size: 14px; opacity: 0.9;
         }
@@ -124,7 +134,7 @@
             background: rgba(0,0,0,0.15); padding: 8px 12px; border-radius: 8px;
         }
         .autarky-critical-item.warning { border-left: 3px solid #f39c12; }
-        .autarky-critical-item.critical { border-left: 3px solid #e74c3c; }
+        .autarky-critical-item.critical { border-left: 3px solid #ff7b7b; }
         .autarky-critical-days { font-weight: 600; margin-left: auto; }
         .quick-actions { background: rgba(255,255,255,0.1); border-radius: 16px; padding: 16px; margin-bottom: 20px; }
         .quick-actions-title { font-size: 14px; opacity: 0.8; margin-bottom: 12px; }
@@ -163,6 +173,8 @@
         input[type="range"] { width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); -webkit-appearance: none; appearance: none; margin: 0; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #4CAF50; cursor: pointer; margin-top: -6px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); }
+        .custom-res-slider input[type="range"]::-webkit-slider-runnable-track { background: transparent; }
+        .custom-res-slider input[type="range"]::-moz-range-track { background: transparent; }
         input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #4CAF50; cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: rgba(255,255,255,0.2); }
         .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
@@ -350,8 +362,7 @@
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="header" id="mainHeader">
+    <div class="header" id="mainHeader">
             <div class="logo">
                 <div class="animated-logo">
                     <div class="logo-sky"></div>
@@ -366,28 +377,28 @@
                         <div class="truck-cabin"></div>
                         <div class="truck-cargo"></div>
                         <div class="truck-window"></div>
-                        <div class="truck-wheel" style="left: 1px;"></div>
-                        <div class="truck-wheel" style="left: 8px;"></div>
-                        <div class="truck-wheel" style="left: 15px;"></div>
+                        <div class="truck-wheel" style="left: 2px;"></div>
+                        <div class="truck-wheel" style="left: 14px;"></div>
                         <div class="dust" style="left: -3px;"></div>
                         <div class="dust" style="left: -6px; animation-delay: 0.2s;"></div>
                         <div class="dust" style="left: -9px; animation-delay: 0.4s;"></div>
                     </div>
                 </div>
-            </div>
-            <div class="header-actions">
-                <button class="icon-btn" onclick="openSettingsModal()" title="Sprache">🌐</button>
-                <button class="icon-btn" onclick="showSetup()" title="Fahrzeug-Setup">⚙️</button>
-                <button class="icon-btn" onclick="logout()" title="Logout">🚪</button>
-            </div>
         </div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="openSettingsModal()" title="Sprache">🌐</button>
+            <button class="icon-btn" onclick="showSetup()" title="Fahrzeug-Setup">⚙️</button>
+            <button class="icon-btn" onclick="logout()" title="Logout">🚪</button>
+        </div>
+    </div>
 
+    <div class="app-container">
         <div id="loadingState" class="loading">
             <div class="spinner"></div>
             <p data-i18n="messages.loading">Lade Daten...</p>
         </div>
 
-        <div id="loginState" style="display: none; text-align: center; padding: 40px 20px;">
+        <div id="loginState" style="display: none; text-align: center; padding: 20px; padding-top: calc(env(safe-area-inset-top) + 40px);">
             <div class="animated-logo" style="margin: 0 auto 20px; transform: scale(1.5);">
                 <div class="logo-sky"></div>
                 <div class="logo-sun"></div>
@@ -401,9 +412,8 @@
                     <div class="truck-cabin"></div>
                     <div class="truck-cargo"></div>
                     <div class="truck-window"></div>
-                    <div class="truck-wheel" style="left: 1px;"></div>
-                    <div class="truck-wheel" style="left: 8px;"></div>
-                    <div class="truck-wheel" style="left: 15px;"></div>
+                    <div class="truck-wheel" style="left: 2px;"></div>
+                    <div class="truck-wheel" style="left: 14px;"></div>
                     <div class="dust" style="left: -3px;"></div>
                     <div class="dust" style="left: -6px; animation-delay: 0.2s;"></div>
                     <div class="dust" style="left: -9px; animation-delay: 0.4s;"></div>
@@ -419,8 +429,23 @@
                 <input type="password" class="form-input" id="loginPassword" placeholder="Passwort" data-i18n-placeholder="auth.password" style="text-align: center;">
             </div>
             
+            <!-- Rechtliche Zustimmung für Registrierung -->
+            <div id="legalConsentBox" style="text-align: left; margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px; line-height: 1.4;">
+                    <input type="checkbox" id="legalConsent" style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;">
+                    <span>Ich akzeptiere die <a href="#" onclick="openLegalModal('agb'); return false;" style="color: #4CAF50;">Nutzungsbedingungen (AGB)</a> und habe die <a href="#" onclick="openLegalModal('datenschutz'); return false;" style="color: #4CAF50;">Datenschutzerklärung</a> gelesen.</span>
+                </label>
+            </div>
+            
             <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom: 10px;" data-i18n="auth.login">Einloggen</button>
             <button class="btn btn-secondary" onclick="doRegister()" data-i18n="auth.register">Neuen Account erstellen</button>
+            
+            <!-- Rechtliche Links -->
+            <div style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
+                <a href="#" onclick="openLegalModal('impressum'); return false;" style="color: rgba(255,255,255,0.8); margin: 0 8px;">Impressum</a> |
+                <a href="#" onclick="openLegalModal('datenschutz'); return false;" style="color: rgba(255,255,255,0.8); margin: 0 8px;">Datenschutz</a> |
+                <a href="#" onclick="openLegalModal('agb'); return false;" style="color: rgba(255,255,255,0.8); margin: 0 8px;">AGB</a>
+            </div>
             
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2);">
                 <div style="display:flex;gap:8px;justify-content:center;">
@@ -452,6 +477,10 @@
                         <div class="vehicle-name" id="vehicleName">Mein Fahrzeug</div>
                         <div class="vehicle-details" id="vehicleDetails">-</div>
                     </div>
+                </div>
+                <div id="vehicleWeather" style="display:none; margin-left:auto; margin-right:12px; align-items:center; gap:6px;">
+                    <div id="vehicleWeatherIcon" style="font-size:28px; line-height:1; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🌧️</div>
+                    <div id="vehicleWeatherTemp" style="font-size:22px; font-weight:300; letter-spacing:-0.5px; color:rgba(255,255,255,0.95);">--°</div>
                 </div>
                 <span>▶</span>
             </div>
@@ -706,7 +735,58 @@
                     <button class="btn" id="langEn" onclick="setLanguage('en')" style="flex:1;">🇬🇧 English</button>
                 </div>
             </div>
+            
+            <div class="setup-section">
+                <div class="setup-section-title">📜 Rechtliches</div>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <button class="btn btn-secondary" onclick="openLegalModal('impressum'); closeSettingsModal();" style="text-align:left;padding:12px;">📋 Impressum</button>
+                    <button class="btn btn-secondary" onclick="openLegalModal('datenschutz'); closeSettingsModal();" style="text-align:left;padding:12px;">🔒 Datenschutzerklärung</button>
+                    <button class="btn btn-secondary" onclick="openLegalModal('agb'); closeSettingsModal();" style="text-align:left;padding:12px;">📄 Nutzungsbedingungen (AGB)</button>
+                </div>
+            </div>
+            
             <button class="btn btn-primary" onclick="closeSettingsModal()" style="margin-top:16px;" data-i18n="actions.close">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Standort Modal -->
+    <div class="modal-overlay" id="locationModal">
+        <div class="modal" style="max-width: 340px;">
+            <div class="modal-header">
+                <span class="modal-title">📍 Standort für Solar</span>
+                <button class="modal-close" onclick="closeLocationModal()">✕</button>
+            </div>
+            <div style="padding: 16px 0; font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.9);">
+                <p style="margin-bottom: 12px;">
+                    <strong>Warum brauchen wir deinen Standort?</strong>
+                </p>
+                <p style="margin-bottom: 12px; opacity: 0.85;">
+                    Mit deinem Standort können wir die <strong>Wetterprognose</strong> abrufen und den 
+                    <strong>täglichen Solarertrag</strong> deiner Anlage schätzen.
+                </p>
+                <p style="margin-bottom: 16px; opacity: 0.85;">
+                    ☀️ Sonnenstunden heute<br>
+                    ⚡ Geschätzter Ertrag in Ah<br>
+                    🌤️ 3-Tage Wettervorhersage
+                </p>
+                <p style="font-size: 12px; opacity: 0.6; margin-bottom: 0;">
+                    Dein Standort wird nur lokal gespeichert und nicht an unsere Server gesendet.
+                </p>
+            </div>
+            <div id="locationModalStatus" style="display:none; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 12px; font-size: 13px;"></div>
+            <button class="btn btn-primary" onclick="confirmLocationRequest()" style="width: 100%;">📍 Standort freigeben</button>
+        </div>
+    </div>
+
+    <!-- Rechtliche Modals (Impressum, Datenschutz, AGB) -->
+    <div class="modal-overlay" id="legalModal">
+        <div class="modal" style="max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <span class="modal-title" id="legalModalTitle">Rechtliches</span>
+                <button class="modal-close" onclick="closeLegalModal()">✕</button>
+            </div>
+            <div id="legalModalContent" style="font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.9);"></div>
+            <button class="btn btn-primary" onclick="closeLegalModal()" style="margin-top: 20px;">Schließen</button>
         </div>
     </div>
 
@@ -714,14 +794,16 @@
     <script src="js/capacitor-bridge.js"></script>
     
     <script>
-        // API-URL: Lokal, Web oder Native App (Capacitor)
+        // API-URL: Native App, Lokal oder Web
         const isNativeApp = window.Capacitor !== undefined || window.location.protocol === 'capacitor:' || window.location.protocol === 'ionic:';
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const API_BASE = isLocalhost 
-            ? 'http://localhost:3001/api' 
-            : isNativeApp 
-                ? 'https://budget.wirkstoff.com/api'
+        const isLocalDev = !isNativeApp && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const API_BASE = isNativeApp 
+            ? 'http://budget.wirkstoff.com/api'
+            : isLocalDev 
+                ? 'http://localhost:3001/api' 
                 : '/api';
+        
+        console.log('API Config:', { isNativeApp, isLocalDev, API_BASE });
 
         // i18n - Mehrsprachigkeit
         let currentLang = localStorage.getItem('language') || 'de';
@@ -771,7 +853,7 @@
         const RESOURCE_CONFIG = {
             water: { icon: '💧', key: 'water', unit: 'L', color: '#3498db', capacityField: 'freshWaterCapacity', consumptionField: 'waterConsumptionPerDay', inverted: false },
             power: { icon: '🔋', key: 'power', unit: 'Ah', color: '#f39c12', capacityField: 'batteryCapacity', consumptionField: 'powerConsumptionPerDay', inverted: false },
-            fuel: { icon: '⛽', key: 'fuel', unit: 'L', color: '#e74c3c', capacityField: 'fuelTankCapacity', consumptionField: 'fuelConsumption', inverted: false },
+            fuel: { icon: '⛽', key: 'fuel', unit: 'L', color: '#ff7b7b', capacityField: 'fuelTankCapacity', consumptionField: 'fuelConsumption', inverted: false },
             gas: { icon: '🔥', key: 'gas', unit: 'kg', color: '#9b59b6', capacityField: 'gasCapacity', consumptionField: 'gasConsumptionPerDay', inverted: false },
             greywater: { icon: '🚿', key: 'greywater', unit: 'L', color: '#95a5a6', capacityField: 'greyWaterCapacity', consumptionField: null, inverted: true },
             toilet: { icon: '🚽', key: 'toilet', unit: '', color: '#1abc9c', capacityField: 'toiletCapacity', consumptionField: null, inverted: true, hasType: true, types: ['ttt', 'clesana', 'chemical'] },
@@ -832,8 +914,8 @@
                 currentLevels = data.levels;
                 enabledResources = currentVehicle.enabled_resources || ['water', 'power', 'fuel', 'gas'];
                 
-                // Wetterdaten für Solar laden wenn Standort vorhanden
-                if (userLocation && currentVehicle.solar_power) {
+                // Wetterdaten laden wenn Standort vorhanden
+                if (userLocation) {
                     fetchWeatherAndSolar().catch(() => {});
                 }
                 
@@ -1064,29 +1146,44 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             if (!email || !password) { alert('Bitte E-Mail und Passwort eingeben'); return; }
+            
+            // Debug: API URL anzeigen
+            console.log('Login attempt to:', API_BASE + '/auth/login');
+            
             try {
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
+                
+                console.log('Response status:', response.status);
+                
                 const data = await response.json();
+                console.log('Response data:', data);
+                
                 if (data.token) {
                     localStorage.setItem('token', data.token);
                     init();
                 } else {
-                    alert(data.message || 'Login fehlgeschlagen');
+                    alert(data.message || data.error || 'Login fehlgeschlagen');
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                alert('Login fehlgeschlagen');
+                console.error('Login error:', error.message, error.stack);
+                alert('Login fehlgeschlagen: ' + (error.message || 'Netzwerkfehler'));
             }
         }
 
         async function doRegister() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
+            const legalConsent = document.getElementById('legalConsent').checked;
+            
             if (!email || !password) { alert('Bitte E-Mail und Passwort eingeben'); return; }
+            if (!legalConsent) { 
+                alert('Bitte akzeptiere die Nutzungsbedingungen und Datenschutzerklärung, um fortzufahren.'); 
+                return; 
+            }
             try {
                 const response = await fetch(`${API_BASE}/auth/register`, {
                     method: 'POST',
@@ -1106,6 +1203,145 @@
                 console.error('Register error:', error);
                 alert('Registrierung fehlgeschlagen');
             }
+        }
+
+        // Rechtliche Texte
+        const legalTexts = {
+            impressum: {
+                title: 'Impressum',
+                content: `
+                    <h3 style="margin-bottom: 12px;">Angaben gemäß § 5 TMG</h3>
+                    <p style="margin-bottom: 16px;">
+                        <strong>[Dein Name / Firmenname]</strong><br>
+                        [Straße und Hausnummer]<br>
+                        [PLZ Ort]<br>
+                        Deutschland
+                    </p>
+                    <h4 style="margin: 16px 0 8px;">Kontakt</h4>
+                    <p style="margin-bottom: 16px;">
+                        E-Mail: [deine@email.de]<br>
+                        Telefon: [optional]
+                    </p>
+                    <h4 style="margin: 16px 0 8px;">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h4>
+                    <p>[Dein Name]<br>[Adresse]</p>
+                    <h4 style="margin: 16px 0 8px;">Haftungsausschluss</h4>
+                    <p style="font-size: 13px; opacity: 0.9;">
+                        Die Inhalte dieser App wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, 
+                        Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen.
+                    </p>
+                `
+            },
+            datenschutz: {
+                title: 'Datenschutzerklärung',
+                content: `
+                    <h3 style="margin-bottom: 12px;">1. Verantwortlicher</h3>
+                    <p style="margin-bottom: 16px;">
+                        Verantwortlich für die Datenverarbeitung ist:<br>
+                        <strong>[Dein Name / Firmenname]</strong><br>
+                        [Adresse]<br>
+                        E-Mail: [deine@email.de]
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">2. Erhobene Daten</h3>
+                    <p style="margin-bottom: 16px;">Wir erheben und speichern folgende Daten:</p>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        <li>E-Mail-Adresse (für Account-Erstellung)</li>
+                        <li>Passwort (verschlüsselt gespeichert)</li>
+                        <li>Fahrzeug- und Ressourcendaten (von dir eingegeben)</li>
+                    </ul>
+                    
+                    <h3 style="margin: 16px 0 8px;">3. Zweck der Datenverarbeitung</h3>
+                    <p style="margin-bottom: 16px;">
+                        Die Daten werden ausschließlich zur Bereitstellung der App-Funktionalität verwendet:
+                        Verwaltung deines Benutzerkontos und Speicherung deiner Fahrzeug-/Ressourcendaten.
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">4. Datenspeicherung</h3>
+                    <p style="margin-bottom: 16px;">
+                        Deine Daten werden auf sicheren Servern in der EU gespeichert. 
+                        Die Übertragung erfolgt verschlüsselt (HTTPS).
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">5. Deine Rechte</h3>
+                    <p style="margin-bottom: 16px;">Du hast das Recht auf:</p>
+                    <ul style="margin-left: 20px; margin-bottom: 16px;">
+                        <li>Auskunft über deine gespeicherten Daten</li>
+                        <li>Berichtigung unrichtiger Daten</li>
+                        <li>Löschung deiner Daten</li>
+                        <li>Einschränkung der Verarbeitung</li>
+                        <li>Datenübertragbarkeit</li>
+                    </ul>
+                    <p>Kontaktiere uns per E-Mail für entsprechende Anfragen.</p>
+                    
+                    <h3 style="margin: 16px 0 8px;">6. Cookies & Lokale Speicherung</h3>
+                    <p style="margin-bottom: 16px;">
+                        Diese App verwendet localStorage zur Speicherung deines Login-Tokens 
+                        und deiner Spracheinstellung. Es werden keine Tracking-Cookies verwendet.
+                    </p>
+                `
+            },
+            agb: {
+                title: 'Nutzungsbedingungen (AGB)',
+                content: `
+                    <h3 style="margin-bottom: 12px;">1. Geltungsbereich</h3>
+                    <p style="margin-bottom: 16px;">
+                        Diese Nutzungsbedingungen gelten für die Nutzung der DaysLeft App 
+                        (im Folgenden "App" genannt).
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">2. Leistungsbeschreibung</h3>
+                    <p style="margin-bottom: 16px;">
+                        Die App ermöglicht die Verwaltung und Überwachung von Ressourcen 
+                        für Wohnmobile, Campervans und ähnliche Fahrzeuge. 
+                        Die Berechnung der Autarkie-Tage erfolgt auf Basis der eingegebenen Daten.
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">3. Nutzerkonto</h3>
+                    <p style="margin-bottom: 16px;">
+                        Für die Nutzung ist ein Benutzerkonto erforderlich. 
+                        Du bist für die Geheimhaltung deiner Zugangsdaten verantwortlich.
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">4. Haftungsausschluss</h3>
+                    <p style="margin-bottom: 16px;">
+                        Die in der App angezeigten Werte und Berechnungen dienen nur als Orientierungshilfe. 
+                        Wir übernehmen keine Haftung für Schäden, die durch die Nutzung der App entstehen. 
+                        Überprüfe deine Ressourcen stets eigenständig.
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">5. Änderungen</h3>
+                    <p style="margin-bottom: 16px;">
+                        Wir behalten uns vor, diese Nutzungsbedingungen jederzeit zu ändern. 
+                        Änderungen werden in der App bekannt gegeben.
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">6. Kündigung</h3>
+                    <p style="margin-bottom: 16px;">
+                        Du kannst dein Konto jederzeit löschen. 
+                        Kontaktiere uns hierfür per E-Mail.
+                    </p>
+                    
+                    <h3 style="margin: 16px 0 8px;">7. Anwendbares Recht</h3>
+                    <p>Es gilt deutsches Recht.</p>
+                `
+            }
+        };
+
+        function openLegalModal(type) {
+            const modal = document.getElementById('legalModal');
+            const title = document.getElementById('legalModalTitle');
+            const content = document.getElementById('legalModalContent');
+            
+            const legal = legalTexts[type];
+            if (legal) {
+                title.textContent = legal.title;
+                content.innerHTML = legal.content;
+                modal.classList.add('active');
+            }
+        }
+
+        function closeLegalModal() {
+            document.getElementById('legalModal').classList.remove('active');
         }
 
         function showLoading() {
@@ -1200,15 +1436,16 @@
                 const config = RESOURCE_CONFIG[key];
                 
                 if (key === 'toilet') {
+                    const savedType = currentVehicle?.toilet_type || 'ttt';
                     container.innerHTML += `
                         <div class="setup-section">
                             <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
                             <div class="form-group">
                                 <label class="form-label">Toiletten-Typ</label>
                                 <select class="form-input" id="setup_toiletType" onchange="updateToiletFields()">
-                                    <option value="ttt">Trockentrenntoilette (TTT)</option>
-                                    <option value="clesana">Clesana (Verbrennend)</option>
-                                    <option value="chemical">Chemie-Toilette</option>
+                                    <option value="ttt" ${savedType === 'ttt' ? 'selected' : ''}>Trockentrenntoilette (TTT)</option>
+                                    <option value="clesana" ${savedType === 'clesana' ? 'selected' : ''}>Clesana (Tüten-System)</option>
+                                    <option value="chemical" ${savedType === 'chemical' ? 'selected' : ''}>Chemie-Toilette</option>
                                 </select>
                             </div>
                             <div id="toiletTypeFields"></div>
@@ -1227,7 +1464,7 @@
                                     <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1" value="${capValue}">
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Verbrauch/Tag (berechnet)</label>
+                                    <label class="form-label">Verbrauch/Tag (calc)</label>
                                     <input type="number" class="form-input" id="setup_${config.consumptionField}" placeholder="aus Verbrauchern" step="0.1" readonly style="opacity:0.7;" value="${conValue}">
                                 </div>
                             </div>
@@ -1247,12 +1484,15 @@
                                         <input type="number" class="form-input" id="setup_solarYield" placeholder="geschätzt" readonly style="opacity:0.7;">
                                     </div>
                                 </div>
-                                <div style="margin-top:10px;">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <label class="form-label" style="margin:0;">Standort für Wetterprognose</label>
-                                        <button class="btn btn-secondary" onclick="requestLocation()" style="padding:6px 12px;font-size:12px;" id="locationBtn">📍 Standort</button>
+                                <div style="margin-top:16px; padding:12px; background:rgba(0,0,0,0.2); border-radius:10px;">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                        <label class="form-label" style="margin:0;">📍 Standort für Wetterprognose</label>
+                                        <button type="button" class="btn btn-secondary" onclick="requestLocation()" style="padding:6px 12px;font-size:12px;" id="locationBtn">📍 Aktualisieren</button>
                                     </div>
-                                    <div id="locationInfo" style="font-size:12px;opacity:0.7;margin-top:6px;"></div>
+                                    <div id="locationInfo" style="padding:10px;background:rgba(255,255,255,0.05);border-radius:8px;">
+                                        <div id="locationName" style="font-weight:600;font-size:14px;margin-bottom:4px;">Kein Standort</div>
+                                        <div id="locationCoords" style="font-size:11px;opacity:0.6;"></div>
+                                    </div>
                                     <div id="solarForecast" style="margin-top:10px;display:none;"></div>
                                 </div>
                             </div>
@@ -1266,7 +1506,7 @@
                                 <div class="input-row" style="gap:8px;">
                                     <input type="text" class="form-input" id="setupNewConsumerName" placeholder="z.B. Kühlschrank" style="flex:2;">
                                     <input type="number" class="form-input" id="setupNewConsumerAh" placeholder="Ah/Tag" step="0.1" style="flex:1;">
-                                    <button class="btn btn-secondary" onclick="addSetupConsumer()" style="padding:8px 12px;">+</button>
+                                    <button type="button" class="btn btn-secondary" onclick="addSetupConsumer()" style="padding:8px 12px;">+</button>
                                 </div>
                                 <div id="setupConsumersSummary" style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.3);border-radius:8px;font-size:13px;"></div>
                             </div>
@@ -1274,6 +1514,50 @@
                     `;
                     setTimeout(loadSetupConsumers, 0);
                     setTimeout(loadSolarData, 0);
+                } else if (key === 'fuel') {
+                    const capValue = currentVehicle?.fuel_tank_capacity || '';
+                    const conValue = currentVehicle?.fuel_consumption || '';
+                    container.innerHTML += `
+                        <div class="setup-section">
+                            <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
+                            <div class="input-row">
+                                <div class="form-group">
+                                    <label class="form-label">Tankgröße (L)</label>
+                                    <input type="number" class="form-input" id="setup_fuelTankCapacity" placeholder="z.B. 100" step="1" value="${capValue}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">L/100km</label>
+                                    <input type="number" class="form-input" id="setup_fuelConsumption" placeholder="z.B. 12" step="0.1" value="${conValue}">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (key === 'greywater') {
+                    const capValue = currentVehicle?.grey_water_capacity || '';
+                    const linkEnabled = currentVehicle?.greywater_linked_to_water ?? true;
+                    const linkFactor = currentVehicle?.greywater_link_factor || 90;
+                    container.innerHTML += `
+                        <div class="setup-section">
+                            <div class="setup-section-title">${config.icon} ${getResourceName(key)}</div>
+                            <div class="form-group">
+                                <label class="form-label">Kapazität (${config.unit})</label>
+                                <input type="number" class="form-input" id="setup_${config.capacityField}" placeholder="z.B. 100" step="0.1" value="${capValue}">
+                            </div>
+                            <div style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.2);border-radius:8px;">
+                                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                                    <input type="checkbox" id="setup_greywaterLinked" ${linkEnabled ? 'checked' : ''} onchange="toggleGreywaterLink()">
+                                    <span>Mit Wasserverbrauch koppeln</span>
+                                </label>
+                                <div id="greywaterLinkOptions" style="margin-top:10px;${linkEnabled ? '' : 'display:none;'}">
+                                    <div style="display:flex;align-items:center;gap:10px;">
+                                        <input type="range" id="setup_greywaterFactor" min="50" max="100" value="${linkFactor}" class="filled-slider" style="flex:1;background:linear-gradient(to right, #f1c40f 0%, #f1c40f ${(linkFactor-50)/50*100}%, rgba(255,255,255,0.2) ${(linkFactor-50)/50*100}%, rgba(255,255,255,0.2) 100%);" oninput="document.getElementById('greywaterFactorValue').textContent = this.value + '%'; updateSliderFill(this)">
+                                        <span id="greywaterFactorValue" style="min-width:40px;font-weight:600;">${linkFactor}%</span>
+                                    </div>
+                                    <div style="font-size:11px;opacity:0.6;margin-top:4px;">Anteil des Wasserverbrauchs der ins Abwasser geht</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 } else {
                     const capValue = currentVehicle?.[toSnakeCase(config.capacityField)] || '';
                     const conValue = config.consumptionField ? (currentVehicle?.[toSnakeCase(config.consumptionField)] || '') : '';
@@ -1304,6 +1588,8 @@
             if (!container) return;
             
             if (type === 'ttt') {
+                const solidIgnore = currentVehicle?.ttt_solid_ignore_autarky ?? false;
+                const liquidIgnore = currentVehicle?.ttt_liquid_ignore_autarky ?? false;
                 container.innerHTML = `
                     <div class="input-row">
                         <div class="form-group">
@@ -1314,6 +1600,18 @@
                             <label class="form-label">Pipi-Tank (L)</label>
                             <input type="number" class="form-input" id="setup_tttLiquidCapacity" placeholder="z.B. 10" step="1">
                         </div>
+                    </div>
+                    <div style="margin-top:12px;padding:12px;background:rgba(76,175,80,0.15);border:1px solid rgba(76,175,80,0.3);border-radius:8px;">
+                        <div style="font-size:13px;font-weight:600;margin-bottom:8px;">🌿 Natürliche Entsorgung möglich</div>
+                        <div style="font-size:11px;opacity:0.8;margin-bottom:10px;">Markiere Tanks die nicht die Autarkie einschränken, weil sie naturnah entsorgt werden können.</div>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin-bottom:8px;">
+                            <input type="checkbox" id="setup_tttLiquidIgnore" ${liquidIgnore ? 'checked' : ''} style="width:18px;height:18px;">
+                            <span style="font-size:13px;">💧 Pipi-Tank ignorieren <span style="opacity:0.6;font-size:11px;">(kann in Natur entleert werden)</span></span>
+                        </label>
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="setup_tttSolidIgnore" ${solidIgnore ? 'checked' : ''} style="width:18px;height:18px;">
+                            <span style="font-size:13px;">💩 Feststoff ignorieren <span style="opacity:0.6;font-size:11px;">(mit Kokos vergraben)</span></span>
+                        </label>
                     </div>
                 `;
             } else if (type === 'clesana') {
@@ -1333,6 +1631,23 @@
             }
             
             if (currentVehicle) prefillToiletFields();
+        }
+
+        function toggleGreywaterLink() {
+            const checkbox = document.getElementById('setup_greywaterLinked');
+            const options = document.getElementById('greywaterLinkOptions');
+            if (options) options.style.display = checkbox?.checked ? 'block' : 'none';
+            // Slider-Fill beim Öffnen aktualisieren
+            const slider = document.getElementById('setup_greywaterFactor');
+            if (slider) setTimeout(() => updateSliderFill(slider), 50);
+        }
+        
+        function updateSliderFill(slider) {
+            const min = parseFloat(slider.min) || 0;
+            const max = parseFloat(slider.max) || 100;
+            const val = parseFloat(slider.value) || 0;
+            const pct = ((val - min) / (max - min)) * 100;
+            slider.style.background = `linear-gradient(to right, #f1c40f 0%, #f1c40f ${pct}%, rgba(255,255,255,0.2) ${pct}%, rgba(255,255,255,0.2) 100%)`;
         }
 
         function prefillToiletFields() {
@@ -1377,7 +1692,7 @@
             // Standard-Ressourcen sammeln (nur die mit Tages-Verbrauch)
             for (const key of enabledResources) {
                 const config = RESOURCE_CONFIG[key];
-                if (config.inverted) continue; // Inverted resources (greywater, toilet) ausschließen
+                if (key === 'greywater') continue; // Abwasser ausschließen (hat keine Autarkie-Relevanz)
                 if (key === 'fuel') continue; // Fuel hat km statt Tage
                 
                 let days = null;
@@ -1386,8 +1701,19 @@
                     if (toiletType === 'ttt') {
                         const solidDays = currentLevels.ttt_solid_days;
                         const liquidDays = currentLevels.ttt_liquid_days;
-                        if (solidDays != null && liquidDays != null) {
-                            days = Math.min(solidDays, liquidDays);
+                        const solidIgnore = currentVehicle.ttt_solid_ignore_autarky || false;
+                        const liquidIgnore = currentVehicle.ttt_liquid_ignore_autarky || false;
+                        
+                        // Nur nicht-ignorierte Tanks in Berechnung einbeziehen
+                        const relevantDays = [];
+                        if (!solidIgnore && solidDays != null) relevantDays.push(solidDays);
+                        if (!liquidIgnore && liquidDays != null) relevantDays.push(liquidDays);
+                        
+                        if (relevantDays.length > 0) {
+                            days = Math.min(...relevantDays);
+                        } else if (solidIgnore && liquidIgnore) {
+                            // Beide ignoriert = keine Einschränkung durch Toilette
+                            days = null;
                         }
                     } else if (toiletType === 'clesana') {
                         days = currentLevels.clesana_days;
@@ -1461,23 +1787,31 @@
             }).join('');
         }
 
+        let isUpdatingUI = false;
         async function updateUI() {
             if (!currentVehicle || !currentLevels) return;
-            document.getElementById('vehicleName').textContent = currentVehicle.name || 'Mein Fahrzeug';
+            if (isUpdatingUI) return; // Verhindere parallele Aufrufe
+            isUpdatingUI = true;
             
-            // Zähle auch Custom Resources
-            let customCount = 0;
             try {
-                const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
-                customCount = customRes?.length || 0;
-            } catch (e) {}
-            const totalResources = enabledResources.length + customCount;
-            const personCount = currentVehicle.person_count || 2;
-            document.getElementById('vehicleDetails').textContent = `${personCount} Personen • ${totalResources} Ressourcen`;
-            
-            await updateAutarkyDashboard();
-            renderResourceCards();
-            renderQuickActions();
+                document.getElementById('vehicleName').textContent = currentVehicle.name || 'Mein Fahrzeug';
+                
+                // Zähle auch Custom Resources
+                let customCount = 0;
+                try {
+                    const customRes = await fetchAPI(`/custom-resources/${currentVehicle.id}`);
+                    customCount = customRes?.length || 0;
+                } catch (e) {}
+                const totalResources = enabledResources.length + customCount;
+                const personCount = currentVehicle.person_count || 2;
+                document.getElementById('vehicleDetails').textContent = `${personCount} Personen • ${totalResources} Ressourcen`;
+                
+                await updateAutarkyDashboard();
+                await renderResourceCards();
+                renderQuickActions();
+            } finally {
+                isUpdatingUI = false;
+            }
         }
 
         async function renderResourceCards() {
@@ -1511,10 +1845,20 @@
                 const levelField = `${key}_level`;
                 const pctField = `${key}_percentage`;
                 const remainField = key === 'fuel' ? 'fuel_km_remaining' : `${key}_days_remaining`;
-                const level = currentLevels[levelField] || 0;
-                const pct = currentLevels[pctField] || 0;
+                let level = parseFloat(currentLevels[levelField]) || 0;
+                const pct = parseFloat(currentLevels[pctField]) || 0;
                 const remaining = currentLevels[remainField];
                 const capacity = currentVehicle[toSnakeCase(config.capacityField)] || 0;
+                // Fix: Berechne Level aus Percentage wenn Level 0 aber Percentage > 0
+                if (level === 0 && pct > 0 && capacity > 0) {
+                    level = Math.round(capacity * pct / 100);
+                }
+                // Fix: Berechne km-Remaining für Fuel wenn nicht vorhanden
+                let calcRemaining = remaining;
+                if (key === 'fuel' && (remaining == null || remaining === 0) && level > 0) {
+                    const consumption = currentVehicle.fuel_consumption || currentVehicle.fuel_consumption_onroad || 12;
+                    calcRemaining = Math.round(level / consumption * 100);
+                }
                 let statusClass = '';
                 if (config.inverted) {
                     if (pct > 80) statusClass = 'critical inverted';
@@ -1523,7 +1867,25 @@
                     if (pct < 20) statusClass = 'critical';
                     else if (pct < 40) statusClass = 'warning';
                 }
-                const remainingText = remaining != null ? (key === 'fuel' ? `~${remaining} km` : `~${remaining} Tage`) : '--';
+                // Für food/drinks mit Unit "Tage" ist Kapazität * Prozent = verbleibende Tage
+                let remainingText = '--';
+                if (config.unit === 'Tage') {
+                    const daysRemaining = Math.round(capacity * pct / 100);
+                    remainingText = `~${daysRemaining} Tage`;
+                } else if (key === 'fuel') {
+                    remainingText = calcRemaining != null ? `~${calcRemaining} km` : '--';
+                } else if (calcRemaining != null) {
+                    remainingText = `~${calcRemaining} Tage`;
+                }
+                
+                // Verbraucht-Button für Getränke und Proviant
+                let consumeBtn = '';
+                if (key === 'drinks') {
+                    consumeBtn = `<button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:8px;width:100%;" onclick="event.stopPropagation(); consumeResource('drinks', 0.5)">🥤 Getrunken (-0.5L)</button>`;
+                } else if (key === 'food') {
+                    consumeBtn = `<button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:8px;width:100%;" onclick="event.stopPropagation(); consumeResource('food', 1)">🍽️ Tag vorbei (-1)</button>`;
+                }
+                
                 grid.innerHTML += `
                     <div class="resource-card ${statusClass}" data-resource="${key}" onclick="openResourceModal('${key}')" style="position:relative;">
                         <div class="resource-header">
@@ -1536,6 +1898,7 @@
                         </div>
                         <div class="resource-remaining">${remainingText}</div>
                         <div class="resource-value">${Math.round(level)} / ${capacity} ${config.unit}</div>
+                        ${consumeBtn}
                     </div>
                 `;
             }
@@ -1609,7 +1972,7 @@
                         <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
                             <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
                                 <span style="opacity:0.7;">⚡ Verbrauch</span>
-                                <span style="color:#e74c3c;">-${totalConsumption.toFixed(1)} Ah/Tag</span>
+                                <span style="color:#ff7b7b;">-${totalConsumption.toFixed(1)} Ah/Tag</span>
                             </div>
                             <div style="max-height:60px;overflow-y:auto;font-size:11px;">
                                 ${consumersList.slice(0, 3).map(c => `
@@ -1649,7 +2012,7 @@
                 }
                 
                 const netBalance = estimatedSolarAh - totalConsumption;
-                const balanceColor = netBalance >= 0 ? '#4CAF50' : '#e74c3c';
+                const balanceColor = netBalance >= 0 ? '#4CAF50' : '#ff7b7b';
                 const balanceSign = netBalance >= 0 ? '+' : '';
                 
                 solarHtml = `
@@ -1666,8 +2029,12 @@
                 `;
             }
             
+            // Nur span-2 wenn Verbraucher oder Solar vorhanden
+            const hasExtras = consumersHtml || solarHtml;
+            const spanClass = hasExtras ? 'span-2' : '';
+            
             grid.innerHTML += `
-                <div class="resource-card span-2 ${statusClass}" data-resource="power" onclick="openResourceModal('power')" style="position:relative;">
+                <div class="resource-card ${spanClass} ${statusClass}" data-resource="power" onclick="openResourceModal('power')" style="position:relative;">
                     <div class="resource-header">
                         <span class="resource-icon">${config.icon}</span>
                         <span class="resource-percentage">${Math.round(pct)}%</span>
@@ -1710,7 +2077,7 @@
                                 <span style="font-size:18px;">💧</span>
                                 <span style="font-weight:600;">Frischwasser</span>
                             </div>
-                            <span style="font-size:20px;font-weight:700;color:${waterStatus === 'critical' ? '#e74c3c' : waterStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(waterPct)}%</span>
+                            <span style="font-size:20px;font-weight:700;color:${waterStatus === 'critical' ? '#ff7b7b' : waterStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(waterPct)}%</span>
                         </div>
                         <div class="resource-bar-bg"><div class="resource-bar water" style="width:${waterPct}%"></div></div>
                         <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;opacity:0.7;">
@@ -1725,7 +2092,7 @@
                                 <span style="font-size:18px;">🚿</span>
                                 <span style="font-weight:600;">Grauwasser</span>
                             </div>
-                            <span style="font-size:20px;font-weight:700;color:${greyStatus === 'critical' ? '#e74c3c' : greyStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(greyPct)}%</span>
+                            <span style="font-size:20px;font-weight:700;color:${greyStatus === 'critical' ? '#ff7b7b' : greyStatus === 'warning' ? '#f39c12' : '#fff'};">${Math.round(greyPct)}%</span>
                         </div>
                         <div class="resource-bar-bg"><div class="resource-bar greywater" style="width:${greyPct}%"></div></div>
                         <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:4px;opacity:0.7;">
@@ -1747,6 +2114,12 @@
                 const liquidPct = currentLevels.ttt_liquid_percentage || 0;
                 const solidDays = currentLevels.ttt_solid_days ?? '--';
                 const liquidDays = currentLevels.ttt_liquid_days ?? '--';
+                const solidIgnore = currentVehicle.ttt_solid_ignore_autarky || false;
+                const liquidIgnore = currentVehicle.ttt_liquid_ignore_autarky || false;
+                const solidIgnoreStyle = solidIgnore ? 'opacity:0.5;' : '';
+                const liquidIgnoreStyle = liquidIgnore ? 'opacity:0.5;' : '';
+                const solidIgnoreBadge = solidIgnore ? '<span style="font-size:9px;background:rgba(76,175,80,0.3);padding:2px 4px;border-radius:4px;margin-left:4px;">🌿</span>' : '';
+                const liquidIgnoreBadge = liquidIgnore ? '<span style="font-size:9px;background:rgba(76,175,80,0.3);padding:2px 4px;border-radius:4px;margin-left:4px;">🌿</span>' : '';
                 grid.innerHTML += `
                     <div class="resource-card inverted" data-resource="toilet" style="position:relative;">
                         <div class="resource-header">
@@ -1755,15 +2128,15 @@
                         </div>
                         <div class="resource-name">Trockentrenn</div>
                         <div style="display:flex;gap:8px;margin:8px 0;">
-                            <div style="flex:1;text-align:center;">
-                                <div style="font-size:11px;opacity:0.7;">Feststoff ~${solidDays}d</div>
+                            <div style="flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;${solidIgnoreStyle}">
+                                <div style="font-size:11px;opacity:0.7;white-space:nowrap;">Fest ${solidIgnore ? '' : '~' + solidDays + 'd'}${solidIgnoreBadge}</div>
                                 <div class="resource-bar-bg"><div class="resource-bar toilet" style="width:${solidPct}%"></div></div>
-                                <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:4px;" onclick="toiletUse('solid')">💩 Benutzt</button>
+                                <button class="btn btn-secondary" style="padding:4px 6px;font-size:10px;margin-top:4px;" onclick="toiletUse('solid')">💩 Benutzt</button>
                             </div>
-                            <div style="flex:1;text-align:center;">
-                                <div style="font-size:11px;opacity:0.7;">Urin ~${liquidDays}d</div>
+                            <div style="flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;${liquidIgnoreStyle}">
+                                <div style="font-size:11px;opacity:0.7;white-space:nowrap;">Urin ${liquidIgnore ? '' : '~' + liquidDays + 'd'}${liquidIgnoreBadge}</div>
                                 <div class="resource-bar-bg"><div class="resource-bar toilet" style="width:${liquidPct}%"></div></div>
-                                <button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:4px;" onclick="toiletUse('liquid')">💧 Benutzt</button>
+                                <button class="btn btn-secondary" style="padding:4px 6px;font-size:10px;margin-top:4px;" onclick="toiletUse('liquid')">💧 Benutzt</button>
                             </div>
                         </div>
                     </div>
@@ -1790,8 +2163,8 @@
                 `;
             } else if (toiletType === 'chemical') {
                 const tankCap = currentVehicle.chemical_tank_capacity || 20;
-                const pct = currentLevels.chemical_percentage || 0;
-                const level = currentLevels.chemical_level || 0;
+                const pct = parseFloat(currentLevels.chemical_percentage) || 0;
+                const level = parseFloat(currentLevels.chemical_level) || 0;
                 const days = currentLevels.chemical_days ?? '--';
                 grid.innerHTML += `
                     <div class="resource-card inverted ${pct > 80 ? 'critical' : pct > 60 ? 'warning' : ''}" style="position:relative;">
@@ -1811,7 +2184,27 @@
             }
         }
 
+        async function consumeResource(resourceType, amount) {
+            const scrollY = window.scrollY;
+            try {
+                const config = RESOURCE_CONFIG[resourceType];
+                const levelField = `${resourceType}_level`;
+                const currentLevel = parseFloat(currentLevels[levelField]) || 0;
+                const capacity = currentVehicle[toSnakeCase(config.capacityField)] || 100;
+                const newLevel = Math.max(currentLevel - amount, 0);
+                
+                const data = await fetchAPI('/resources/log', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, resourceType, action: 'set_level', amount: newLevel })
+                });
+                currentLevels = data.levels;
+                await updateUI();
+                requestAnimationFrame(() => window.scrollTo(0, scrollY));
+            } catch (error) { console.error('Consume error:', error); }
+        }
+
         async function toiletUse(type) {
+            const scrollY = window.scrollY;
             try {
                 await fetchAPI('/resources/toilet-use', {
                     method: 'POST',
@@ -1820,7 +2213,8 @@
                 const data = await fetchAPI('/resources/current');
                 if (data) {
                     currentLevels = data.levels;
-                    updateUI();
+                    await updateUI();
+                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
                 }
             } catch (error) { console.error('Toilet use error:', error); }
         }
@@ -1830,6 +2224,22 @@
             grid.innerHTML = '';
             for (const key of enabledResources) {
                 const config = RESOURCE_CONFIG[key];
+                
+                // TTT: Separate Buttons für Pipi und Fest
+                if (key === 'toilet' && currentVehicle.toilet_type === 'ttt') {
+                    grid.innerHTML += `
+                        <button class="quick-action-btn" onclick="quickToiletEmpty('solid')">
+                            <span class="icon">💩</span>
+                            <span class="label">Fest ∅</span>
+                        </button>
+                        <button class="quick-action-btn" onclick="quickToiletEmpty('liquid')">
+                            <span class="icon">💧</span>
+                            <span class="label">Pipi ∅</span>
+                        </button>
+                    `;
+                    continue;
+                }
+                
                 const action = config.inverted ? 'empty' : 'full';
                 const label = config.inverted ? 'Geleert' : 'Voll';
                 grid.innerHTML += `
@@ -1949,6 +2359,56 @@
                 updateUI();
             }
         }
+        
+        // Legal Modal Funktionen
+        function openLegalModal(type) {
+            const titles = { impressum: 'Impressum', datenschutz: 'Datenschutzerklärung', agb: 'Nutzungsbedingungen (AGB)' };
+            const contents = {
+                impressum: `<h3>Impressum</h3>
+                    <p><strong>Angaben gemäß § 5 TMG:</strong></p>
+                    <p>morepixel<br>Inhaber: Marcel Reichelt<br>Musterstraße 1<br>12345 Musterstadt</p>
+                    <p><strong>Kontakt:</strong><br>E-Mail: info@morepixel.de</p>
+                    <p><strong>Umsatzsteuer-ID:</strong><br>DE123456789</p>`,
+                datenschutz: `<h3>Datenschutzerklärung</h3>
+                    <p><strong>1. Verantwortlicher</strong><br>morepixel, info@morepixel.de</p>
+                    <p><strong>2. Erhobene Daten</strong><br>Wir speichern: E-Mail-Adresse, Passwort (verschlüsselt), Fahrzeugdaten, Ressourcen-Logs.</p>
+                    <p><strong>3. Zweck der Verarbeitung</strong><br>Bereitstellung der App-Funktionen, Benutzerauthentifizierung.</p>
+                    <p><strong>4. Speicherdauer</strong><br>Daten werden gespeichert bis zur Löschung des Accounts.</p>
+                    <p><strong>5. Rechte</strong><br>Auskunft, Berichtigung, Löschung, Widerspruch gemäß DSGVO.</p>`,
+                agb: `<h3>Nutzungsbedingungen</h3>
+                    <p><strong>1. Geltungsbereich</strong><br>Diese AGB gelten für die Nutzung der DaysLeft App.</p>
+                    <p><strong>2. Leistungen</strong><br>DaysLeft ist ein Ressourcen-Tracker für Overlander und Camper.</p>
+                    <p><strong>3. Haftung</strong><br>Die Nutzung erfolgt auf eigene Gefahr. Keine Gewähr für Richtigkeit der Berechnungen.</p>
+                    <p><strong>4. Datenschutz</strong><br>Siehe Datenschutzerklärung.</p>`
+            };
+            
+            // Modal erstellen falls nicht vorhanden
+            let modal = document.getElementById('legalModal');
+            if (!modal) {
+                document.body.insertAdjacentHTML('beforeend', `
+                    <div class="modal-overlay" id="legalModal">
+                        <div class="modal" style="max-height:90vh;overflow-y:auto;">
+                            <div class="modal-header">
+                                <span class="modal-title" id="legalModalTitle">Rechtliches</span>
+                                <button class="modal-close" onclick="closeLegalModal()">✕</button>
+                            </div>
+                            <div id="legalModalContent" style="font-size:14px;line-height:1.6;"></div>
+                            <button class="btn btn-primary" onclick="closeLegalModal()" style="margin-top:20px;">Schließen</button>
+                        </div>
+                    </div>
+                `);
+                modal = document.getElementById('legalModal');
+            }
+            
+            document.getElementById('legalModalTitle').textContent = titles[type] || 'Rechtliches';
+            document.getElementById('legalModalContent').innerHTML = contents[type] || '<p>Inhalt nicht verfügbar.</p>';
+            modal.classList.add('active');
+        }
+        
+        function closeLegalModal() {
+            document.getElementById('legalModal')?.classList.remove('active');
+        }
+        
         function updateSliderValue() { document.getElementById('modalSliderValue').textContent = `${document.getElementById('modalSlider').value}%`; }
         function setLevel(pct) { document.getElementById('modalSlider').value = pct; updateSliderValue(); }
 
@@ -1957,26 +2417,69 @@
             const config = RESOURCE_CONFIG[currentResourceType];
             const capacity = currentVehicle[toSnakeCase(config.capacityField)] || 100;
             const amount = (pct / 100) * capacity;
+            
+            // Bei Wasser: Abwasser-Korrelation prüfen
+            let greywaterUpdate = null;
+            if (currentResourceType === 'water' && currentVehicle.greywater_linked_to_water) {
+                const oldWaterLevel = currentLevels.water_level || 0;
+                const waterUsed = oldWaterLevel - amount;
+                if (waterUsed > 0) {
+                    const factor = (currentVehicle.greywater_link_factor || 90) / 100;
+                    const greywaterIncrease = waterUsed * factor;
+                    const greywarerCap = currentVehicle.grey_water_capacity || 100;
+                    const currentGreywater = currentLevels.greywater_level || 0;
+                    greywaterUpdate = Math.min(currentGreywater + greywaterIncrease, greywarerCap);
+                }
+            }
+            
             try {
                 const data = await fetchAPI('/resources/log', {
                     method: 'POST',
                     body: JSON.stringify({ vehicleId: currentVehicle.id, resourceType: currentResourceType, action: 'set_level', amount })
                 });
                 currentLevels = data.levels;
+                
+                // Abwasser-Update wenn nötig
+                if (greywaterUpdate !== null) {
+                    const greyData = await fetchAPI('/resources/log', {
+                        method: 'POST',
+                        body: JSON.stringify({ vehicleId: currentVehicle.id, resourceType: 'greywater', action: 'set_level', amount: greywaterUpdate })
+                    });
+                    currentLevels = greyData.levels;
+                }
+                
                 updateUI();
                 closeResourceModal();
             } catch (error) { console.error('Save error:', error); }
         }
 
         async function quickAction(type, action) {
+            const scrollY = window.scrollY;
             try {
                 const data = await fetchAPI('/resources/log', {
                     method: 'POST',
                     body: JSON.stringify({ vehicleId: currentVehicle.id, resourceType: type, action, amount: 0 })
                 });
                 currentLevels = data.levels;
-                updateUI();
+                await updateUI();
+                requestAnimationFrame(() => window.scrollTo(0, scrollY));
             } catch (error) { console.error('Quick action error:', error); }
+        }
+        
+        async function quickToiletEmpty(tankType) {
+            const scrollY = window.scrollY;
+            try {
+                await fetchAPI('/resources/toilet-empty', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id, tankType })
+                });
+                const data = await fetchAPI('/resources/current');
+                if (data) {
+                    currentLevels = data.levels;
+                    await updateUI();
+                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                }
+            } catch (error) { console.error('Toilet empty error:', error); }
         }
 
         async function saveVehicle(event) {
@@ -1996,14 +2499,24 @@
             const solarPowerEl = document.getElementById('setup_solarPower');
             if (solarPowerEl?.value) vehicleData.solarPower = parseInt(solarPowerEl.value);
             
+            // Greywater-Link-Einstellungen
+            const greywaterLinked = document.getElementById('setup_greywaterLinked');
+            const greywaterFactor = document.getElementById('setup_greywaterFactor');
+            if (greywaterLinked) vehicleData.greywaterLinkedToWater = greywaterLinked.checked;
+            if (greywaterFactor) vehicleData.greywaterLinkFactor = parseInt(greywaterFactor.value);
+            
             const toiletType = document.getElementById('setup_toiletType');
             if (toiletType) {
                 vehicleData.toiletType = toiletType.value;
                 if (toiletType.value === 'ttt') {
                     const solid = document.getElementById('setup_tttSolidCapacity');
                     const liquid = document.getElementById('setup_tttLiquidCapacity');
+                    const solidIgnore = document.getElementById('setup_tttSolidIgnore');
+                    const liquidIgnore = document.getElementById('setup_tttLiquidIgnore');
                     if (solid?.value) vehicleData.tttSolidCapacity = parseInt(solid.value);
                     if (liquid?.value) vehicleData.tttLiquidCapacity = parseInt(liquid.value);
+                    vehicleData.tttSolidIgnoreAutarky = solidIgnore?.checked ?? false;
+                    vehicleData.tttLiquidIgnoreAutarky = liquidIgnore?.checked ?? false;
                 } else if (toiletType.value === 'clesana') {
                     const bags = document.getElementById('setup_clesanaBagsCapacity');
                     if (bags?.value) vehicleData.clesanaBagsCapacity = parseInt(bags.value);
@@ -2013,19 +2526,15 @@
                 }
             }
             try {
-                document.body.insertAdjacentHTML('beforeend', `<div id="debug" style="position:fixed;bottom:0;left:0;right:0;background:#333;color:#0f0;padding:10px;font-size:12px;z-index:9999;">Speichere: ${JSON.stringify(vehicleData).substring(0,100)}...</div>`);
-                let result;
+                                let result;
                 if (currentVehicle && currentVehicle.id) {
                     result = await fetchAPI(`/vehicles/${currentVehicle.id}`, { method: 'PUT', body: JSON.stringify(vehicleData) });
                 } else {
                     result = await fetchAPI('/vehicles', { method: 'POST', body: JSON.stringify(vehicleData) });
                 }
-                document.getElementById('debug').textContent = 'Gespeichert: ' + JSON.stringify(result);
-                setTimeout(() => document.getElementById('debug')?.remove(), 3000);
-                await init();
+                                await init();
             } catch (error) { 
-                document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;bottom:0;left:0;right:0;background:#900;color:#fff;padding:10px;font-size:12px;z-index:9999;">FEHLER: ${error.message}</div>`);
-            }
+                            }
         }
 
         function logout() { localStorage.removeItem('token'); window.location.href = 'index.html'; }
@@ -2143,6 +2652,52 @@
         let userLocation = JSON.parse(localStorage.getItem('userLocation') || 'null');
         let weatherData = null;
 
+        function openLocationModal() {
+            const modal = document.getElementById('locationModal');
+            const statusEl = document.getElementById('locationModalStatus');
+            if (modal) modal.classList.add('active');
+            if (statusEl) statusEl.style.display = 'none';
+        }
+
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
+            if (modal) modal.classList.remove('active');
+        }
+
+        async function confirmLocationRequest() {
+            const statusEl = document.getElementById('locationModalStatus');
+            if (!navigator.geolocation) {
+                if (statusEl) {
+                    statusEl.style.display = 'block';
+                    statusEl.innerHTML = '❌ Geolocation wird nicht unterstützt';
+                }
+                return;
+            }
+            if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.innerHTML = '⏳ Standort wird ermittelt...';
+            }
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                    localStorage.setItem('userLocation', JSON.stringify(userLocation));
+                    if (statusEl) {
+                        statusEl.innerHTML = '✅ Standort gespeichert! Lade Wetterdaten...';
+                    }
+                    updateLocationDisplay();
+                    await fetchWeatherAndSolar();
+                    closeLocationModal();
+                },
+                (err) => {
+                    if (statusEl) {
+                        statusEl.style.display = 'block';
+                        statusEl.innerHTML = '❌ Standort-Zugriff verweigert. Bitte erlaube den Zugriff in deinen Geräteeinstellungen.';
+                    }
+                },
+                { enableHighAccuracy: false, timeout: 15000 }
+            );
+        }
+
         function loadSolarData() {
             const solarInput = document.getElementById('setup_solarPower');
             if (solarInput && currentVehicle?.solar_power) {
@@ -2176,13 +2731,45 @@
                 { enableHighAccuracy: false, timeout: 10000 }
             );
         }
+        
+        // Automatische Standortabfrage im Hintergrund (für neue Accounts)
+        function autoRequestLocation() {
+            if (!navigator.geolocation) return;
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    userLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+                    localStorage.setItem('userLocation', JSON.stringify(userLocation));
+                    await fetchWeatherAndSolar();
+                    updateUI(); // UI aktualisieren um Wetter anzuzeigen
+                },
+                () => { /* Still fehlschlagen */ },
+                { enableHighAccuracy: false, timeout: 10000 }
+            );
+        }
 
-        function updateLocationDisplay() {
+        async function updateLocationDisplay() {
             const btn = document.getElementById('locationBtn');
-            const info = document.getElementById('locationInfo');
-            if (btn) btn.textContent = '✅ Standort aktiv';
-            if (info && userLocation) {
-                info.textContent = `📍 ${userLocation.lat.toFixed(4)}, ${userLocation.lon.toFixed(4)}`;
+            const nameEl = document.getElementById('locationName');
+            const coordsEl = document.getElementById('locationCoords');
+            
+            if (btn) btn.textContent = '✅ Aktiv';
+            if (coordsEl && userLocation) {
+                coordsEl.textContent = `${userLocation.lat.toFixed(4)}, ${userLocation.lon.toFixed(4)}`;
+            }
+            
+            // Reverse Geocoding für Ortsnamen
+            if (nameEl && userLocation) {
+                nameEl.textContent = 'Lade Ort...';
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userLocation.lat}&lon=${userLocation.lon}&format=json&zoom=10`);
+                    const data = await res.json();
+                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.municipality || '';
+                    const state = data.address?.state || '';
+                    const country = data.address?.country || '';
+                    nameEl.textContent = city ? `${city}, ${state || country}` : (state || country || 'Unbekannter Ort');
+                } catch (e) {
+                    nameEl.textContent = 'Standort geladen';
+                }
             }
         }
 
@@ -2193,10 +2780,31 @@
             
             try {
                 // Open-Meteo API für Wetter und Sonnenstrahlung (kostenlos, kein API-Key nötig)
-                const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&daily=sunshine_duration,shortwave_radiation_sum,weathercode&timezone=auto&forecast_days=3`;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${userLocation.lat}&longitude=${userLocation.lon}&current=temperature_2m,weathercode&daily=sunshine_duration,shortwave_radiation_sum,weathercode&timezone=auto&forecast_days=3`;
                 const res = await fetch(url);
                 const data = await res.json();
                 weatherData = data;
+                
+                // Aktuelles Wetter in Fahrzeug-Kachel anzeigen
+                const weatherIcons = {
+                    0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+                    45: '🌫️', 48: '🌫️',
+                    51: '🌧️', 53: '🌧️', 55: '🌧️',
+                    61: '🌧️', 63: '🌧️', 65: '🌧️',
+                    71: '🌨️', 73: '🌨️', 75: '🌨️',
+                    80: '🌦️', 81: '🌦️', 82: '🌦️',
+                    95: '⛈️', 96: '⛈️', 99: '⛈️'
+                };
+                if (data.current) {
+                    const weatherEl = document.getElementById('vehicleWeather');
+                    const iconEl = document.getElementById('vehicleWeatherIcon');
+                    const tempEl = document.getElementById('vehicleWeatherTemp');
+                    const currentIcon = weatherIcons[data.current.weathercode] || '🌤️';
+                    const currentTemp = Math.round(data.current.temperature_2m);
+                    if (weatherEl) weatherEl.style.display = 'flex';
+                    if (iconEl) iconEl.textContent = currentIcon;
+                    if (tempEl) tempEl.textContent = `${currentTemp}°`;
+                }
                 
                 // Solarertrag berechnen
                 const solarWp = parseFloat(document.getElementById('setup_solarPower')?.value) || currentVehicle?.solar_power || 0;
@@ -2212,17 +2820,6 @@
                     const estimatedAh = (solarWp * sunshineHours * efficiency * 0.15) / voltage;
                     
                     if (yieldEl) yieldEl.value = estimatedAh.toFixed(1);
-                    
-                    // Wettercode zu Icon
-                    const weatherIcons = {
-                        0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
-                        45: '🌫️', 48: '🌫️',
-                        51: '🌧️', 53: '🌧️', 55: '🌧️',
-                        61: '🌧️', 63: '🌧️', 65: '🌧️',
-                        71: '🌨️', 73: '🌨️', 75: '🌨️',
-                        80: '🌦️', 81: '🌦️', 82: '🌦️',
-                        95: '⛈️', 96: '⛈️', 99: '⛈️'
-                    };
                     
                     if (forecastEl) {
                         forecastEl.style.display = 'block';
@@ -2405,7 +3002,7 @@
             }
             list.innerHTML = customResources.map(r => {
                 const pct = r.current_percentage || 0;
-                const color = r.is_inverted ? (pct > 75 ? '#e74c3c' : pct > 50 ? '#f39c12' : '#27ae60') : (pct < 25 ? '#e74c3c' : pct < 50 ? '#f39c12' : '#27ae60');
+                const color = r.is_inverted ? (pct > 75 ? '#ff7b7b' : pct > 50 ? '#f39c12' : '#27ae60') : (pct < 25 ? '#ff7b7b' : pct < 50 ? '#f39c12' : '#27ae60');
                 const modalPersonCount = currentVehicle.person_count || 2;
                 const modalTotalConsumption = r.consumption_per_day ? r.consumption_per_day * modalPersonCount : null;
                 const daysRemaining = modalTotalConsumption ? (r.current_level / modalTotalConsumption).toFixed(1) : null;
@@ -2419,11 +3016,15 @@
                         </div>
                         <button class="icon-btn" onclick="deleteCustomResource(${r.id})">🗑️</button>
                     </div>
-                    <div style="background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden;">
-                        <div style="background: ${color}; height: 100%; width: ${pct}%; transition: width 0.3s;"></div>
+                    <div class="custom-res-slider" style="position: relative; height: 24px;">
+                        <div style="position: absolute; top: 8px; left: 0; right: 0; background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div style="background: ${color}; height: 100%; width: ${pct}%; transition: width 0.3s;"></div>
+                        </div>
+                        <input type="range" min="0" max="${r.capacity}" step="0.1" value="${r.current_level || 0}" 
+                            style="position: absolute; top: 0; left: 0; width: 100%; height: 24px; -webkit-appearance: none; background: transparent; cursor: pointer;" 
+                            oninput="this.parentElement.querySelector('div > div').style.width = (this.value / ${r.capacity} * 100) + '%'" 
+                            onchange="updateCustomResourceLevel(${r.id}, this.value)">
                     </div>
-                    <input type="range" min="0" max="${r.capacity}" step="0.1" value="${r.current_level || 0}" 
-                        style="width: 100%; margin-top: 8px;" onchange="updateCustomResourceLevel(${r.id}, this.value)">
                 </div>
             `}).join('');
         }
@@ -2459,6 +3060,7 @@
                     body: JSON.stringify({ level: parseFloat(level) })
                 });
                 await loadCustomResources();
+                await init();
             } catch (error) { console.error('Update custom resource level error:', error); }
         }
 

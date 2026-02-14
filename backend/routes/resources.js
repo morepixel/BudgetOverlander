@@ -334,8 +334,9 @@ router.post('/toilet-use', authenticateToken, async (req, res) => {
     } else if (toiletType === 'chemical') {
       // Durchschnitt ~0.5L pro Nutzung
       const tankCap = vehicle.chemical_tank_capacity || 20;
-      const newLevel = Math.min((levels.chemical_level || 0) + 0.5, tankCap);
-      const newPct = (newLevel / tankCap) * 100;
+      const currentLevel = parseFloat(levels.chemical_level) || 0;
+      const newLevel = Math.min(currentLevel + 0.5, tankCap);
+      const newPct = tankCap > 0 ? (newLevel / tankCap) * 100 : 0;
       await pool.query('UPDATE current_levels SET chemical_level = $1, chemical_percentage = $2 WHERE vehicle_id = $3', [newLevel, newPct, vehicleId]);
     }
 
@@ -343,6 +344,39 @@ router.post('/toilet-use', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Toilet use error:', error);
     res.status(500).json({ error: 'Fehler beim Speichern' });
+  }
+});
+
+// POST /api/resources/toilet-empty - Toiletten-Tank leeren
+router.post('/toilet-empty', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId, tankType } = req.body;
+    
+    const vResult = await pool.query('SELECT * FROM vehicles WHERE id = $1 AND user_id = $2', [vehicleId, req.user.userId]);
+    const vehicle = vResult.rows[0];
+    if (!vehicle) return res.status(404).json({ error: 'Fahrzeug nicht gefunden' });
+
+    const toiletType = vehicle.toilet_type || 'ttt';
+    
+    if (toiletType === 'ttt') {
+      if (tankType === 'solid') {
+        await pool.query('UPDATE current_levels SET ttt_solid_level = 0, ttt_solid_percentage = 0 WHERE vehicle_id = $1', [vehicleId]);
+      } else if (tankType === 'liquid') {
+        await pool.query('UPDATE current_levels SET ttt_liquid_level = 0, ttt_liquid_percentage = 0 WHERE vehicle_id = $1', [vehicleId]);
+      }
+    } else if (toiletType === 'clesana') {
+      // Clesana: Tüten auffüllen
+      const bagsCap = vehicle.clesana_bags_capacity || 50;
+      await pool.query('UPDATE current_levels SET clesana_bags_remaining = $1 WHERE vehicle_id = $2', [bagsCap, vehicleId]);
+    } else if (toiletType === 'chemical') {
+      // Chemical: Tank leeren
+      await pool.query('UPDATE current_levels SET chemical_level = 0, chemical_percentage = 0 WHERE vehicle_id = $1', [vehicleId]);
+    }
+
+    res.json({ message: 'Toilette geleert' });
+  } catch (error) {
+    console.error('Toilet empty error:', error);
+    res.status(500).json({ error: 'Fehler beim Leeren' });
   }
 });
 
@@ -386,10 +420,17 @@ function calculateRemaining(vehicle, levels) {
   const persons = vehicle.person_count || 2;
 
   // 1. Wasser - Verbrauch pro Person × Anzahl Personen
-  if (levels.water_level != null) {
-    const consumptionPerPerson = vehicle.water_consumption_per_day || 5; // Default: 5L pro Person/Tag
+  if (levels.water_level != null || levels.water_percentage != null) {
+    const consumptionPerPerson = parseFloat(vehicle.water_consumption_per_day) || 5; // Default: 5L pro Person/Tag
     const totalConsumption = consumptionPerPerson * persons;
-    result.water_days_remaining = Math.round(levels.water_level / totalConsumption * 10) / 10;
+    // Level aus Percentage berechnen falls nötig
+    let waterLevel = parseFloat(levels.water_level) || 0;
+    if (waterLevel === 0 && parseFloat(levels.water_percentage) > 0 && vehicle.fresh_water_capacity) {
+      waterLevel = vehicle.fresh_water_capacity * parseFloat(levels.water_percentage) / 100;
+    }
+    if (totalConsumption > 0) {
+      result.water_days_remaining = Math.round(waterLevel / totalConsumption * 10) / 10;
+    }
   }
 
   // 2. Strom

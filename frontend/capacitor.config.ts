@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'de.morepixel.daysleft',
+  appId: 'com.morepixel.daysleft',
   appName: 'DaysLeft',
   webDir: 'www',
   // Server-Config entfernt - App nutzt lokale Web-Assets

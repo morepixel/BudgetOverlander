@@ -13,6 +13,7 @@ import resourcesRouter from './routes/resources.js';
 import consumersRouter from './routes/consumers.js';
 import customResourcesRouter from './routes/custom-resources.js';
 import premiumRouter from './routes/premium.js';
+import testersRouter from './routes/testers.js';
 
 dotenv.config();
 
@@ -28,8 +29,10 @@ app.use(cors({
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:5173',
+    'http://localhost:8080',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:3001',
+    'http://127.0.0.1:8080',
     'https://budget.wirkstoff.com',
     'https://budget-overlander.moremedia.de',
     'capacitor://localhost',  // iOS Capacitor
@@ -55,6 +58,7 @@ app.use('/api/resources', resourcesRouter);
 app.use('/api/consumers', consumersRouter);
 app.use('/api/custom-resources', customResourcesRouter);
 app.use('/api/premium', premiumRouter);
+app.use('/api/testers', testersRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {
