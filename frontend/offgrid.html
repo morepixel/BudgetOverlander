@@ -368,6 +368,38 @@
             opacity: 0.4;
             margin-top: 4px;
         }
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(30, 30, 30, 0.95);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 9998;
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 90%;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+        .toast.success { border-left: 4px solid #4CAF50; }
+        .toast.info { border-left: 4px solid #2196F3; }
+        .toast.warning { border-left: 4px solid #FF9800; }
+        .toast-icon { font-size: 18px; }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; margin-bottom: 2px; }
+        .toast-message { font-size: 12px; opacity: 0.8; }
         /* Animated Splash Screen */
         .splash-screen {
             position: fixed;
@@ -415,6 +447,15 @@
     </style>
 </head>
 <body>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">🔄</span>
+        <div class="toast-content">
+            <div class="toast-title">Aktualisiert</div>
+            <div class="toast-message"></div>
+        </div>
+    </div>
+
     <!-- Animated Splash Screen -->
     <div class="splash-screen" id="splashScreen">
         <div class="splash-logo">
@@ -997,6 +1038,59 @@
             }
         }
 
+        // Toast Notification
+        function showToast(title, message, type = 'info', duration = 3000) {
+            const toast = document.getElementById('toast');
+            const icons = { success: '✅', info: '🔄', warning: '⚠️' };
+            toast.querySelector('.toast-icon').textContent = icons[type] || '🔄';
+            toast.querySelector('.toast-title').textContent = title;
+            toast.querySelector('.toast-message').textContent = message;
+            toast.className = 'toast ' + type;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), duration);
+        }
+
+        // Auto-Refresh alle 5 Minuten
+        let autoRefreshInterval = null;
+        let previousLevels = null;
+
+        function startAutoRefresh() {
+            if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+            autoRefreshInterval = setInterval(async () => {
+                if (!currentVehicle || document.hidden) return;
+                try {
+                    const data = await fetchAPI('/resources/current');
+                    if (data && data.levels) {
+                        const changes = detectChanges(previousLevels, data.levels);
+                        previousLevels = { ...data.levels };
+                        currentLevels = data.levels;
+                        if (changes.length > 0) {
+                            await updateUI();
+                            showToast('Daten aktualisiert', changes.join(', '), 'success');
+                        }
+                    }
+                } catch (e) { console.error('Auto-refresh error:', e); }
+            }, 5 * 60 * 1000); // 5 Minuten
+        }
+
+        function detectChanges(oldLevels, newLevels) {
+            if (!oldLevels) return [];
+            const changes = [];
+            const fields = ['water_percentage', 'power_percentage', 'gas_percentage', 'fuel_percentage'];
+            const names = { water: 'Wasser', power: 'Batterie', gas: 'Gas', fuel: 'Treibstoff' };
+            for (const field of fields) {
+                const key = field.split('_')[0];
+                const oldVal = parseFloat(oldLevels[field]) || 0;
+                const newVal = parseFloat(newLevels[field]) || 0;
+                const diff = newVal - oldVal;
+                if (Math.abs(diff) >= 1) {
+                    const sign = diff > 0 ? '+' : '';
+                    changes.push(`${names[key]} ${sign}${Math.round(diff)}%`);
+                }
+            }
+            return changes;
+        }
+
         async function init() {
             await loadTranslations();
             const token = getToken();
@@ -1484,6 +1578,9 @@
             document.getElementById('noVehicleState').style.display = 'none';
             document.getElementById('dashboardState').style.display = 'block';
             document.getElementById('setupScreen').classList.remove('active');
+            // Auto-Refresh starten und aktuelle Levels merken
+            previousLevels = currentLevels ? { ...currentLevels } : null;
+            startAutoRefresh();
         }
 
         function showSetup() {
