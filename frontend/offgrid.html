@@ -1989,9 +1989,9 @@
                 const pct = parseFloat(currentLevels[pctField]) || 0;
                 const remaining = currentLevels[remainField];
                 const capacity = currentVehicle[toSnakeCase(config.capacityField)] || 0;
-                // Fix: Berechne Level aus Percentage wenn Level 0 aber Percentage > 0
-                if (level === 0 && pct > 0 && capacity > 0) {
-                    level = Math.round(capacity * pct / 100);
+                // Fix: Berechne Level aus Percentage wenn Level 0 oder Level > Kapazität (falsch gespeichert)
+                if ((level === 0 || level > capacity) && pct > 0 && capacity > 0) {
+                    level = capacity * pct / 100;
                 }
                 // Fix: Berechne km-Remaining für Fuel wenn nicht vorhanden
                 let calcRemaining = remaining;
@@ -2037,7 +2037,7 @@
                             <div class="resource-bar ${key}" style="width: ${pct}%"></div>
                         </div>
                         <div class="resource-remaining">${remainingText}</div>
-                        <div class="resource-value">${Math.round(level)} / ${capacity} ${config.unit}</div>
+                        <div class="resource-value">${config.unit === 'kg' ? level.toFixed(1) : Math.round(level)} / ${capacity} ${config.unit}</div>
                         ${consumeBtn}
                     </div>
                 `;
