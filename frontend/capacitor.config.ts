@@ -9,15 +9,15 @@ const config: CapacitorConfig = {
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: '#1a3a1a',
+      backgroundColor: '#2E7D32',
       showSpinner: false,
       androidScaleType: 'CENTER_CROP',
       splashFullScreen: true,
       splashImmersive: true
     },
     StatusBar: {
-      style: 'Dark',
-      backgroundColor: '#1a3a1a'
+      style: 'Light',
+      backgroundColor: '#2E7D32'
     },
     LocalNotifications: {
       smallIcon: 'ic_stat_icon',
@@ -31,11 +31,11 @@ const config: CapacitorConfig = {
     contentInset: 'always',
     preferredContentMode: 'mobile',
     scheme: 'DaysLeft',
-    backgroundColor: '#1a3a1a'
+    backgroundColor: '#2E7D32'
   },
   android: {
     allowMixedContent: true,
-    backgroundColor: '#1a3a1a'
+    backgroundColor: '#2E7D32'
   }
 };
 

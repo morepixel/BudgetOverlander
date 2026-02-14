@@ -208,6 +208,24 @@ router.get('/current', authenticateToken, async (req, res) => {
 
     // Berechne Tage/km verbleibend
     const calculated = calculateRemaining(vehicle, levels);
+    
+    // Strom: Berechne mit aktiven Verbrauchern und Solar
+    if (levels.power_level != null) {
+      const consumersResult = await pool.query(
+        'SELECT COALESCE(SUM(consumption_ah), 0) as total FROM consumers WHERE vehicle_id = $1 AND is_active = true',
+        [vehicle.id]
+      );
+      const totalConsumption = parseFloat(consumersResult.rows[0]?.total) || 0;
+      const solarWp = parseFloat(vehicle.solar_power) || 0;
+      const estimatedSolarAh = solarWp > 0 ? (solarWp * 4 * 0.7 * 0.15) / 12 : 0;
+      const netConsumption = totalConsumption - estimatedSolarAh;
+      
+      if (netConsumption > 0) {
+        calculated.power_days_remaining = Math.round(parseFloat(levels.power_level) / netConsumption * 10) / 10;
+      } else {
+        calculated.power_days_remaining = 999; // Solar deckt Verbrauch
+      }
+    }
 
     res.json({ 
       levels: { ...levels, ...calculated },
@@ -280,12 +298,31 @@ router.post('/log', authenticateToken, async (req, res) => {
     );
 
     // Hole aktualisierte Levels
-    const updatedLevels = await pool.query('SELECT * FROM current_levels WHERE vehicle_id = $1', [vehicleId]);
-    const calculated = calculateRemaining(vehicle, updatedLevels.rows[0]);
+    const updatedLevelsResult = await pool.query('SELECT * FROM current_levels WHERE vehicle_id = $1', [vehicleId]);
+    const updatedLevels = updatedLevelsResult.rows[0];
+    const calculated = calculateRemaining(vehicle, updatedLevels);
+    
+    // Strom: Berechne mit aktiven Verbrauchern und Solar
+    if (updatedLevels.power_level != null) {
+      const consumersResult = await pool.query(
+        'SELECT COALESCE(SUM(consumption_ah), 0) as total FROM consumers WHERE vehicle_id = $1 AND is_active = true',
+        [vehicle.id]
+      );
+      const totalConsumption = parseFloat(consumersResult.rows[0]?.total) || 0;
+      const solarWp = parseFloat(vehicle.solar_power) || 0;
+      const estimatedSolarAh = solarWp > 0 ? (solarWp * 4 * 0.7 * 0.15) / 12 : 0;
+      const netConsumption = totalConsumption - estimatedSolarAh;
+      
+      if (netConsumption > 0) {
+        calculated.power_days_remaining = Math.round(parseFloat(updatedLevels.power_level) / netConsumption * 10) / 10;
+      } else {
+        calculated.power_days_remaining = 999;
+      }
+    }
 
     res.json({ 
       message: 'Ressource aktualisiert',
-      levels: { ...updatedLevels.rows[0], ...calculated }
+      levels: { ...updatedLevels, ...calculated }
     });
   } catch (error) {
     console.error('Log resource error:', error);
@@ -433,8 +470,9 @@ function calculateRemaining(vehicle, levels) {
     }
   }
 
-  // 2. Strom
-  if (levels.power_level != null) {
+  // 2. Strom - wird separat mit Verbrauchern berechnet (siehe calculatePowerRemaining)
+  // Fallback falls keine Verbraucher-Daten vorhanden
+  if (levels.power_level != null && result.power_days_remaining === undefined) {
     const consumption = vehicle.power_consumption_per_day || 50;
     result.power_days_remaining = Math.round(levels.power_level / consumption * 10) / 10;
   }

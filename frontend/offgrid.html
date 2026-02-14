@@ -3,18 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#2d5a27">
+    <meta name="theme-color" content="#2E7D32">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>DaysLeft</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body {
+        html {
             min-height: 100%;
-            background: linear-gradient(135deg, #1a3a1a 0%, #2d5a27 100%);
-            background-attachment: fixed;
-            overscroll-behavior: none;
+            background: #2E7D32;
         }
         body {
+            min-height: 100%;
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            background-attachment: fixed;
+            overscroll-behavior: none;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: #fff;
             padding-bottom: env(safe-area-inset-bottom, 34px);
@@ -28,7 +31,7 @@
             display: flex; justify-content: space-between; align-items: center; 
             max-width: 500px;
             margin: 0 auto;
-            padding: calc(env(safe-area-inset-top, 47px) + 8px) 20px 8px 20px;
+            padding: calc(env(safe-area-inset-top, 20px) + 8px) 20px 8px 20px;
         }
         .logo { display: flex; align-items: center; gap: 10px; }
         .logo-icon { font-size: 32px; }
@@ -48,11 +51,12 @@
         .vehicle-icon { font-size: 28px; }
         .vehicle-name { font-size: 18px; font-weight: 600; }
         .vehicle-details { font-size: 14px; opacity: 0.8; }
-        .resources-grid { display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: auto; gap: 12px; margin-bottom: 20px; }
+        .resources-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; gap: 12px; margin-bottom: 20px; }
         .resource-card.span-2 { grid-row: span 2; }
         .resource-card {
             background: rgba(255,255,255,0.1); border-radius: 16px; padding: 16px;
             cursor: pointer; transition: transform 0.2s, background 0.2s;
+            min-width: 0; overflow: hidden;
         }
         .resource-card:hover { transform: scale(1.02); background: rgba(255,255,255,0.15); }
         /* iOS-Style Edit Mode */
@@ -115,6 +119,11 @@
         }
         .autarky-days {
             font-size: 48px; font-weight: 700; color: #4CAF50; line-height: 1;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.2);
+            padding: 8px 16px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
         }
         .autarky-days.warning { color: #f39c12; }
         .autarky-days.critical { color: #ff7b7b; }
@@ -274,7 +283,7 @@
             100% { left: 125px; }
         }
         .animated-logo .truck-cabin {
-            background: #2c3e50;
+            background: #4CAF50;
             width: 14px;
             height: 8px;
             border-radius: 1px;
@@ -282,7 +291,7 @@
             bottom: 3px;
         }
         .animated-logo .truck-cargo {
-            background: #34495e;
+            background: #2E7D32;
             width: 6px;
             height: 6px;
             border-radius: 1px;
@@ -291,7 +300,7 @@
             left: 14px;
         }
         .animated-logo .truck-window {
-            background: #3498db;
+            background: #81C784;
             width: 5px;
             height: 4px;
             position: absolute;
@@ -398,7 +407,7 @@
             <p data-i18n="messages.loading">Lade Daten...</p>
         </div>
 
-        <div id="loginState" style="display: none; text-align: center; padding: 20px; padding-top: calc(env(safe-area-inset-top) + 40px);">
+        <div id="loginState" style="display: none; text-align: center; padding: 20px; padding-top: calc(env(safe-area-inset-top) + 20px);">
             <div class="animated-logo" style="margin: 0 auto 20px; transform: scale(1.5);">
                 <div class="logo-sky"></div>
                 <div class="logo-sun"></div>
@@ -429,16 +438,8 @@
                 <input type="password" class="form-input" id="loginPassword" placeholder="Passwort" data-i18n-placeholder="auth.password" style="text-align: center;">
             </div>
             
-            <!-- Rechtliche Zustimmung für Registrierung -->
-            <div id="legalConsentBox" style="text-align: left; margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px;">
-                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px; line-height: 1.4;">
-                    <input type="checkbox" id="legalConsent" style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;">
-                    <span>Ich akzeptiere die <a href="#" onclick="openLegalModal('agb'); return false;" style="color: #4CAF50;">Nutzungsbedingungen (AGB)</a> und habe die <a href="#" onclick="openLegalModal('datenschutz'); return false;" style="color: #4CAF50;">Datenschutzerklärung</a> gelesen.</span>
-                </label>
-            </div>
-            
             <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom: 10px;" data-i18n="auth.login">Einloggen</button>
-            <button class="btn btn-secondary" onclick="doRegister()" data-i18n="auth.register">Neuen Account erstellen</button>
+            <button class="btn btn-secondary" onclick="openRegisterModal()" data-i18n="auth.register">Neuen Account erstellen</button>
             
             <!-- Rechtliche Links -->
             <div style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
@@ -488,7 +489,7 @@
             <div class="autarky-dashboard" id="autarkyDashboard">
                 <div class="autarky-main">
                     <div class="autarky-days" id="autarkyDays">--</div>
-                    <div class="autarky-label">Tage<br>Autarkie</div>
+                    <div class="autarky-label">Tage<br>autark</div>
                 </div>
                 <div class="autarky-bottleneck" id="autarkyBottleneck">
                     <span class="autarky-bottleneck-icon">⚠️</span>
@@ -775,6 +776,31 @@
             </div>
             <div id="locationModalStatus" style="display:none; padding: 12px; background: rgba(0,0,0,0.3); border-radius: 8px; margin-bottom: 12px; font-size: 13px;"></div>
             <button class="btn btn-primary" onclick="confirmLocationRequest()" style="width: 100%;">📍 Standort freigeben</button>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal" style="max-width: 380px;">
+            <div class="modal-header">
+                <span class="modal-title">🚀 Account erstellen</span>
+                <button class="modal-close" onclick="closeRegisterModal()">✕</button>
+            </div>
+            <div style="padding: 8px 0;">
+                <div class="form-group">
+                    <input type="email" class="form-input" id="registerEmail" placeholder="E-Mail" style="text-align: center;">
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-input" id="registerPassword" placeholder="Passwort" style="text-align: center;">
+                </div>
+                <div style="text-align: left; margin: 16px 0; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 13px; line-height: 1.4;">
+                        <input type="checkbox" id="registerLegalConsent" style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0;">
+                        <span>Ich akzeptiere die <a href="#" onclick="openLegalModal('agb'); return false;" style="color: #4CAF50;">Nutzungsbedingungen (AGB)</a> und habe die <a href="#" onclick="openLegalModal('datenschutz'); return false;" style="color: #4CAF50;">Datenschutzerklärung</a> gelesen.</span>
+                    </label>
+                </div>
+                <button class="btn btn-primary" onclick="doRegister()" style="width: 100%;">Account erstellen</button>
+            </div>
         </div>
     </div>
 
@@ -1174,10 +1200,21 @@
             }
         }
 
+        function openRegisterModal() {
+            document.getElementById('registerModal').classList.add('active');
+            document.getElementById('registerEmail').value = document.getElementById('loginEmail').value || '';
+            document.getElementById('registerPassword').value = '';
+            document.getElementById('registerLegalConsent').checked = false;
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').classList.remove('active');
+        }
+
         async function doRegister() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const legalConsent = document.getElementById('legalConsent').checked;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const legalConsent = document.getElementById('registerLegalConsent').checked;
             
             if (!email || !password) { alert('Bitte E-Mail und Passwort eingeben'); return; }
             if (!legalConsent) { 
@@ -1193,8 +1230,10 @@
                 const data = await response.json();
                 if (data.token) {
                     localStorage.setItem('token', data.token);
+                    closeRegisterModal();
                     init();
                 } else if (response.ok) {
+                    closeRegisterModal();
                     alert('Registrierung erfolgreich! Bitte einloggen.');
                 } else {
                     alert(data.message || 'Registrierung fehlgeschlagen');
@@ -1768,7 +1807,31 @@
             const minDays = resourceDays[0].days;
             const bottleneck = resourceDays[0];
             
-            daysEl.textContent = Math.floor(minDays);
+            // Animation für Zähler
+            const currentDays = parseInt(daysEl.textContent) || 0;
+            const targetDays = Math.floor(minDays);
+            const diff = targetDays - currentDays;
+            const steps = Math.abs(diff);
+            const duration = 500; // ms
+            const stepDuration = duration / steps;
+            
+            if (diff !== 0) {
+                let step = 0;
+                const interval = setInterval(() => {
+                    step++;
+                    if (diff > 0) {
+                        daysEl.textContent = currentDays + step;
+                    } else {
+                        daysEl.textContent = currentDays - step;
+                    }
+                    if (step >= steps) {
+                        clearInterval(interval);
+                        daysEl.textContent = targetDays;
+                    }
+                }, stepDuration);
+            } else {
+                daysEl.textContent = targetDays;
+            }
             daysEl.className = 'autarky-days' + (minDays < 2 ? ' critical' : minDays < 5 ? ' warning' : '');
             
             bottleneckTextEl.innerHTML = `<strong>${bottleneck.icon} ${bottleneck.name}</strong> begrenzt auf ~${bottleneck.days.toFixed(1)} Tage`;
@@ -2121,22 +2184,52 @@
                 const solidIgnoreBadge = solidIgnore ? '<span style="font-size:9px;background:rgba(76,175,80,0.3);padding:2px 4px;border-radius:4px;margin-left:4px;">🌿</span>' : '';
                 const liquidIgnoreBadge = liquidIgnore ? '<span style="font-size:9px;background:rgba(76,175,80,0.3);padding:2px 4px;border-radius:4px;margin-left:4px;">🌿</span>' : '';
                 grid.innerHTML += `
-                    <div class="resource-card inverted" data-resource="toilet" style="position:relative;">
+                    <div class="resource-card inverted span-2" data-resource="toilet" style="position:relative; grid-column: span 2;">
                         <div class="resource-header">
                             <span class="resource-icon">🚽</span>
                             <span class="resource-percentage">TTT</span>
                         </div>
-                        <div class="resource-name">Trockentrenn</div>
-                        <div style="display:flex;gap:8px;margin:8px 0;">
-                            <div style="flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;${solidIgnoreStyle}">
-                                <div style="font-size:11px;opacity:0.7;white-space:nowrap;">Fest ${solidIgnore ? '' : '~' + solidDays + 'd'}${solidIgnoreBadge}</div>
-                                <div class="resource-bar-bg"><div class="resource-bar toilet" style="width:${solidPct}%"></div></div>
-                                <button class="btn btn-secondary" style="padding:4px 6px;font-size:10px;margin-top:4px;" onclick="toiletUse('solid')">💩 Benutzt</button>
+                        <div class="resource-name" style="margin-bottom: 12px;">Trockentrenn-Toilette</div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <!-- Feststoff-Bereich -->
+                            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 16px;">💩</span>
+                                        <span style="font-size: 12px; font-weight: 600;">Feststoffe</span>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 700;">${Math.round(solidPct)}%</span>
+                                </div>
+                                <div class="resource-bar-bg" style="margin-bottom: 6px;"><div class="resource-bar toilet" style="width:${solidPct}%"></div></div>
+                                <div style="display: flex; justify-content: space-between; font-size: 10px; opacity: 0.8; margin-bottom: 8px;">
+                                    <span>${solidIgnore ? '🌿 Ignoriert' : '~' + solidDays + ' Tage'}</span>
+                                    <span>${(solidPct * solidCap / 100).toFixed(1)} / ${solidCap} L</span>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button style="flex: 1; padding: 8px; font-size: 12px; background: rgba(139,90,43,0.5); border: none; border-radius: 8px; color: #fff; font-weight: 600;" onclick="event.stopPropagation(); toiletUse('solid')">+1</button>
+                                    <button style="padding: 8px 10px; font-size: 12px; background: rgba(76,175,80,0.4); border: none; border-radius: 8px; color: #fff;" onclick="event.stopPropagation(); quickToiletEmpty('solid')">🗑️</button>
+                                </div>
                             </div>
-                            <div style="flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;${liquidIgnoreStyle}">
-                                <div style="font-size:11px;opacity:0.7;white-space:nowrap;">Urin ${liquidIgnore ? '' : '~' + liquidDays + 'd'}${liquidIgnoreBadge}</div>
-                                <div class="resource-bar-bg"><div class="resource-bar toilet" style="width:${liquidPct}%"></div></div>
-                                <button class="btn btn-secondary" style="padding:4px 6px;font-size:10px;margin-top:4px;" onclick="toiletUse('liquid')">💧 Benutzt</button>
+                            
+                            <!-- Urin-Bereich -->
+                            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 16px;">💧</span>
+                                        <span style="font-size: 12px; font-weight: 600;">Urin</span>
+                                    </div>
+                                    <span style="font-size: 12px; font-weight: 700;">${Math.round(liquidPct)}%</span>
+                                </div>
+                                <div class="resource-bar-bg" style="margin-bottom: 6px;"><div class="resource-bar toilet" style="width:${liquidPct}%"></div></div>
+                                <div style="display: flex; justify-content: space-between; font-size: 10px; opacity: 0.8; margin-bottom: 8px;">
+                                    <span>${liquidIgnore ? '🌿 Ignoriert' : '~' + liquidDays + ' Tage'}</span>
+                                    <span>${(liquidPct * liquidCap / 100).toFixed(1)} / ${liquidCap} L</span>
+                                </div>
+                                <div style="display: flex; gap: 6px;">
+                                    <button style="flex: 1; padding: 8px; font-size: 12px; background: rgba(52,152,219,0.5); border: none; border-radius: 8px; color: #fff; font-weight: 600;" onclick="event.stopPropagation(); toiletUse('liquid')">+1</button>
+                                    <button style="padding: 8px 10px; font-size: 12px; background: rgba(76,175,80,0.4); border: none; border-radius: 8px; color: #fff;" onclick="event.stopPropagation(); quickToiletEmpty('liquid')">🗑️</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2204,7 +2297,6 @@
         }
 
         async function toiletUse(type) {
-            const scrollY = window.scrollY;
             try {
                 await fetchAPI('/resources/toilet-use', {
                     method: 'POST',
@@ -2213,10 +2305,47 @@
                 const data = await fetchAPI('/resources/current');
                 if (data) {
                     currentLevels = data.levels;
-                    await updateUI();
-                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                    updateToiletCardOnly();
                 }
             } catch (error) { console.error('Toilet use error:', error); }
+        }
+
+        function updateToiletCardOnly() {
+            const toiletCard = document.querySelector('[data-resource="toilet"]');
+            if (!toiletCard || currentVehicle.toilet_type !== 'ttt') return;
+            
+            const solidCap = currentVehicle.ttt_solid_capacity || 10;
+            const liquidCap = currentVehicle.ttt_liquid_capacity || 10;
+            const solidPct = currentLevels.ttt_solid_percentage || 0;
+            const liquidPct = currentLevels.ttt_liquid_percentage || 0;
+            const solidDays = currentLevels.ttt_solid_days ?? '--';
+            const liquidDays = currentLevels.ttt_liquid_days ?? '--';
+            const solidIgnore = currentVehicle.ttt_solid_ignore_autarky || false;
+            const liquidIgnore = currentVehicle.ttt_liquid_ignore_autarky || false;
+            
+            // Update Feststoffe
+            const solidSection = toiletCard.querySelectorAll('[style*="background: rgba(255,255,255,0.1)"]')[0];
+            if (solidSection) {
+                solidSection.querySelector('[style*="font-weight: 700"]').textContent = `${Math.round(solidPct)}%`;
+                solidSection.querySelector('.resource-bar').style.width = `${solidPct}%`;
+                const infoRow = solidSection.querySelectorAll('span');
+                if (infoRow.length >= 2) {
+                    infoRow[infoRow.length - 2].textContent = solidIgnore ? '🌿 Ignoriert' : `~${solidDays} Tage`;
+                    infoRow[infoRow.length - 1].textContent = `${(solidPct * solidCap / 100).toFixed(1)} / ${solidCap} L`;
+                }
+            }
+            
+            // Update Urin
+            const liquidSection = toiletCard.querySelectorAll('[style*="background: rgba(255,255,255,0.1)"]')[1];
+            if (liquidSection) {
+                liquidSection.querySelector('[style*="font-weight: 700"]').textContent = `${Math.round(liquidPct)}%`;
+                liquidSection.querySelector('.resource-bar').style.width = `${liquidPct}%`;
+                const infoRow = liquidSection.querySelectorAll('span');
+                if (infoRow.length >= 2) {
+                    infoRow[infoRow.length - 2].textContent = liquidIgnore ? '🌿 Ignoriert' : `~${liquidDays} Tage`;
+                    infoRow[infoRow.length - 1].textContent = `${(liquidPct * liquidCap / 100).toFixed(1)} / ${liquidCap} L`;
+                }
+            }
         }
 
         function renderQuickActions() {
@@ -2467,7 +2596,6 @@
         }
         
         async function quickToiletEmpty(tankType) {
-            const scrollY = window.scrollY;
             try {
                 await fetchAPI('/resources/toilet-empty', {
                     method: 'POST',
@@ -2476,8 +2604,7 @@
                 const data = await fetchAPI('/resources/current');
                 if (data) {
                     currentLevels = data.levels;
-                    await updateUI();
-                    requestAnimationFrame(() => window.scrollTo(0, scrollY));
+                    updateToiletCardOnly();
                 }
             } catch (error) { console.error('Toilet empty error:', error); }
         }
@@ -3014,6 +3141,7 @@
                             <div style="font-weight: 600;">${r.name}</div>
                             <div style="font-size: 12px; opacity: 0.7;">${r.current_level || 0} / ${r.capacity} ${r.unit}${daysRemaining ? ` • ${daysRemaining} Tage` : ''}</div>
                         </div>
+                        <button class="icon-btn" onclick="editCustomResource(${r.id})" style="font-size:16px;">✏️</button>
                         <button class="icon-btn" onclick="deleteCustomResource(${r.id})">🗑️</button>
                     </div>
                     <div class="custom-res-slider" style="position: relative; height: 24px;">
@@ -3062,6 +3190,99 @@
                 await loadCustomResources();
                 await init();
             } catch (error) { console.error('Update custom resource level error:', error); }
+        }
+
+        function editCustomResource(id) {
+            const resource = customResources.find(r => r.id === id);
+            if (!resource) return;
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.id = 'editCustomResourceModal';
+            modal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <span class="modal-title">✏️ ${resource.name} bearbeiten</span>
+                        <button class="modal-close" onclick="document.getElementById('editCustomResourceModal').remove()">✕</button>
+                    </div>
+                    <div class="input-row">
+                        <div class="form-group" style="flex: 0.5;">
+                            <label>Icon</label>
+                            <select class="form-input" id="editCustomIcon" style="font-size:18px;">
+                                <option value="📦" ${resource.icon === '📦' ? 'selected' : ''}>📦</option>
+                                <option value="🐕" ${resource.icon === '🐕' ? 'selected' : ''}>🐕</option>
+                                <option value="🐈" ${resource.icon === '🐈' ? 'selected' : ''}>🐈</option>
+                                <option value="🧴" ${resource.icon === '🧴' ? 'selected' : ''}>🧴</option>
+                                <option value="💊" ${resource.icon === '💊' ? 'selected' : ''}>💊</option>
+                                <option value="🧻" ${resource.icon === '🧻' ? 'selected' : ''}>🧻</option>
+                                <option value="🧹" ${resource.icon === '🧹' ? 'selected' : ''}>🧹</option>
+                                <option value="🔋" ${resource.icon === '🔋' ? 'selected' : ''}>🔋</option>
+                                <option value="⛽" ${resource.icon === '⛽' ? 'selected' : ''}>⛽</option>
+                                <option value="🪵" ${resource.icon === '🪵' ? 'selected' : ''}>🪵</option>
+                                <option value="🧊" ${resource.icon === '🧊' ? 'selected' : ''}>🧊</option>
+                                <option value="☕" ${resource.icon === '☕' ? 'selected' : ''}>☕</option>
+                                <option value="🍺" ${resource.icon === '🍺' ? 'selected' : ''}>🍺</option>
+                                <option value="🥛" ${resource.icon === '🥛' ? 'selected' : ''}>🥛</option>
+                                <option value="🥚" ${resource.icon === '🥚' ? 'selected' : ''}>🥚</option>
+                                <option value="🍞" ${resource.icon === '🍞' ? 'selected' : ''}>🍞</option>
+                                <option value="🥩" ${resource.icon === '🥩' ? 'selected' : ''}>🥩</option>
+                                <option value="🧀" ${resource.icon === '🧀' ? 'selected' : ''}>🧀</option>
+                                <option value="🗑️" ${resource.icon === '🗑️' ? 'selected' : ''}>🗑️</option>
+                                <option value="🎒" ${resource.icon === '🎒' ? 'selected' : ''}>🎒</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="flex: 2;">
+                            <label>Name</label>
+                            <input type="text" class="form-input" id="editCustomName" value="${resource.name}">
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Einheit</label>
+                            <input type="text" class="form-input" id="editCustomUnit" value="${resource.unit || 'Stück'}">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Kapazität</label>
+                            <input type="number" class="form-input" id="editCustomCapacity" value="${resource.capacity}" step="0.1">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>pro Person/Tag</label>
+                            <input type="number" class="form-input" id="editCustomConsumption" value="${resource.consumption_per_day || ''}" step="0.1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="editCustomInverted" ${resource.is_inverted ? 'checked' : ''}> Invertiert
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveCustomResource(${id})">Speichern</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        async function saveCustomResource(id) {
+            const icon = document.getElementById('editCustomIcon').value;
+            const name = document.getElementById('editCustomName').value.trim();
+            const unit = document.getElementById('editCustomUnit').value;
+            const capacity = parseFloat(document.getElementById('editCustomCapacity').value);
+            const consumption = parseFloat(document.getElementById('editCustomConsumption').value) || null;
+            const isInverted = document.getElementById('editCustomInverted').checked;
+            
+            const resource = customResources.find(r => r.id === id);
+            const currentLevel = Math.min(resource.current_level || 0, capacity);
+            
+            if (!name || !capacity) { alert('Bitte Name und Kapazität eingeben'); return; }
+            
+            try {
+                await fetchAPI(`/custom-resources/${id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ name, icon, unit, capacity, consumptionPerDay: consumption, currentLevel, isInverted })
+                });
+                document.getElementById('editCustomResourceModal').remove();
+                await loadCustomResources();
+                await init();
+            } catch (error) { console.error('Save custom resource error:', error); }
         }
 
         async function deleteCustomResource(id) {
