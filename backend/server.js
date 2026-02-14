@@ -133,7 +133,7 @@ cron.schedule('0 0 * * *', async () => {
       // Aktive Verbraucher summieren
       const consumersResult = await pool.query(`
         SELECT COALESCE(SUM(consumption_ah), 0) as total_consumption
-        FROM consumers 
+        FROM power_consumers 
         WHERE vehicle_id = $1 AND is_active = true
       `, [v.id]);
       const totalConsumption = parseFloat(consumersResult.rows[0]?.total_consumption) || 0;

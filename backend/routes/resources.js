@@ -212,7 +212,7 @@ router.get('/current', authenticateToken, async (req, res) => {
     // Strom: Berechne mit aktiven Verbrauchern und Solar
     if (levels.power_level != null) {
       const consumersResult = await pool.query(
-        'SELECT COALESCE(SUM(consumption_ah), 0) as total FROM consumers WHERE vehicle_id = $1 AND is_active = true',
+        'SELECT COALESCE(SUM(consumption_ah), 0) as total FROM power_consumers WHERE vehicle_id = $1 AND is_active = true',
         [vehicle.id]
       );
       const totalConsumption = parseFloat(consumersResult.rows[0]?.total) || 0;
@@ -305,7 +305,7 @@ router.post('/log', authenticateToken, async (req, res) => {
     // Strom: Berechne mit aktiven Verbrauchern und Solar
     if (updatedLevels.power_level != null) {
       const consumersResult = await pool.query(
-        'SELECT COALESCE(SUM(consumption_ah), 0) as total FROM consumers WHERE vehicle_id = $1 AND is_active = true',
+        'SELECT COALESCE(SUM(consumption_ah), 0) as total FROM power_consumers WHERE vehicle_id = $1 AND is_active = true',
         [vehicle.id]
       );
       const totalConsumption = parseFloat(consumersResult.rows[0]?.total) || 0;
