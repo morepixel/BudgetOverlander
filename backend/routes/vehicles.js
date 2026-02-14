@@ -11,6 +11,8 @@ const router = express.Router();
     await pool.query(`
       ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_solid_capacity INTEGER;
       ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_liquid_capacity INTEGER;
+      ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_solid_ignore_autarky BOOLEAN DEFAULT FALSE;
+      ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS ttt_liquid_ignore_autarky BOOLEAN DEFAULT FALSE;
       ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS clesana_bags_capacity INTEGER;
       ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS chemical_tank_capacity INTEGER;
       ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS person_count INTEGER DEFAULT 2;
@@ -170,6 +172,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
 
     // Dynamisches Update bauen
+    console.log('TTT Debug - updates:', JSON.stringify({
+      tttSolidIgnoreAutarky: updates.tttSolidIgnoreAutarky,
+      tttLiquidIgnoreAutarky: updates.tttLiquidIgnoreAutarky,
+      toiletType: updates.toiletType
+    }));
     const fields = [];
     const values = [];
     let paramCount = 1;
@@ -187,6 +194,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
       fuelConsumptionOffroad: 'fuel_consumption_offroad',
       freshWaterCapacity: 'fresh_water_capacity',
       greyWaterCapacity: 'grey_water_capacity',
+      greywaterLinkedToWater: 'greywater_linked_to_water',
+      greywaterLinkFactor: 'greywater_link_factor',
       waterConsumptionPerDay: 'water_consumption_per_day',
       batteryCapacity: 'battery_capacity',
       batteryType: 'battery_type',
@@ -204,6 +213,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
       toiletConsumptionPerDay: 'toilet_consumption_per_day',
       tttSolidCapacity: 'ttt_solid_capacity',
       tttLiquidCapacity: 'ttt_liquid_capacity',
+      tttSolidIgnoreAutarky: 'ttt_solid_ignore_autarky',
+      tttLiquidIgnoreAutarky: 'ttt_liquid_ignore_autarky',
       clesanaBagsCapacity: 'clesana_bags_capacity',
       chemicalTankCapacity: 'chemical_tank_capacity',
       foodCapacity: 'food_capacity',
