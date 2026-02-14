@@ -487,7 +487,13 @@ function calculateRemaining(vehicle, levels) {
   if (levels.gas_level != null) {
     const consumptionPerPerson = vehicle.gas_consumption_per_day || 0.25; // Default: 0.25kg pro Person/Tag
     const totalConsumption = consumptionPerPerson * persons;
-    result.gas_days_remaining = Math.round(levels.gas_level / totalConsumption * 10) / 10;
+    // Fix: Wenn gas_level > gas_capacity, berechne aus Percentage
+    let gasLevel = parseFloat(levels.gas_level) || 0;
+    const gasCapacity = parseFloat(vehicle.gas_capacity) || 0;
+    if (gasLevel > gasCapacity && gasCapacity > 0 && parseFloat(levels.gas_percentage) > 0) {
+      gasLevel = gasCapacity * parseFloat(levels.gas_percentage) / 100;
+    }
+    result.gas_days_remaining = Math.round(gasLevel / totalConsumption * 10) / 10;
   }
 
   // 5. Abwasser (invertiert: Tage bis voll) - Verbrauch pro Person × Anzahl Personen
