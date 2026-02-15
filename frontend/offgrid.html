@@ -1137,20 +1137,12 @@
                         showToast('Fehler', 'Aktualisierung fehlgeschlagen', 'warning');
                     }
                     
-                    // Gesamte Seite zurück nach oben schieben
-                    document.body.style.transition = 'transform 0.3s ease';
-                    document.body.style.transform = 'translateY(-50px)';
-                    setTimeout(() => {
-                        document.body.style.transform = '';
-                        window.scrollTo(0, 0);
-                    }, 300);
-                    
+                    // Spinner ausblenden und Scroll zurücksetzen
                     setTimeout(() => {
                         pullRefresh.classList.remove('visible', 'loading');
-                        document.body.style.transition = '';
                         document.body.style.overflow = '';
                         isRefreshing = false;
-                    }, 400);
+                    }, 300);
                 }
             });
         }

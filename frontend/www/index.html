@@ -1109,6 +1109,8 @@
                 
                 if (pullDistance > 50 && window.scrollY === 0) {
                     pullRefresh.classList.add('visible');
+                    // Verhindere iOS Overscroll
+                    document.body.style.overflow = 'hidden';
                 } else {
                     pullRefresh.classList.remove('visible');
                 }
@@ -1146,6 +1148,7 @@
                     setTimeout(() => {
                         pullRefresh.classList.remove('visible', 'loading');
                         document.body.style.transition = '';
+                        document.body.style.overflow = '';
                         isRefreshing = false;
                     }, 400);
                 }
