@@ -1135,6 +1135,9 @@
                         showToast('Fehler', 'Aktualisierung fehlgeschlagen', 'warning');
                     }
                     
+                    // Nach oben scrollen
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
                     setTimeout(() => {
                         pullRefresh.classList.remove('visible', 'loading');
                         isRefreshing = false;
