@@ -1092,13 +1092,6 @@
             if (!dashboard || dashboard.dataset.pullInit) return;
             dashboard.dataset.pullInit = 'true';
 
-            // Verhindere iOS Overscroll global wenn ganz oben
-            document.body.addEventListener('touchmove', (e) => {
-                if (window.scrollY === 0 && isPulling) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-
             dashboard.addEventListener('touchstart', (e) => {
                 if (window.scrollY === 0 && !isRefreshing) {
                     pullStartY = e.touches[0].clientY;
@@ -1118,9 +1111,13 @@
                 }
             }, { passive: true });
 
-            dashboard.addEventListener('touchend', async () => {
+            // Immer isPulling zurücksetzen bei touchend (global)
+            document.addEventListener('touchend', () => {
                 if (!isPulling) return;
                 isPulling = false;
+            }, { passive: true });
+
+            dashboard.addEventListener('touchend', async () => {
                 const pullRefresh = document.getElementById('pullRefresh');
                 
                 if (pullRefresh.classList.contains('visible')) {
