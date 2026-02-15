@@ -124,9 +124,9 @@ cron.schedule('0 * * * *', async () => {
     
     // 2. Batterie: Verbraucher - Solar = Netto-Verbrauch (1/24 pro Stunde)
     const vehicles = await pool.query(`
-      SELECT v.*, rl.power_level, rl.power_percentage
+      SELECT v.*, cl.power_level, cl.power_percentage
       FROM vehicles v
-      LEFT JOIN resource_levels rl ON v.id = rl.vehicle_id
+      LEFT JOIN current_levels cl ON v.id = cl.vehicle_id
       WHERE v.battery_capacity > 0
     `);
     
@@ -159,7 +159,7 @@ cron.schedule('0 * * * *', async () => {
         const newPercentage = (newLevel / capacity) * 100;
         
         await pool.query(`
-          UPDATE resource_levels 
+          UPDATE current_levels 
           SET power_level = $1, power_percentage = $2, updated_at = NOW()
           WHERE vehicle_id = $3
         `, [newLevel, newPercentage, v.id]);
