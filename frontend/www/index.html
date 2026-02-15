@@ -2969,6 +2969,14 @@
             if (currentResourceType === 'water' && currentVehicle.greywater_linked_to_water) {
                 const oldWaterLevel = currentLevels.water_level || 0;
                 const waterUsed = oldWaterLevel - amount;
+                
+                // DEBUG
+                const debugDiv = document.createElement('div');
+                debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:#333;color:#0f0;padding:10px;z-index:99999;font-size:12px;border-radius:8px;';
+                debugDiv.innerHTML = `DEBUG Wasser-Kopplung:<br>oldWaterLevel: ${oldWaterLevel}<br>newAmount: ${amount}<br>waterUsed: ${waterUsed}<br>linked: ${currentVehicle.greywater_linked_to_water}<br>factor: ${currentVehicle.greywater_link_factor}`;
+                document.body.appendChild(debugDiv);
+                setTimeout(() => debugDiv.remove(), 5000);
+                
                 if (waterUsed > 0) {
                     const factor = (currentVehicle.greywater_link_factor || 90) / 100;
                     const greywaterIncrease = waterUsed * factor;
