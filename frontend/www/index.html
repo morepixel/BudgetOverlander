@@ -7,33 +7,52 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>DaysLeft</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html {
-            min-height: 100%;
+            height: 100%;
             background: #2E7D32;
             overscroll-behavior-y: none;
+            overflow: hidden;
         }
         body {
-            min-height: 100%;
+            height: 100%;
             background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
             background-attachment: fixed;
             overscroll-behavior-y: none;
-            -webkit-overflow-scrolling: touch;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             color: #fff;
-            padding-bottom: env(safe-area-inset-bottom, 34px);
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
         }
         .app-container { 
             max-width: 500px; 
             margin: 0 auto; 
             padding: 20px;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 70px);
+            padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .header { 
             display: flex; justify-content: space-between; align-items: center; 
             max-width: 500px;
             margin: 0 auto;
-            padding: calc(env(safe-area-inset-top, 0px) + 12px) 20px 8px 20px;
+            padding: calc(env(safe-area-inset-top, 0px) - 22px) 20px 8px 20px;
+            position: fixed;
+            height: 50px;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background:29752D;
         }
         .logo { display: flex; align-items: center; gap: 10px; }
         .logo-icon { font-size: 32px; }
@@ -84,10 +103,10 @@
             font-size: 12px;
         }
         .edit-mode-btn {
-            position: fixed; bottom: 80px; right: 16px;
+            position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 75px); right: 16px;
             background: rgba(76,175,80,0.9); border: none; border-radius: 50%;
             width: 50px; height: 50px; font-size: 20px;
-            cursor: pointer; z-index: 100; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer; z-index: 1001; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .edit-mode-btn.active { background: rgba(244,67,54,0.9); }
         .resource-card.warning { background: rgba(255, 193, 7, 0.2); border: 2px solid rgba(255, 193, 7, 0.5); }
@@ -214,6 +233,55 @@
         .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
         .tab { flex: 1; padding: 10px; text-align: center; background: rgba(255,255,255,0.1); border: none; border-radius: 10px; color: white; cursor: pointer; font-size: 14px; }
         .tab.active { background: #4CAF50; }
+
+        /* POI Pill Buttons */
+        .poi-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px 6px 6px;
+            border: none;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .poi-pill.active {
+            background: rgba(255,255,255,0.25);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .poi-pill:not(.active) {
+            opacity: 0.4;
+        }
+        .poi-pill-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        .poi-pill-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            min-width: 16px;
+        }
+        
+        /* POI Marker Styles */
+        .poi-marker-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            border: 2px solid white;
+        }
 
         /* Animated Logo */
         .animated-logo {
@@ -373,7 +441,7 @@
         /* Toast Notification */
         .toast {
             position: fixed;
-            bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
             left: 50%;
             transform: translateX(-50%) translateY(100px);
             background: rgba(30, 30, 30, 0.95);
@@ -383,7 +451,7 @@
             font-size: 14px;
             font-weight: 500;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 9998;
+            z-index: 10000;
             opacity: 0;
             transition: transform 0.3s ease, opacity 0.3s ease;
             display: flex;
@@ -473,6 +541,78 @@
         .splash-logo .truck-window { background: #81C784; width: 8px; height: 6px; position: absolute; top: 2px; left: 3px; border-radius: 2px; }
         .splash-logo .truck-wheel { position: absolute; bottom: 0; width: 8px; height: 8px; background: #333; border-radius: 50%; }
         .splash-title { color: white; font-size: 18px; margin-top: 24px; opacity: 0.9; font-weight: 500; }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            background: #1B5E20;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding: 0;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            z-index: 9999 !important;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 0 6px 0;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex: 1;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bottom-nav-item:active {
+            color: #fff;
+        }
+        .bottom-nav-item .nav-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bottom-nav-item .nav-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+        }
+        .bottom-nav-item .nav-label {
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+        .bottom-nav-item.nav-home {
+            position: relative;
+        }
+        .bottom-nav-item.nav-home .nav-icon {
+            width: 50px;
+            height: 50px;
+            background: #4CAF50;
+            border-radius: 50%;
+            margin-top: -22px;
+            margin-bottom: 3px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        }
+        .bottom-nav-item.nav-home .nav-icon svg {
+            width: 26px;
+            height: 26px;
+            fill: #fff;
+        }
+        .bottom-nav-item.nav-home:active .nav-icon {
+            transform: scale(0.95);
+        }
     </style>
 </head>
 <body>
@@ -534,12 +674,6 @@
                         <div class="dust" style="left: -9px; animation-delay: 0.4s;"></div>
                     </div>
                 </div>
-        </div>
-        <div class="header-actions">
-            <button class="icon-btn" onclick="openActivityLogModal()" title="Aktivitätslog">ℹ️</button>
-            <button class="icon-btn" onclick="openSettingsModal()" title="Sprache">🌐</button>
-            <button class="icon-btn" onclick="showSetup()" title="Fahrzeug-Setup">⚙️</button>
-            <button class="icon-btn" onclick="logout()" title="Logout">🚪</button>
         </div>
     </div>
 
@@ -885,10 +1019,65 @@
                     <button class="btn btn-secondary" onclick="openLegalModal('impressum'); closeSettingsModal();" style="text-align:left;padding:12px;">📋 Impressum</button>
                     <button class="btn btn-secondary" onclick="openLegalModal('datenschutz'); closeSettingsModal();" style="text-align:left;padding:12px;">🔒 Datenschutzerklärung</button>
                     <button class="btn btn-secondary" onclick="openLegalModal('agb'); closeSettingsModal();" style="text-align:left;padding:12px;">📄 Nutzungsbedingungen (AGB)</button>
+                    <button class="btn btn-secondary" onclick="logout()" style="text-align:left;padding:12px;margin-top:8px;color:#ff7b7b;">🚪 Logout</button>
                 </div>
             </div>
             
             <button class="btn btn-primary" onclick="closeSettingsModal()" style="margin-top:16px;" data-i18n="actions.close">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Karten Modal -->
+    <div class="modal-overlay" id="mapModal" style="align-items:stretch;">
+        <div class="modal" style="max-width:100%;height:100%;border-radius:0;padding:0;display:flex;flex-direction:column;background:#1a1a1a;">
+            <!-- Kompakter Header -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);flex-shrink:0;">
+                <span style="font-size:16px;font-weight:600;color:white;">🗺️ POIs in der Nähe</span>
+                <button onclick="closeMapModal()" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);border:none;color:white;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+            </div>
+            
+            <!-- Horizontale Pill-Filter -->
+            <div style="display:flex;gap:6px;padding:10px 12px;background:#1a1a1a;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;" id="poiFilters">
+                <button class="poi-pill active" data-poi="water" onclick="togglePoiFilter('water')">
+                    <span class="poi-pill-icon" style="background:#3498db;">💧</span>
+                    <span class="poi-pill-count" id="count-water">0</span>
+                </button>
+                <button class="poi-pill active" data-poi="fuel" onclick="togglePoiFilter('fuel')">
+                    <span class="poi-pill-icon" style="background:#e74c3c;">⛽</span>
+                    <span class="poi-pill-count" id="count-fuel">0</span>
+                </button>
+                <button class="poi-pill active" data-poi="power" onclick="togglePoiFilter('power')">
+                    <span class="poi-pill-icon" style="background:#f39c12;">⛺</span>
+                    <span class="poi-pill-count" id="count-power">0</span>
+                </button>
+                <button class="poi-pill active" data-poi="shop" onclick="togglePoiFilter('shop')">
+                    <span class="poi-pill-icon" style="background:#27ae60;">🛒</span>
+                    <span class="poi-pill-count" id="count-shop">0</span>
+                </button>
+                <button class="poi-pill active" data-poi="dump" onclick="togglePoiFilter('dump')">
+                    <span class="poi-pill-icon" style="background:#1abc9c;">🚿</span>
+                    <span class="poi-pill-count" id="count-dump">0</span>
+                </button>
+            </div>
+            
+            <!-- Karte -->
+            <div id="mapContainer" style="flex:1;min-height:300px;position:relative;">
+                <!-- Reload Button -->
+                <button id="mapReloadBtn" onclick="reloadPOIsAtCenter()" style="display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:1000;background:#4CAF50;color:white;border:none;padding:10px 20px;border-radius:25px;font-size:13px;font-weight:600;box-shadow:0 3px 12px rgba(0,0,0,0.3);cursor:pointer;">
+                    🔄 POIs hier laden
+                </button>
+                <!-- Loading Overlay -->
+                <div id="mapLoading" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1001;">
+                    <div style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.2);border-top-color:#4CAF50;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+                    <div id="mapLoadingText" style="color:white;margin-top:12px;font-size:13px;">Lade POIs...</div>
+                    <div id="mapLoadingProgress" style="width:200px;height:4px;background:rgba(255,255,255,0.2);border-radius:2px;margin-top:10px;overflow:hidden;">
+                        <div id="mapLoadingBar" style="width:0%;height:100%;background:#4CAF50;transition:width 0.3s;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Debug -->
+            <div id="mapDebug" style="padding:10px 12px;font-size:11px;background:#111;color:#4CAF50;min-height:60px;max-height:100px;overflow-y:auto;font-family:monospace;"></div>
         </div>
     </div>
 
@@ -1156,9 +1345,12 @@
                         showToast('Fehler', 'Aktualisierung fehlgeschlagen', 'warning');
                     }
                     
-                    // Spinner ausblenden
+                    // Spinner ausblenden und nach oben scrollen
                     setTimeout(() => {
                         pullRefresh.classList.remove('visible', 'loading');
+                        window.scrollTo(0, 0);
+                        document.documentElement.scrollTop = 0;
+                        document.body.scrollTop = 0;
                         isRefreshing = false;
                     }, 200);
                 }
@@ -2969,14 +3161,6 @@
             if (currentResourceType === 'water' && currentVehicle.greywater_linked_to_water) {
                 const oldWaterLevel = currentLevels.water_level || 0;
                 const waterUsed = oldWaterLevel - amount;
-                
-                // DEBUG
-                const debugDiv = document.createElement('div');
-                debugDiv.style.cssText = 'position:fixed;top:10px;left:10px;right:10px;background:#333;color:#0f0;padding:10px;z-index:99999;font-size:12px;border-radius:8px;';
-                debugDiv.innerHTML = `DEBUG Wasser-Kopplung:<br>oldWaterLevel: ${oldWaterLevel}<br>newAmount: ${amount}<br>waterUsed: ${waterUsed}<br>linked: ${currentVehicle.greywater_linked_to_water}<br>factor: ${currentVehicle.greywater_link_factor}`;
-                document.body.appendChild(debugDiv);
-                setTimeout(() => debugDiv.remove(), 5000);
-                
                 if (waterUsed > 0) {
                     const factor = (currentVehicle.greywater_link_factor || 90) / 100;
                     const greywaterIncrease = waterUsed * factor;
@@ -3102,6 +3286,282 @@
         function closeSettingsModal() {
             document.getElementById('settingsModal').classList.remove('active');
         }
+
+        // ========== KARTEN FUNKTIONEN ==========
+        let poiMap = null;
+        let poiMarkers = [];
+        let activePoiFilters = { water: true, fuel: true, power: true, shop: true, dump: true };
+        let lastLoadedCenter = null;
+        let mapMovedAfterLoad = false;
+
+        function mapDebugLog(msg) {
+            const dbg = document.getElementById('mapDebug');
+            if (dbg) dbg.innerHTML += msg + '<br>';
+        }
+
+        function openMapModal() {
+            document.getElementById('mapModal').classList.add('active');
+            document.getElementById('mapDebug').innerHTML = '';
+            mapDebugLog('Karte wird geladen...');
+            
+            setTimeout(() => {
+                initPoiMap();
+            }, 100);
+        }
+
+        function closeMapModal() {
+            document.getElementById('mapModal').classList.remove('active');
+            if (poiMap) {
+                poiMap.remove();
+                poiMap = null;
+            }
+        }
+
+        function initPoiMap() {
+            const container = document.getElementById('mapContainer');
+            if (!container) {
+                mapDebugLog('ERROR: mapContainer nicht gefunden');
+                return;
+            }
+
+            if (poiMap) {
+                poiMap.remove();
+                poiMap = null;
+            }
+
+            // Standard-Position (Deutschland Mitte) falls kein GPS
+            let lat = 51.1657;
+            let lng = 10.4515;
+
+            poiMap = L.map('mapContainer').setView([lat, lng], 6);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(poiMap);
+
+            // Event-Listener für Kartenbewegung
+            poiMap.on('moveend', onMapMoved);
+            poiMap.on('zoomend', onMapMoved);
+
+            mapDebugLog('Karte initialisiert. Hole GPS-Position...');
+
+            // GPS-Position holen
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        lat = pos.coords.latitude;
+                        lng = pos.coords.longitude;
+                        mapDebugLog(`GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+                        poiMap.setView([lat, lng], 13);
+                        
+                        // Eigene Position markieren
+                        L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                className: 'my-location-marker',
+                                html: '<div style="background:#4CAF50;width:16px;height:16px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+                                iconSize: [16, 16],
+                                iconAnchor: [8, 8]
+                            })
+                        }).addTo(poiMap).bindPopup('📍 Dein Standort');
+
+                        loadPOIs(lat, lng);
+                    },
+                    (err) => {
+                        mapDebugLog('GPS Fehler: ' + err.message + ' - Lade POIs für Deutschland...');
+                        loadPOIs(lat, lng);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                mapDebugLog('GPS nicht verfügbar');
+                loadPOIs(lat, lng);
+            }
+        }
+
+        const poiColors = {
+            water: '#3498db',
+            fuel: '#e74c3c', 
+            power: '#f39c12',
+            shop: '#27ae60',
+            dump: '#1abc9c'
+        };
+
+        let poiCounts = { water: 0, fuel: 0, power: 0, shop: 0, dump: 0 };
+
+        function showMapLoading(show, text = 'Lade POIs...', progress = 0) {
+            const el = document.getElementById('mapLoading');
+            const textEl = document.getElementById('mapLoadingText');
+            const barEl = document.getElementById('mapLoadingBar');
+            if (el) el.style.display = show ? 'flex' : 'none';
+            if (textEl) textEl.textContent = text;
+            if (barEl) barEl.style.width = progress + '%';
+        }
+
+        async function loadPOIs(lat, lng) {
+            showMapLoading(true, '📍 Suche POIs in der Nähe...', 10);
+            mapDebugLog(`Lade POIs für ${lat.toFixed(4)}, ${lng.toFixed(4)}...`);
+            
+            const radius = 5000; // 5km Radius
+            
+            // Nur Camper-relevante POIs
+            const query = `[out:json][timeout:30];(node["amenity"="drinking_water"](around:${radius},${lat},${lng});node["amenity"="water_point"](around:${radius},${lat},${lng});node["amenity"="fuel"](around:${radius},${lat},${lng});node["tourism"="camp_site"](around:${radius},${lat},${lng});node["tourism"="caravan_site"](around:${radius},${lat},${lng});way["tourism"="camp_site"](around:${radius},${lat},${lng});way["tourism"="caravan_site"](around:${radius},${lat},${lng});node["shop"="supermarket"](around:${radius},${lat},${lng});node["shop"="convenience"](around:${radius},${lat},${lng});node["amenity"="sanitary_dump_station"](around:${radius},${lat},${lng}););out center;`;
+
+            try {
+                showMapLoading(true, '🌐 Verbinde mit OpenStreetMap...', 30);
+                mapDebugLog('Sende Anfrage an Overpass API...');
+                
+                // Verwende GET mit URL-Parameter (zuverlässiger)
+                const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+                const response = await fetch(url);
+
+                mapDebugLog(`Response Status: ${response.status}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    mapDebugLog(`Error Body: ${errorText.substring(0, 100)}`);
+                    throw new Error('API Fehler: ' + response.status);
+                }
+
+                showMapLoading(true, '📡 Empfange Daten...', 60);
+                const data = await response.json();
+                mapDebugLog(`${data.elements.length} POIs geladen`);
+
+                showMapLoading(true, `📍 ${data.elements.length} POIs gefunden...`, 80);
+                
+                // Marker löschen & Zähler zurücksetzen
+                poiMarkers.forEach(m => poiMap.removeLayer(m));
+                poiMarkers = [];
+                poiCounts = { water: 0, fuel: 0, power: 0, shop: 0, dump: 0 };
+
+                data.elements.forEach(el => {
+                    const poiInfo = categorizePOI(el);
+                    if (!poiInfo) return;
+
+                    // Koordinaten: node hat lat/lon direkt, way hat center
+                    const lat = el.lat || (el.center && el.center.lat);
+                    const lon = el.lon || (el.center && el.center.lon);
+                    if (!lat || !lon) return;
+
+                    poiCounts[poiInfo.category]++;
+
+                    const marker = L.marker([lat, lon], {
+                        icon: L.divIcon({
+                            className: 'poi-marker-wrapper',
+                            html: `<div class="poi-marker-icon" style="background:${poiColors[poiInfo.category]};">${poiInfo.icon}</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        })
+                    });
+
+                    marker.poiCategory = poiInfo.category;
+                    
+                    const popupContent = `
+                        <div style="font-size:13px;min-width:150px;">
+                            <div style="font-weight:600;margin-bottom:4px;">${poiInfo.icon} ${el.tags.name || poiInfo.name}</div>
+                            ${el.tags.opening_hours ? `<div style="font-size:11px;color:#666;">🕐 ${el.tags.opening_hours}</div>` : ''}
+                            ${el.tags.brand ? `<div style="font-size:11px;color:#666;">${el.tags.brand}</div>` : ''}
+                        </div>
+                    `;
+                    marker.bindPopup(popupContent);
+                    
+                    if (activePoiFilters[poiInfo.category]) {
+                        marker.addTo(poiMap);
+                    }
+                    poiMarkers.push(marker);
+                });
+
+                updatePoiCounts();
+                updatePoiVisibility();
+                
+                showMapLoading(false);
+                
+                // Speichere aktuelle Position
+                lastLoadedCenter = poiMap.getCenter();
+                mapMovedAfterLoad = false;
+                document.getElementById('mapReloadBtn').style.display = 'none';
+
+            } catch (err) {
+                mapDebugLog('ERROR: ' + err.message);
+                showMapLoading(true, '❌ Fehler beim Laden', 0);
+                setTimeout(() => showMapLoading(false), 2000);
+            }
+        }
+
+        function onMapMoved() {
+            if (!poiMap || !lastLoadedCenter) return;
+            
+            const center = poiMap.getCenter();
+            const distance = lastLoadedCenter.distanceTo(center);
+            
+            // Zeige Button wenn mehr als 500m bewegt oder deutlich gezoomt
+            if (distance > 500) {
+                mapMovedAfterLoad = true;
+                document.getElementById('mapReloadBtn').style.display = 'block';
+            }
+        }
+
+        function reloadPOIsAtCenter() {
+            if (!poiMap) return;
+            const center = poiMap.getCenter();
+            document.getElementById('mapReloadBtn').style.display = 'none';
+            loadPOIs(center.lat, center.lng);
+        }
+
+        function updatePoiCounts() {
+            Object.keys(poiCounts).forEach(cat => {
+                const el = document.getElementById('count-' + cat);
+                if (el) el.textContent = poiCounts[cat];
+            });
+        }
+
+        function categorizePOI(el) {
+            const tags = el.tags || {};
+            
+            if (tags.amenity === 'drinking_water' || tags.amenity === 'water_point') {
+                return { category: 'water', icon: '💧', name: 'Wasser' };
+            }
+            if (tags.amenity === 'fuel') {
+                return { category: 'fuel', icon: '⛽', name: 'Tankstelle' };
+            }
+            if (tags.tourism === 'camp_site') {
+                return { category: 'power', icon: '⛺', name: 'Campingplatz' };
+            }
+            if (tags.tourism === 'caravan_site') {
+                return { category: 'power', icon: '🚐', name: 'Stellplatz' };
+            }
+            if (tags.shop === 'supermarket' || tags.shop === 'convenience') {
+                return { category: 'shop', icon: '🛒', name: 'Einkaufen' };
+            }
+            if (tags.amenity === 'sanitary_dump_station') {
+                return { category: 'dump', icon: '🚿', name: 'Entsorgung' };
+            }
+            if (tags.waterway === 'water_point') {
+                return { category: 'water', icon: '💧', name: 'Wasserstelle' };
+            }
+            return null;
+        }
+
+        function togglePoiFilter(category) {
+            activePoiFilters[category] = !activePoiFilters[category];
+            
+            const btn = document.querySelector(`.poi-pill[data-poi="${category}"]`);
+            if (btn) {
+                btn.classList.toggle('active', activePoiFilters[category]);
+            }
+            
+            updatePoiVisibility();
+        }
+
+        function updatePoiVisibility() {
+            poiMarkers.forEach(marker => {
+                if (activePoiFilters[marker.poiCategory]) {
+                    if (!poiMap.hasLayer(marker)) marker.addTo(poiMap);
+                } else {
+                    if (poiMap.hasLayer(marker)) poiMap.removeLayer(marker);
+                }
+            });
+        }
+        // ========== ENDE KARTEN FUNKTIONEN ==========
 
         function updateLangButtons() {
             const deBtn = document.getElementById('langDe');
@@ -3721,5 +4181,29 @@
 
         init();
     </script>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="bottom-nav-item" onclick="openActivityLogModal()" title="Info">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></span>
+            <span class="nav-label">Info</span>
+        </button>
+        <button class="bottom-nav-item" onclick="openMapModal()" title="Karte">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></span>
+            <span class="nav-label">Karte</span>
+        </button>
+        <button class="bottom-nav-item nav-home" onclick="showDashboard()" title="Dashboard">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></span>
+            <span class="nav-label">Home</span>
+        </button>
+        <button class="bottom-nav-item" onclick="showSetup()" title="Setup">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></span>
+            <span class="nav-label">Setup</span>
+        </button>
+        <button class="bottom-nav-item" onclick="openSettingsModal()" title="Mehr">
+            <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg></span>
+            <span class="nav-label">Mehr</span>
+        </button>
+    </nav>
 </body>
 </html>
