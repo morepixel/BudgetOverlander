@@ -1156,9 +1156,12 @@
                         showToast('Fehler', 'Aktualisierung fehlgeschlagen', 'warning');
                     }
                     
-                    // Spinner ausblenden
+                    // Spinner ausblenden und nach oben scrollen
                     setTimeout(() => {
                         pullRefresh.classList.remove('visible', 'loading');
+                        window.scrollTo(0, 0);
+                        document.documentElement.scrollTop = 0;
+                        document.body.scrollTop = 0;
                         isRefreshing = false;
                     }, 200);
                 }
