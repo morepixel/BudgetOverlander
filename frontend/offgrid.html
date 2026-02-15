@@ -400,6 +400,39 @@
         .toast-content { flex: 1; }
         .toast-title { font-weight: 600; margin-bottom: 2px; }
         .toast-message { font-size: 12px; opacity: 0.8; }
+        /* Pull-to-Refresh */
+        .pull-refresh {
+            position: fixed;
+            top: calc(env(safe-area-inset-top, 0px) + 60px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+        .pull-refresh.visible {
+            transform: translateX(-50%) translateY(10px);
+        }
+        .pull-refresh.loading .spinner {
+            animation: spin 0.8s linear infinite;
+        }
+        .pull-refresh .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #e0e0e0;
+            border-top-color: #2E7D32;
+            border-radius: 50%;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
         /* Animated Splash Screen */
         .splash-screen {
             position: fixed;
@@ -447,6 +480,11 @@
     </style>
 </head>
 <body>
+    <!-- Pull-to-Refresh Spinner -->
+    <div class="pull-refresh" id="pullRefresh">
+        <div class="spinner"></div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast" id="toast">
         <span class="toast-icon">🔄</span>
@@ -1050,6 +1088,68 @@
             setTimeout(() => toast.classList.remove('show'), duration);
         }
 
+        // Pull-to-Refresh
+        let pullStartY = 0;
+        let isPulling = false;
+        let isRefreshing = false;
+
+        function initPullToRefresh() {
+            const dashboard = document.getElementById('dashboardState');
+            if (!dashboard) return;
+
+            dashboard.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0 && !isRefreshing) {
+                    pullStartY = e.touches[0].clientY;
+                    isPulling = true;
+                }
+            }, { passive: true });
+
+            dashboard.addEventListener('touchmove', (e) => {
+                if (!isPulling || isRefreshing) return;
+                const pullDistance = e.touches[0].clientY - pullStartY;
+                const pullRefresh = document.getElementById('pullRefresh');
+                
+                if (pullDistance > 0 && window.scrollY === 0) {
+                    const progress = Math.min(pullDistance / 80, 1);
+                    pullRefresh.style.transform = `translateX(-50%) translateY(${-80 + (progress * 90)}px)`;
+                    pullRefresh.querySelector('.spinner').style.transform = `rotate(${progress * 180}deg)`;
+                }
+            }, { passive: true });
+
+            dashboard.addEventListener('touchend', async () => {
+                if (!isPulling) return;
+                isPulling = false;
+                const pullRefresh = document.getElementById('pullRefresh');
+                const currentY = parseFloat(pullRefresh.style.transform.match(/translateY\(([^p]+)px\)/)?.[1] || -80);
+                
+                if (currentY > -20) {
+                    // Trigger refresh
+                    isRefreshing = true;
+                    pullRefresh.classList.add('visible', 'loading');
+                    
+                    try {
+                        const data = await fetchAPI('/resources/current');
+                        if (data && data.levels) {
+                            currentLevels = data.levels;
+                            previousLevels = { ...data.levels };
+                            await updateUI();
+                            showToast('Aktualisiert', 'Daten wurden geladen', 'success');
+                        }
+                    } catch (e) {
+                        showToast('Fehler', 'Aktualisierung fehlgeschlagen', 'warning');
+                    }
+                    
+                    setTimeout(() => {
+                        pullRefresh.classList.remove('visible', 'loading');
+                        pullRefresh.style.transform = '';
+                        isRefreshing = false;
+                    }, 500);
+                } else {
+                    pullRefresh.style.transform = '';
+                }
+            });
+        }
+
         // Auto-Refresh alle 5 Minuten
         let autoRefreshInterval = null;
         let previousLevels = null;
@@ -1578,9 +1678,10 @@
             document.getElementById('noVehicleState').style.display = 'none';
             document.getElementById('dashboardState').style.display = 'block';
             document.getElementById('setupScreen').classList.remove('active');
-            // Auto-Refresh starten und aktuelle Levels merken
+            // Auto-Refresh und Pull-to-Refresh starten
             previousLevels = currentLevels ? { ...currentLevels } : null;
             startAutoRefresh();
+            initPullToRefresh();
         }
 
         function showSetup() {
