@@ -99,6 +99,110 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Debug: CRON manuell triggern
+app.get('/api/debug/trigger-cron', async (req, res) => {
+  console.log('🔧 Debug: CRON manuell getriggert...');
+  try {
+    let updatedCustom = 0;
+    let updatedBattery = 0;
+    
+    // 1. Custom Resources
+    const resources = await pool.query(`
+      SELECT cr.*, v.person_count, v.user_id as vehicle_user_id
+      FROM custom_resources cr 
+      JOIN vehicles v ON cr.vehicle_id = v.id 
+      WHERE cr.consumption_per_day > 0
+    `);
+    
+    for (const r of resources.rows) {
+      const personCount = r.person_count || 2;
+      const hourlyConsumption = (r.consumption_per_day * personCount) / 24;
+      const oldLevel = parseFloat(r.current_level) || 0;
+      
+      let newLevel;
+      if (r.is_inverted) {
+        newLevel = Math.min(oldLevel + hourlyConsumption, parseFloat(r.capacity));
+      } else {
+        newLevel = Math.max(oldLevel - hourlyConsumption, 0);
+      }
+      
+      const newPercentage = (newLevel / r.capacity) * 100;
+      const changeAmount = Math.abs(newLevel - oldLevel);
+      
+      await pool.query(`
+        UPDATE custom_resources 
+        SET current_level = $1, current_percentage = $2, updated_at = NOW()
+        WHERE id = $3
+      `, [newLevel, newPercentage, r.id]);
+      
+      const direction = r.is_inverted ? '+' : '-';
+      await logActivity(
+        r.vehicle_id, r.vehicle_user_id, 'cron_consumption', r.name, r.icon,
+        `${r.name}: ${direction}${changeAmount.toFixed(2)} ${r.unit} (stündl. Verbrauch)`,
+        oldLevel, newLevel, changeAmount, r.unit
+      );
+      
+      updatedCustom++;
+    }
+    
+    // 2. Batterie
+    const vehicles = await pool.query(`
+      SELECT v.*, cl.power_level, cl.power_percentage
+      FROM vehicles v
+      LEFT JOIN current_levels cl ON v.id = cl.vehicle_id
+      WHERE v.battery_capacity > 0
+    `);
+    
+    for (const v of vehicles.rows) {
+      const consumersResult = await pool.query(`
+        SELECT COALESCE(SUM(consumption_ah), 0) as total_consumption
+        FROM power_consumers 
+        WHERE vehicle_id = $1 AND is_active = true
+      `, [v.id]);
+      const dailyConsumption = parseFloat(consumersResult.rows[0]?.total_consumption) || 0;
+      const hourlyConsumption = dailyConsumption / 24;
+      
+      const solarWp = parseFloat(v.solar_power) || 0;
+      const dailySolarAh = solarWp > 0 ? (solarWp * 4 * 0.7 * 0.15) / 12 : 0;
+      const hourlySolarAh = dailySolarAh / 24;
+      
+      const netHourlyConsumption = hourlyConsumption - hourlySolarAh;
+      
+      if (netHourlyConsumption !== 0) {
+        const oldLevel = parseFloat(v.power_level) || 0;
+        const capacity = parseFloat(v.battery_capacity) || 100;
+        
+        let newLevel = oldLevel - netHourlyConsumption;
+        newLevel = Math.max(0, Math.min(newLevel, capacity));
+        
+        const newPercentage = (newLevel / capacity) * 100;
+        const changeAmount = Math.abs(newLevel - oldLevel);
+        
+        await pool.query(`
+          UPDATE current_levels 
+          SET power_level = $1, power_percentage = $2, updated_at = NOW()
+          WHERE vehicle_id = $3
+        `, [newLevel, newPercentage, v.id]);
+        
+        const direction = netHourlyConsumption > 0 ? '-' : '+';
+        await logActivity(
+          v.id, v.user_id, 'cron_consumption', 'power', '🔋',
+          `Batterie: ${direction}${changeAmount.toFixed(2)} Ah (stündl. Verbrauch)`,
+          oldLevel, newLevel, changeAmount, 'Ah'
+        );
+        
+        updatedBattery++;
+      }
+    }
+    
+    console.log(`✅ Debug-Cron: ${updatedCustom} Custom Resources, ${updatedBattery} Batterien aktualisiert`);
+    res.json({ success: true, updatedCustom, updatedBattery });
+  } catch (error) {
+    console.error('❌ Debug-Cron Fehler:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error Handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
