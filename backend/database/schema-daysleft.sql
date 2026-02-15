@@ -322,3 +322,29 @@ CREATE TRIGGER update_supply_stations_updated_at
     BEFORE UPDATE ON supply_stations
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================
+-- 6. ACTIVITY LOG TABELLE (Alle Aktivitäten)
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS activity_log (
+    id SERIAL PRIMARY KEY,
+    vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    
+    activity_type VARCHAR(50) NOT NULL,       -- cron_consumption, user_update, user_empty, user_fill, system
+    resource_type VARCHAR(50),                -- water, power, fuel, gas, custom_resource_name
+    resource_icon VARCHAR(10),                -- Emoji für Anzeige
+    
+    description TEXT NOT NULL,                -- Lesbare Beschreibung
+    old_value DECIMAL(10,2),                  -- Vorheriger Wert
+    new_value DECIMAL(10,2),                  -- Neuer Wert
+    change_amount DECIMAL(10,2),              -- Änderungsmenge
+    unit VARCHAR(20),                         -- Einheit (L, Ah, %, etc.)
+    
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_log_vehicle ON activity_log(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_activity_log_date ON activity_log(created_at DESC);

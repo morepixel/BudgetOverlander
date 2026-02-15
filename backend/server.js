@@ -8,6 +8,34 @@ import fs from 'fs';
 import cron from 'node-cron';
 import pool from './database/db-postgres.js';
 
+// Auto-Migration für activity_log Tabelle
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS activity_log (
+        id SERIAL PRIMARY KEY,
+        vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        activity_type VARCHAR(50) NOT NULL,
+        resource_type VARCHAR(50),
+        resource_icon VARCHAR(10),
+        description TEXT NOT NULL,
+        old_value DECIMAL(10,2),
+        new_value DECIMAL(10,2),
+        change_amount DECIMAL(10,2),
+        unit VARCHAR(20),
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_activity_log_vehicle ON activity_log(vehicle_id);
+      CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id);
+      CREATE INDEX IF NOT EXISTS idx_activity_log_date ON activity_log(created_at DESC);
+    `);
+    console.log('✅ activity_log table ready');
+  } catch (err) {
+    console.error('activity_log migration:', err.message);
+  }
+})();
+
 // Routes
 import authRouter from './routes/auth.js';
 import vehiclesRouter from './routes/vehicles.js';
@@ -84,6 +112,18 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint nicht gefunden' });
 });
 
+// Hilfsfunktion: Aktivität loggen
+async function logActivity(vehicleId, userId, activityType, resourceType, resourceIcon, description, oldValue, newValue, changeAmount, unit) {
+  try {
+    await pool.query(`
+      INSERT INTO activity_log (vehicle_id, user_id, activity_type, resource_type, resource_icon, description, old_value, new_value, change_amount, unit)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `, [vehicleId, userId, activityType, resourceType, resourceIcon, description, oldValue, newValue, changeAmount, unit]);
+  } catch (err) {
+    console.error('Activity log error:', err.message);
+  }
+}
+
 // Cron-Job: Stündlicher Verbrauch (jede Stunde, 1/24 des Tageswertes)
 cron.schedule('0 * * * *', async () => {
   const hour = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
@@ -94,7 +134,7 @@ cron.schedule('0 * * * *', async () => {
     
     // 1. Custom Resources mit consumption_per_day > 0 (1/24 pro Stunde)
     const resources = await pool.query(`
-      SELECT cr.*, v.person_count 
+      SELECT cr.*, v.person_count, v.user_id as vehicle_user_id
       FROM custom_resources cr 
       JOIN vehicles v ON cr.vehicle_id = v.id 
       WHERE cr.consumption_per_day > 0
@@ -103,21 +143,31 @@ cron.schedule('0 * * * *', async () => {
     for (const r of resources.rows) {
       const personCount = r.person_count || 2;
       const hourlyConsumption = (r.consumption_per_day * personCount) / 24;
+      const oldLevel = parseFloat(r.current_level) || 0;
       
       let newLevel;
       if (r.is_inverted) {
-        newLevel = Math.min(parseFloat(r.current_level) + hourlyConsumption, parseFloat(r.capacity));
+        newLevel = Math.min(oldLevel + hourlyConsumption, parseFloat(r.capacity));
       } else {
-        newLevel = Math.max(parseFloat(r.current_level) - hourlyConsumption, 0);
+        newLevel = Math.max(oldLevel - hourlyConsumption, 0);
       }
       
       const newPercentage = (newLevel / r.capacity) * 100;
+      const changeAmount = Math.abs(newLevel - oldLevel);
       
       await pool.query(`
         UPDATE custom_resources 
         SET current_level = $1, current_percentage = $2, updated_at = NOW()
         WHERE id = $3
       `, [newLevel, newPercentage, r.id]);
+      
+      // Aktivität loggen
+      const direction = r.is_inverted ? '+' : '-';
+      await logActivity(
+        r.vehicle_id, r.vehicle_user_id, 'cron_consumption', r.name, r.icon,
+        `${r.name}: ${direction}${changeAmount.toFixed(2)} ${r.unit} (stündl. Verbrauch)`,
+        oldLevel, newLevel, changeAmount, r.unit
+      );
       
       updatedCustom++;
     }
@@ -149,20 +199,29 @@ cron.schedule('0 * * * *', async () => {
       const netHourlyConsumption = hourlyConsumption - hourlySolarAh;
       
       if (netHourlyConsumption !== 0) {
-        const currentLevel = parseFloat(v.power_level) || 0;
+        const oldLevel = parseFloat(v.power_level) || 0;
         const capacity = parseFloat(v.battery_capacity) || 100;
         
         // Neuer Level (begrenzt auf 0 bis Kapazität)
-        let newLevel = currentLevel - netHourlyConsumption;
+        let newLevel = oldLevel - netHourlyConsumption;
         newLevel = Math.max(0, Math.min(newLevel, capacity));
         
         const newPercentage = (newLevel / capacity) * 100;
+        const changeAmount = Math.abs(newLevel - oldLevel);
         
         await pool.query(`
           UPDATE current_levels 
           SET power_level = $1, power_percentage = $2, updated_at = NOW()
           WHERE vehicle_id = $3
         `, [newLevel, newPercentage, v.id]);
+        
+        // Aktivität loggen
+        const direction = netHourlyConsumption > 0 ? '-' : '+';
+        await logActivity(
+          v.id, v.user_id, 'cron_consumption', 'power', '🔋',
+          `Batterie: ${direction}${changeAmount.toFixed(2)} Ah (stündl. Verbrauch)`,
+          oldLevel, newLevel, changeAmount, 'Ah'
+        );
         
         updatedBattery++;
       }

@@ -31,7 +31,9 @@ const config: CapacitorConfig = {
     contentInset: 'always',
     preferredContentMode: 'mobile',
     scheme: 'DaysLeft',
-    backgroundColor: '#2E7D32'
+    backgroundColor: '#2E7D32',
+    scrollEnabled: true,
+    allowsLinkPreview: false
   },
   android: {
     allowMixedContent: true,

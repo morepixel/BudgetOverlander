@@ -297,6 +297,22 @@ router.post('/log', authenticateToken, async (req, res) => {
       [vehicleId, req.user.userId, resourceType, action, amount, typeConfig.unit, newLevel, newPercentage, lat || null, lon || null, notes || null]
     );
 
+    // Aktivitätslog erstellen
+    const activityType = action === 'fill' || action === 'full' ? 'user_fill' : 
+                         action === 'empty' ? 'user_empty' : 
+                         action === 'set_level' ? 'user_set' : 'user_update';
+    const changeAmount = Math.abs(newLevel - currentLevel);
+    const direction = newLevel > currentLevel ? '+' : '-';
+    const description = action === 'full' ? `${typeConfig.name} aufgefüllt (100%)` :
+                        action === 'empty' ? `${typeConfig.name} geleert` :
+                        `${typeConfig.name}: ${direction}${changeAmount.toFixed(1)} ${typeConfig.unit} (${Math.round(newPercentage)}%)`;
+    
+    await pool.query(
+      `INSERT INTO activity_log (vehicle_id, user_id, activity_type, resource_type, resource_icon, description, old_value, new_value, change_amount, unit)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [vehicleId, req.user.userId, activityType, resourceType, typeConfig.icon, description, currentLevel, newLevel, changeAmount, typeConfig.unit]
+    );
+
     // Hole aktualisierte Levels
     const updatedLevelsResult = await pool.query('SELECT * FROM current_levels WHERE vehicle_id = $1', [vehicleId]);
     const updatedLevels = updatedLevelsResult.rows[0];
@@ -410,6 +426,16 @@ router.post('/toilet-empty', authenticateToken, async (req, res) => {
       await pool.query('UPDATE current_levels SET chemical_level = 0, chemical_percentage = 0 WHERE vehicle_id = $1', [vehicleId]);
     }
 
+    // Aktivitätslog für Toilette leeren
+    const tankName = toiletType === 'ttt' ? (tankType === 'solid' ? 'Feststoff-Tank' : 'Pipi-Tank') :
+                     toiletType === 'clesana' ? 'Clesana-Tüten' : 'Chemie-Tank';
+    const description = toiletType === 'clesana' ? `${tankName} aufgefüllt` : `${tankName} geleert`;
+    await pool.query(
+      `INSERT INTO activity_log (vehicle_id, user_id, activity_type, resource_type, resource_icon, description, old_value, new_value, change_amount, unit)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [vehicleId, req.user.userId, toiletType === 'clesana' ? 'user_fill' : 'user_empty', 'toilet', '🚽', description, null, null, null, null]
+    );
+
     res.json({ message: 'Toilette geleert' });
   } catch (error) {
     console.error('Toilet empty error:', error);
@@ -446,6 +472,58 @@ router.get('/history', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Get history error:', error);
     res.status(500).json({ error: 'Fehler beim Laden des Verlaufs' });
+  }
+});
+
+// GET /api/resources/activity-log - Aktivitätslog für alle Änderungen
+router.get('/activity-log', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId, limit = 100 } = req.query;
+    
+    // Hole Standard-Fahrzeug wenn keine ID
+    let vId = vehicleId;
+    if (!vId) {
+      const vResult = await pool.query('SELECT id FROM vehicles WHERE user_id = $1 AND is_default = true', [req.user.userId]);
+      if (vResult.rows[0]) {
+        vId = vResult.rows[0].id;
+      } else {
+        const vResult2 = await pool.query('SELECT id FROM vehicles WHERE user_id = $1 LIMIT 1', [req.user.userId]);
+        vId = vResult2.rows[0]?.id;
+      }
+    }
+    
+    if (!vId) {
+      return res.json({ activities: [] });
+    }
+    
+    const result = await pool.query(`
+      SELECT * FROM activity_log 
+      WHERE vehicle_id = $1 
+      ORDER BY created_at DESC 
+      LIMIT $2
+    `, [vId, parseInt(limit)]);
+    
+    res.json({ activities: result.rows });
+  } catch (error) {
+    console.error('Get activity log error:', error);
+    res.status(500).json({ error: 'Fehler beim Laden des Aktivitätslogs' });
+  }
+});
+
+// POST /api/resources/activity-log - Aktivität manuell loggen
+router.post('/activity-log', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId, activityType, resourceType, resourceIcon, description, oldValue, newValue, changeAmount, unit } = req.body;
+    
+    await pool.query(`
+      INSERT INTO activity_log (vehicle_id, user_id, activity_type, resource_type, resource_icon, description, old_value, new_value, change_amount, unit)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    `, [vehicleId, req.user.userId, activityType, resourceType, resourceIcon, description, oldValue, newValue, changeAmount, unit]);
+    
+    res.json({ message: 'Aktivität geloggt' });
+  } catch (error) {
+    console.error('Log activity error:', error);
+    res.status(500).json({ error: 'Fehler beim Loggen der Aktivität' });
   }
 });
 
