@@ -28,7 +28,7 @@ const config: CapacitorConfig = {
     }
   },
   ios: {
-    contentInset: 'always',
+    contentInset: 'never',
     preferredContentMode: 'mobile',
     scheme: 'DaysLeft',
     backgroundColor: '#2E7D32',
