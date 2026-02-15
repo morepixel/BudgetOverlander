@@ -1135,18 +1135,17 @@
                         showToast('Fehler', 'Aktualisierung fehlgeschlagen', 'warning');
                     }
                     
-                    // Seite zurück nach oben schieben
-                    const dashboard = document.getElementById('dashboardState');
-                    dashboard.style.transition = 'transform 0.3s ease';
-                    dashboard.style.transform = 'translateY(-50px)';
+                    // Gesamte Seite zurück nach oben schieben
+                    document.body.style.transition = 'transform 0.3s ease';
+                    document.body.style.transform = 'translateY(-50px)';
                     setTimeout(() => {
-                        dashboard.style.transform = '';
+                        document.body.style.transform = '';
                         window.scrollTo(0, 0);
                     }, 300);
                     
                     setTimeout(() => {
                         pullRefresh.classList.remove('visible', 'loading');
-                        dashboard.style.transition = '';
+                        document.body.style.transition = '';
                         isRefreshing = false;
                     }, 400);
                 }
