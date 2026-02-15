@@ -84,30 +84,31 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint nicht gefunden' });
 });
 
-// Cron-Job: Täglicher Verbrauch (jeden Tag um 00:00 Uhr)
-cron.schedule('0 0 * * *', async () => {
-  console.log('⏰ Cron-Job: Täglicher Verbrauch wird berechnet...');
+// Cron-Job: Stündlicher Verbrauch (jede Stunde, 1/24 des Tageswertes)
+cron.schedule('0 * * * *', async () => {
+  const hour = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
+  console.log(`⏰ Cron-Job: Stündlicher Verbrauch (${hour})...`);
   try {
     let updatedCustom = 0;
     let updatedBattery = 0;
     
-    // 1. Custom Resources mit consumption_per_day > 0
+    // 1. Custom Resources mit consumption_per_day > 0 (1/24 pro Stunde)
     const resources = await pool.query(`
       SELECT cr.*, v.person_count 
       FROM custom_resources cr 
       JOIN vehicles v ON cr.vehicle_id = v.id 
-      WHERE cr.consumption_per_day > 0 AND cr.current_level > 0
+      WHERE cr.consumption_per_day > 0
     `);
     
     for (const r of resources.rows) {
       const personCount = r.person_count || 2;
-      const dailyConsumption = r.consumption_per_day * personCount;
+      const hourlyConsumption = (r.consumption_per_day * personCount) / 24;
       
       let newLevel;
       if (r.is_inverted) {
-        newLevel = Math.min(parseFloat(r.current_level) + dailyConsumption, parseFloat(r.capacity));
+        newLevel = Math.min(parseFloat(r.current_level) + hourlyConsumption, parseFloat(r.capacity));
       } else {
-        newLevel = Math.max(parseFloat(r.current_level) - dailyConsumption, 0);
+        newLevel = Math.max(parseFloat(r.current_level) - hourlyConsumption, 0);
       }
       
       const newPercentage = (newLevel / r.capacity) * 100;
@@ -121,7 +122,7 @@ cron.schedule('0 0 * * *', async () => {
       updatedCustom++;
     }
     
-    // 2. Batterie: Verbraucher - Solar = Netto-Verbrauch
+    // 2. Batterie: Verbraucher - Solar = Netto-Verbrauch (1/24 pro Stunde)
     const vehicles = await pool.query(`
       SELECT v.*, rl.power_level, rl.power_percentage
       FROM vehicles v
@@ -130,27 +131,29 @@ cron.schedule('0 0 * * *', async () => {
     `);
     
     for (const v of vehicles.rows) {
-      // Aktive Verbraucher summieren
+      // Aktive Verbraucher summieren (Ah pro Tag)
       const consumersResult = await pool.query(`
         SELECT COALESCE(SUM(consumption_ah), 0) as total_consumption
         FROM power_consumers 
         WHERE vehicle_id = $1 AND is_active = true
       `, [v.id]);
-      const totalConsumption = parseFloat(consumersResult.rows[0]?.total_consumption) || 0;
+      const dailyConsumption = parseFloat(consumersResult.rows[0]?.total_consumption) || 0;
+      const hourlyConsumption = dailyConsumption / 24;
       
-      // Solar-Ertrag schätzen (ca. 4h Sonne, 70% Effizienz, 15% Panel-Faktor)
+      // Solar-Ertrag schätzen (ca. 4h Sonne pro Tag, verteilt auf 24h)
       const solarWp = parseFloat(v.solar_power) || 0;
-      const estimatedSolarAh = solarWp > 0 ? (solarWp * 4 * 0.7 * 0.15) / 12 : 0;
+      const dailySolarAh = solarWp > 0 ? (solarWp * 4 * 0.7 * 0.15) / 12 : 0;
+      const hourlySolarAh = dailySolarAh / 24;
       
-      // Netto-Verbrauch (kann negativ sein wenn Solar mehr liefert)
-      const netConsumption = totalConsumption - estimatedSolarAh;
+      // Netto-Verbrauch pro Stunde
+      const netHourlyConsumption = hourlyConsumption - hourlySolarAh;
       
-      if (netConsumption !== 0) {
+      if (netHourlyConsumption !== 0) {
         const currentLevel = parseFloat(v.power_level) || 0;
         const capacity = parseFloat(v.battery_capacity) || 100;
         
         // Neuer Level (begrenzt auf 0 bis Kapazität)
-        let newLevel = currentLevel - netConsumption;
+        let newLevel = currentLevel - netHourlyConsumption;
         newLevel = Math.max(0, Math.min(newLevel, capacity));
         
         const newPercentage = (newLevel / capacity) * 100;
@@ -162,11 +165,12 @@ cron.schedule('0 0 * * *', async () => {
         `, [newLevel, newPercentage, v.id]);
         
         updatedBattery++;
-        console.log(`🔋 ${v.name}: ${currentLevel.toFixed(1)} → ${newLevel.toFixed(1)} Ah (Verbrauch: ${totalConsumption.toFixed(1)}, Solar: +${estimatedSolarAh.toFixed(1)})`);
       }
     }
     
-    console.log(`✅ Cron-Job: ${updatedCustom} Custom Resources, ${updatedBattery} Batterien aktualisiert`);
+    if (updatedCustom > 0 || updatedBattery > 0) {
+      console.log(`✅ Cron: ${updatedCustom} Custom Resources, ${updatedBattery} Batterien aktualisiert`);
+    }
   } catch (error) {
     console.error('❌ Cron-Job Fehler:', error);
   }
@@ -178,5 +182,5 @@ app.listen(PORT, () => {
   console.log(`\n🚀 DaysLeft Backend läuft auf Port ${PORT}`);
   console.log(`📍 API: http://localhost:${PORT}/api`);
   console.log(`💚 Health: http://localhost:${PORT}/api/health`);
-  console.log(`⏰ Cron: Täglicher Verbrauch um 00:00 Uhr (Europe/Berlin)\n`);
+  console.log(`⏰ Cron: Stündlicher Verbrauch (1/24 des Tageswertes)\n`);
 });
