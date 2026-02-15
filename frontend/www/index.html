@@ -1095,6 +1095,13 @@
             if (!dashboard || dashboard.dataset.pullInit) return;
             dashboard.dataset.pullInit = 'true';
 
+            // Verhindere iOS Overscroll global wenn ganz oben
+            document.body.addEventListener('touchmove', (e) => {
+                if (window.scrollY === 0 && isPulling) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
             dashboard.addEventListener('touchstart', (e) => {
                 if (window.scrollY === 0 && !isRefreshing) {
                     pullStartY = e.touches[0].clientY;
@@ -1109,8 +1116,6 @@
                 
                 if (pullDistance > 50 && window.scrollY === 0) {
                     pullRefresh.classList.add('visible');
-                    // Verhindere iOS Overscroll
-                    document.body.style.overflow = 'hidden';
                 } else {
                     pullRefresh.classList.remove('visible');
                 }
@@ -1137,23 +1142,11 @@
                         showToast('Fehler', 'Aktualisierung fehlgeschlagen', 'warning');
                     }
                     
-                    // Gesamte Seite zurück nach oben schieben
-                    document.body.style.overscrollBehavior = 'none';
-                    document.body.style.transition = 'transform 0.3s ease';
-                    document.body.style.transform = 'translateY(-50px)';
-                    
-                    setTimeout(() => {
-                        document.body.style.transform = '';
-                        window.scrollTo(0, 0);
-                    }, 300);
-                    
+                    // Spinner ausblenden
                     setTimeout(() => {
                         pullRefresh.classList.remove('visible', 'loading');
-                        document.body.style.transition = '';
-                        document.body.style.overflow = '';
-                        document.body.style.overscrollBehavior = '';
                         isRefreshing = false;
-                    }, 500);
+                    }, 300);
                 }
             });
         }
