@@ -628,4 +628,108 @@ function calculateRemaining(vehicle, levels) {
   return result;
 }
 
+// GET /api/resources/stats - Statistiken (Durchschnittsverbrauch)
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const { vehicleId, days = 30 } = req.query;
+
+    // Resolve vehicleId
+    let vId = vehicleId;
+    if (!vId) {
+      const vResult = await pool.query(
+        'SELECT id FROM vehicles WHERE user_id = $1 AND is_default = true',
+        [req.user.userId]
+      );
+      if (vResult.rows[0]) {
+        vId = vResult.rows[0].id;
+      } else {
+        const vResult2 = await pool.query(
+          'SELECT id FROM vehicles WHERE user_id = $1 LIMIT 1',
+          [req.user.userId]
+        );
+        vId = vResult2.rows[0]?.id;
+      }
+    }
+
+    if (!vId) {
+      return res.json({ stats: {} });
+    }
+
+    const periodDays = Math.min(Math.max(parseInt(days) || 30, 1), 365);
+
+    // Average daily consumption per resource type from 'use' actions
+    const consumptionResult = await pool.query(
+      `SELECT
+        resource_type,
+        unit,
+        SUM(amount) AS total_used,
+        COUNT(*) AS log_count,
+        MIN(created_at) AS first_entry,
+        MAX(created_at) AS last_entry,
+        ROUND(
+          SUM(amount) / GREATEST(
+            EXTRACT(EPOCH FROM (MAX(created_at) - MIN(created_at))) / 86400,
+            1
+          )::numeric,
+          2
+        ) AS avg_per_day
+      FROM resource_logs
+      WHERE vehicle_id = $1
+        AND user_id = $2
+        AND action = 'use'
+        AND created_at >= NOW() - ($3 || ' days')::INTERVAL
+      GROUP BY resource_type, unit`,
+      [vId, req.user.userId, periodDays]
+    );
+
+    // Fill events (refills) per resource type
+    const fillResult = await pool.query(
+      `SELECT
+        resource_type,
+        COUNT(*) AS fill_count,
+        SUM(amount) AS total_filled,
+        ROUND(AVG(amount)::numeric, 2) AS avg_fill_amount
+      FROM resource_logs
+      WHERE vehicle_id = $1
+        AND user_id = $2
+        AND action IN ('fill', 'full')
+        AND created_at >= NOW() - ($3 || ' days')::INTERVAL
+      GROUP BY resource_type`,
+      [vId, req.user.userId, periodDays]
+    );
+
+    // Build combined stats map
+    const stats = {};
+
+    for (const row of consumptionResult.rows) {
+      stats[row.resource_type] = {
+        unit: row.unit,
+        total_used: parseFloat(row.total_used),
+        log_count: parseInt(row.log_count),
+        avg_per_day: parseFloat(row.avg_per_day),
+        first_entry: row.first_entry,
+        last_entry: row.last_entry
+      };
+    }
+
+    for (const row of fillResult.rows) {
+      if (!stats[row.resource_type]) {
+        stats[row.resource_type] = {};
+      }
+      stats[row.resource_type].fill_count = parseInt(row.fill_count);
+      stats[row.resource_type].total_filled = parseFloat(row.total_filled);
+      stats[row.resource_type].avg_fill_amount = parseFloat(row.avg_fill_amount);
+    }
+
+    res.json({
+      stats,
+      vehicle_id: parseInt(vId),
+      period_days: periodDays
+    });
+  } catch (error) {
+    console.error('Get stats error:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der Statistiken' });
+  }
+});
+
 export default router;
