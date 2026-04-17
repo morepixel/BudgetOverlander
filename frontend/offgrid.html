@@ -1004,6 +1004,30 @@
                 <div class="setup-section-title">⭐ Premium</div>
                 <div style="text-align:center;padding:12px;">Lade...</div>
             </div>
+
+            <div class="setup-section" id="sensorSection" style="display:none;">
+                <div class="setup-section-title">⚡ Sensoren verbinden</div>
+                <div id="sensorContent">
+                    <div style="font-size:13px;opacity:0.8;margin-bottom:12px;">Verbinde dein Victron-System für automatisches Batterie-Tracking – kein manuelles Eintragen mehr.</div>
+                    <div id="victronStatus" style="margin-bottom:12px;"></div>
+                    <div id="victronConnectForm">
+                        <div class="form-group">
+                            <label class="form-label">VRM Personal Access Token</label>
+                            <input type="password" class="form-input" id="victronToken" placeholder="Aus: vrm.victronenergy.com → Profil → Token" autocomplete="off">
+                            <div style="font-size:11px;opacity:0.5;margin-top:4px;">VRM Portal → oben rechts auf deinen Namen → Access Tokens</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadVictronInstallations()" id="victronConnectBtn">Installationen laden</button>
+                    </div>
+                    <div id="victronInstallationSelect" style="display:none;margin-top:12px;">
+                        <div class="form-group">
+                            <label class="form-label">Installation auswählen</label>
+                            <select class="form-input" id="victronInstallationId"></select>
+                        </div>
+                        <button class="btn btn-primary" onclick="linkVictronInstallation()">Verbinden</button>
+                        <button class="btn btn-secondary" onclick="resetVictronForm()" style="margin-top:8px;">Abbrechen</button>
+                    </div>
+                </div>
+            </div>
             
             <div class="setup-section">
                 <div class="setup-section-title" data-i18n="settings.language">Sprache</div>
@@ -1450,18 +1474,47 @@
         function updatePremiumUI() {
             const premiumBadge = document.getElementById('premiumBadge');
             const premiumSection = document.getElementById('premiumSection');
+            const sensorSection = document.getElementById('sensorSection');
+
             if (premiumBadge) premiumBadge.style.display = isPremium ? 'inline' : 'none';
+            if (sensorSection) sensorSection.style.display = isPremium ? 'block' : 'none';
+
             if (premiumSection) {
-                premiumSection.innerHTML = isPremium 
-                    ? `<div style="text-align:center;padding:16px;background:rgba(76,175,80,0.2);border-radius:12px;"><div style="font-size:24px;margin-bottom:8px;">⭐</div><div style="font-weight:600;">Premium aktiv</div><div style="font-size:12px;opacity:0.7;">Keine Werbung</div><button class="btn btn-secondary" onclick="toggleDebugPremium()" style="margin-top:12px;padding:6px 12px;font-size:11px;opacity:0.6;">🐛 Debug: Premium deaktivieren</button></div>`
-                    : renderPremiumOptions() + `<button class="btn btn-secondary" onclick="toggleDebugPremium()" style="margin-top:12px;padding:6px 12px;font-size:11px;opacity:0.6;">🐛 Debug: Premium aktivieren</button>`;
+                premiumSection.innerHTML = isPremium
+                    ? `<div style="text-align:center;padding:16px;background:rgba(76,175,80,0.2);border-radius:12px;">
+                         <div style="font-size:28px;margin-bottom:8px;">⭐</div>
+                         <div style="font-weight:700;">Premium aktiv</div>
+                         <div style="font-size:12px;opacity:0.7;margin-top:4px;">Sensor-Integration & werbefreie App</div>
+                       </div>`
+                    : renderPremiumOptions();
             }
+
+            if (isPremium) loadVictronStatus();
         }
 
-        function toggleDebugPremium() {
-            isPremium = !isPremium;
-            updateAdsVisibility();
-            updatePremiumUI();
+        // Stripe Success/Cancel aus URL auswerten
+        (function checkStripeReturn() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('premium') === 'success') {
+                history.replaceState({}, '', window.location.pathname);
+                setTimeout(async () => {
+                    await checkPremiumStatus();
+                    showToast('Zahlung erfolgreich!', 'Premium ist jetzt aktiv.', 'success');
+                }, 1000);
+            } else if (params.get('premium') === 'cancelled') {
+                history.replaceState({}, '', window.location.pathname);
+                showToast('Zahlung abgebrochen', 'Du kannst es jederzeit erneut versuchen.', 'info');
+            }
+        })();
+
+        async function toggleDebugPremium() {
+            try {
+                await fetchAPI('/premium/activate', {
+                    method: 'POST',
+                    body: JSON.stringify({ premiumType: 'lifetime' })
+                });
+            } catch (e) { /* Dev-only */ }
+            await checkPremiumStatus();
         }
 
         // === EDIT MODE & DRAG-AND-DROP ===
@@ -1589,50 +1642,206 @@
         function renderPremiumOptions() {
             return `
                 <div style="text-align:center;margin-bottom:16px;">
-                    <div style="font-size:24px;margin-bottom:8px;">🚫➡️⭐</div>
-                    <div style="font-weight:600;">Werbefrei werden</div>
-                    <div style="font-size:12px;opacity:0.7;">Unterstütze die App & entferne Werbung</div>
+                    <div style="font-size:32px;margin-bottom:8px;">⚡</div>
+                    <div style="font-weight:700;font-size:16px;">Kein manuelles Tracking mehr</div>
+                    <div style="font-size:13px;opacity:0.8;margin-top:4px;">Verbinde deinen Victron, Truma & Co. – alles läuft automatisch.</div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:8px;">
-                    <button class="btn btn-primary" onclick="purchasePremium('lifetime')" style="display:flex;justify-content:space-between;align-items:center;">
-                        <span>⭐ Einmalig - Für immer</span>
-                        <span style="font-weight:700;">9,99 €</span>
+                    <button class="btn btn-primary" onclick="purchasePremium('lifetime')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;">
+                        <div style="text-align:left;">
+                            <div style="font-weight:700;">⭐ Einmalig – Für immer</div>
+                            <div style="font-size:11px;opacity:0.7;">Kein Abo – einmal zahlen, immer nutzen</div>
+                        </div>
+                        <span style="font-weight:800;font-size:18px;white-space:nowrap;">59,99 €</span>
                     </button>
-                    <button class="btn btn-secondary" onclick="purchasePremium('yearly')" style="display:flex;justify-content:space-between;align-items:center;">
-                        <span>📅 Jährlich</span>
-                        <span>4,99 €/Jahr</span>
+                    <button class="btn btn-secondary" onclick="purchasePremium('yearly')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;">
+                        <div style="text-align:left;">
+                            <div style="font-weight:600;">📅 Jährlich <span style="background:#4CAF50;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px;">BELIEBT</span></div>
+                            <div style="font-size:11px;opacity:0.7;">Spart 48% gegenüber monatlich</div>
+                        </div>
+                        <span style="font-weight:700;">24,99 €/Jahr</span>
                     </button>
-                    <button class="btn btn-secondary" onclick="purchasePremium('monthly')" style="display:flex;justify-content:space-between;align-items:center;">
-                        <span>📆 Monatlich</span>
-                        <span>0,99 €/Monat</span>
+                    <button class="btn btn-secondary" onclick="purchasePremium('monthly')" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;">
+                        <div style="text-align:left;">
+                            <div style="font-weight:600;">📆 Monatlich</div>
+                            <div style="font-size:11px;opacity:0.7;">Flexibel kündbar</div>
+                        </div>
+                        <span style="font-weight:700;">3,99 €/Monat</span>
                     </button>
                 </div>
-                <div style="font-size:11px;opacity:0.5;text-align:center;margin-top:12px;">Zahlung über Apple Pay / Google Pay (Demo)</div>
+                <div style="font-size:11px;opacity:0.5;text-align:center;margin-top:12px;">Sichere Zahlung via Stripe · Kreditkarte, SEPA, Apple/Google Pay</div>
             `;
         }
 
         async function purchasePremium(type) {
-            // Demo: Direkt aktivieren (später durch echte Payment-Integration ersetzen)
-            if (!confirm(`Premium ${type} für Demo aktivieren?`)) return;
-            
             try {
-                const result = await fetchAPI('/premium/activate', {
+                const result = await fetchAPI('/premium/checkout', {
                     method: 'POST',
-                    body: JSON.stringify({ premiumType: type, paymentId: 'demo-' + Date.now() })
+                    body: JSON.stringify({ premiumType: type })
                 });
-                
-                if (result?.success) {
+
+                if (result?.checkoutUrl) {
+                    // Stripe Checkout in neuem Tab öffnen
+                    window.open(result.checkoutUrl, '_blank');
+                    showToast('Zahlung geöffnet', 'Bitte schließe den Kauf im neuen Tab ab.', 'info');
+                } else if (result?.success) {
+                    // Dev-Modus: direkt aktiviert
                     isPremium = true;
                     updateAdsVisibility();
                     updatePremiumUI();
-                    alert('Premium erfolgreich aktiviert! Werbung wurde entfernt.');
+                    showToast('Premium aktiviert', 'Sensor-Integration jetzt verfügbar!', 'success');
                     closeSettingsModal();
                 } else {
-                    alert('Fehler: ' + (result?.error || 'Unbekannt'));
+                    showToast('Fehler', result?.error || 'Unbekannter Fehler', 'warning');
                 }
             } catch (e) {
-                alert('Fehler beim Aktivieren: ' + e.message);
+                showToast('Fehler', e.message, 'warning');
             }
+        }
+
+        // ─── Victron VRM Sensor-Funktionen ───────────────────────────────────
+        let victronToken = null;
+        let victronInstallations = [];
+
+        async function loadVictronInstallations() {
+            const token = document.getElementById('victronToken')?.value?.trim();
+            if (!token) { showToast('Fehler', 'Bitte VRM Token eingeben', 'warning'); return; }
+            victronToken = token;
+
+            const btn = document.getElementById('victronConnectBtn');
+            btn.disabled = true;
+            btn.textContent = 'Verbinde...';
+
+            try {
+                const result = await fetchAPI('/sensors/victron/connect', {
+                    method: 'POST',
+                    body: JSON.stringify({ accessToken: token })
+                });
+
+                if (result?.installations?.length > 0) {
+                    victronInstallations = result.installations;
+                    const select = document.getElementById('victronInstallationId');
+                    select.innerHTML = result.installations.map(i =>
+                        `<option value="${i.id}">${i.name}</option>`
+                    ).join('');
+                    document.getElementById('victronInstallationSelect').style.display = 'block';
+                    document.getElementById('victronConnectForm').querySelector('.form-group').style.display = 'none';
+                    btn.style.display = 'none';
+                } else {
+                    showToast('Keine Installationen', 'Keine VRM-Installationen gefunden', 'warning');
+                }
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+                btn.disabled = false;
+                btn.textContent = 'Installationen laden';
+            }
+        }
+
+        async function linkVictronInstallation() {
+            if (!currentVehicle) { showToast('Fehler', 'Kein Fahrzeug ausgewählt', 'warning'); return; }
+            const installationId = document.getElementById('victronInstallationId')?.value;
+            const installation = victronInstallations.find(i => String(i.id) === String(installationId));
+
+            try {
+                const result = await fetchAPI('/sensors/victron/link', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        vehicleId: currentVehicle.id,
+                        accessToken: victronToken,
+                        installationId,
+                        installationName: installation?.name
+                    })
+                });
+
+                showToast('Verbunden!', result.message || 'Victron VRM verbunden', 'success');
+                await loadVictronStatus();
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+            }
+        }
+
+        async function loadVictronStatus() {
+            if (!currentVehicle) return;
+            const statusEl = document.getElementById('victronStatus');
+            const formEl = document.getElementById('victronConnectForm');
+            const selectEl = document.getElementById('victronInstallationSelect');
+            if (!statusEl) return;
+
+            try {
+                const status = await fetchAPI(`/sensors/victron/status?vehicleId=${currentVehicle.id}`);
+                if (status?.connected) {
+                    window._victronConnected = true;
+                    window._victronLastSync = status.lastSyncAt;
+                    statusEl.innerHTML = `
+                        <div style="background:rgba(76,175,80,0.2);border-radius:10px;padding:12px;border:1px solid rgba(76,175,80,0.3);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-weight:600;">⚡ ${status.installationName || 'Victron verbunden'}</div>
+                                    <div style="font-size:11px;opacity:0.7;">Letzter Sync: ${status.lastSyncAt ? new Date(status.lastSyncAt).toLocaleString('de-DE') : 'noch nie'}</div>
+                                    ${status.lastSyncStatus === 'error' ? `<div style="font-size:11px;color:#ff7b7b;">Fehler: ${status.lastSyncError}</div>` : ''}
+                                </div>
+                                <div style="display:flex;gap:8px;">
+                                    <button onclick="manualVictronSync()" style="background:rgba(255,255,255,0.1);border:none;color:white;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;">🔄</button>
+                                    <button onclick="disconnectVictron()" style="background:rgba(220,53,69,0.3);border:none;color:white;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;">Trennen</button>
+                                </div>
+                            </div>
+                        </div>`;
+                    if (formEl) formEl.style.display = 'none';
+                    if (selectEl) selectEl.style.display = 'none';
+                } else {
+                    window._victronConnected = false;
+                    statusEl.innerHTML = '';
+                    if (formEl) formEl.style.display = 'block';
+                }
+            } catch (e) {
+                statusEl.innerHTML = '';
+            }
+        }
+
+        async function manualVictronSync() {
+            if (!currentVehicle) return;
+            try {
+                const result = await fetchAPI('/sensors/victron/sync', {
+                    method: 'POST',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id })
+                });
+                if (result?.success) {
+                    showToast('Sync erfolgreich', `Batterie: ${result.soc?.toFixed(0)}% SOC`, 'success');
+                    await loadData();
+                    await loadVictronStatus();
+                } else {
+                    showToast('Sync fehlgeschlagen', result?.error || 'Unbekannt', 'warning');
+                }
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+            }
+        }
+
+        async function disconnectVictron() {
+            if (!currentVehicle || !confirm('Victron VRM wirklich trennen?')) return;
+            try {
+                await fetchAPI('/sensors/victron/disconnect', {
+                    method: 'DELETE',
+                    body: JSON.stringify({ vehicleId: currentVehicle.id })
+                });
+                showToast('Getrennt', 'Victron VRM Verbindung getrennt', 'info');
+                await loadVictronStatus();
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+            }
+        }
+
+        function resetVictronForm() {
+            victronToken = null;
+            victronInstallations = [];
+            const formEl = document.getElementById('victronConnectForm');
+            const selectEl = document.getElementById('victronInstallationSelect');
+            const btn = document.getElementById('victronConnectBtn');
+            if (formEl) { formEl.querySelector('.form-group').style.display = 'block'; formEl.style.display = 'block'; }
+            if (selectEl) selectEl.style.display = 'none';
+            if (btn) { btn.disabled = false; btn.textContent = 'Installationen laden'; btn.style.display = 'block'; }
+            const tokenInput = document.getElementById('victronToken');
+            if (tokenInput) tokenInput.value = '';
         }
 
         function showLogin() {
@@ -2701,6 +2910,15 @@
                 `;
             }
             
+            // Victron Sync-Badge wenn Sensor verbunden
+            let victronSyncBadge = '';
+            if (isPremium && window._victronConnected) {
+                const syncTime = window._victronLastSync
+                    ? (() => { const d = new Date(window._victronLastSync); const diff = Math.round((Date.now() - d) / 60000); return diff < 60 ? `vor ${diff} Min` : d.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'}); })()
+                    : null;
+                victronSyncBadge = `<div style="margin-top:6px;font-size:10px;opacity:0.6;display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;background:#4CAF50;border-radius:50%;display:inline-block;"></span>⚡ Auto-Sync${syncTime ? ' · ' + syncTime : ''}</div>`;
+            }
+
             // Nur span-2 wenn Verbraucher oder Solar vorhanden
             const hasExtras = consumersHtml || solarHtml;
             const spanClass = hasExtras ? 'span-2' : '';
@@ -2719,6 +2937,7 @@
                     <div class="resource-value">${Math.round(level)} / ${capacity} ${config.unit}</div>
                     ${consumersHtml}
                     ${solarHtml}
+                    ${victronSyncBadge}
                 </div>
             `;
         }

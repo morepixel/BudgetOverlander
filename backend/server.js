@@ -8,6 +8,36 @@ import fs from 'fs';
 import cron from 'node-cron';
 import pool from './database/db-postgres.js';
 
+// Auto-Migration für sensor_connections Tabelle
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sensor_connections (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE CASCADE,
+        sensor_type VARCHAR(50) NOT NULL,
+        credentials JSONB NOT NULL DEFAULT '{}',
+        last_sync_at TIMESTAMPTZ,
+        last_sync_status VARCHAR(20) DEFAULT 'pending',
+        last_sync_error TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(vehicle_id, sensor_type)
+      );
+      CREATE INDEX IF NOT EXISTS idx_sensor_connections_active ON sensor_connections(is_active, sensor_type);
+    `);
+    // stripe_customer_id auf users
+    await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(100);
+    `);
+    console.log('✅ sensor_connections table ready');
+  } catch (err) {
+    console.error('sensor_connections migration:', err.message);
+  }
+})();
+
 // Auto-Migration für activity_log Tabelle
 (async () => {
   try {
@@ -44,6 +74,7 @@ import consumersRouter from './routes/consumers.js';
 import customResourcesRouter from './routes/custom-resources.js';
 import premiumRouter from './routes/premium.js';
 import testersRouter from './routes/testers.js';
+import sensorsRouter, { syncVictronVRM } from './routes/sensors.js';
 
 dotenv.config();
 
@@ -89,6 +120,7 @@ app.use('/api/consumers', consumersRouter);
 app.use('/api/custom-resources', customResourcesRouter);
 app.use('/api/premium', premiumRouter);
 app.use('/api/testers', testersRouter);
+app.use('/api/sensors', sensorsRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -341,9 +373,41 @@ cron.schedule('0 * * * *', async () => {
   timezone: 'Europe/Berlin'
 });
 
+// Cron-Job: Victron VRM Sensor-Sync (alle 15 Minuten)
+cron.schedule('*/15 * * * *', async () => {
+  try {
+    const connections = await pool.query(`
+      SELECT sc.id, sc.vehicle_id, sc.credentials
+      FROM sensor_connections sc
+      JOIN users u ON sc.user_id = u.id
+      WHERE sc.sensor_type = 'victron_vrm'
+        AND sc.is_active = true
+        AND u.is_premium = true
+        AND (u.premium_until IS NULL OR u.premium_until > NOW())
+    `);
+
+    if (connections.rows.length === 0) return;
+
+    let synced = 0;
+    for (const conn of connections.rows) {
+      const result = await syncVictronVRM(conn.credentials, conn.vehicle_id);
+      const status = result.success ? 'ok' : 'error';
+      await pool.query(
+        `UPDATE sensor_connections SET last_sync_at = NOW(), last_sync_status = $1, last_sync_error = $2, updated_at = NOW() WHERE id = $3`,
+        [status, result.error || null, conn.id]
+      );
+      if (result.success) synced++;
+    }
+
+    if (synced > 0) console.log(`⚡ Victron VRM Sync: ${synced}/${connections.rows.length} Installationen aktualisiert`);
+  } catch (error) {
+    console.error('❌ Victron Cron-Job Fehler:', error);
+  }
+}, { timezone: 'Europe/Berlin' });
+
 app.listen(PORT, () => {
   console.log(`\n🚀 DaysLeft Backend läuft auf Port ${PORT}`);
   console.log(`📍 API: http://localhost:${PORT}/api`);
   console.log(`💚 Health: http://localhost:${PORT}/api/health`);
-  console.log(`⏰ Cron: Stündlicher Verbrauch (1/24 des Tageswertes)\n`);
+  console.log(`⏰ Cron: Stündlicher Verbrauch + Victron VRM Sync alle 15 min\n`);
 });

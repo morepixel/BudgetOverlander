@@ -259,5 +259,56 @@ const api = {
             method: 'POST',
             body: JSON.stringify({ rating, comment, visitedDate })
         });
+    },
+
+    // Premium
+    async getPremiumStatus() {
+        return this.fetchWithAuth('/premium/status');
+    },
+
+    async getPremiumPrices() {
+        const response = await fetch(`${API_BASE_URL}/premium/prices`);
+        if (!response.ok) throw new Error('Fehler beim Laden der Preise');
+        return response.json();
+    },
+
+    async createCheckout(premiumType) {
+        return this.fetchWithAuth('/premium/checkout', {
+            method: 'POST',
+            body: JSON.stringify({ premiumType })
+        });
+    },
+
+    // Sensors
+    async connectVictron(accessToken) {
+        return this.fetchWithAuth('/sensors/victron/connect', {
+            method: 'POST',
+            body: JSON.stringify({ accessToken })
+        });
+    },
+
+    async linkVictron(vehicleId, accessToken, installationId, installationName) {
+        return this.fetchWithAuth('/sensors/victron/link', {
+            method: 'POST',
+            body: JSON.stringify({ vehicleId, accessToken, installationId, installationName })
+        });
+    },
+
+    async getVictronStatus(vehicleId) {
+        return this.fetchWithAuth(`/sensors/victron/status?vehicleId=${vehicleId}`);
+    },
+
+    async syncVictron(vehicleId) {
+        return this.fetchWithAuth('/sensors/victron/sync', {
+            method: 'POST',
+            body: JSON.stringify({ vehicleId })
+        });
+    },
+
+    async disconnectVictron(vehicleId) {
+        return this.fetchWithAuth('/sensors/victron/disconnect', {
+            method: 'DELETE',
+            body: JSON.stringify({ vehicleId })
+        });
     }
 };

@@ -348,3 +348,41 @@ CREATE TABLE IF NOT EXISTS activity_log (
 CREATE INDEX IF NOT EXISTS idx_activity_log_vehicle ON activity_log(vehicle_id);
 CREATE INDEX IF NOT EXISTS idx_activity_log_user ON activity_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_activity_log_date ON activity_log(created_at DESC);
+
+-- =============================================
+-- 7. STRIPE CUSTOMER ID (users Tabelle erweitern)
+-- =============================================
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(100);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_type VARCHAR(20) DEFAULT 'none';
+
+CREATE INDEX IF NOT EXISTS idx_users_stripe ON users(stripe_customer_id);
+
+-- =============================================
+-- 8. SENSOR CONNECTIONS TABELLE
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS sensor_connections (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE CASCADE,
+    sensor_type VARCHAR(50) NOT NULL,           -- 'victron_vrm', 'truma_inet', 'ecoflow'
+    credentials JSONB NOT NULL DEFAULT '{}',    -- { access_token, installation_id, ... }
+    last_sync_at TIMESTAMPTZ,
+    last_sync_status VARCHAR(20) DEFAULT 'pending',  -- 'ok', 'error', 'pending'
+    last_sync_error TEXT,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(vehicle_id, sensor_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_sensor_connections_user ON sensor_connections(user_id);
+CREATE INDEX IF NOT EXISTS idx_sensor_connections_vehicle ON sensor_connections(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_sensor_connections_active ON sensor_connections(is_active, sensor_type);
+
+DROP TRIGGER IF EXISTS update_sensor_connections_updated_at ON sensor_connections;
+CREATE TRIGGER update_sensor_connections_updated_at
+    BEFORE UPDATE ON sensor_connections
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
