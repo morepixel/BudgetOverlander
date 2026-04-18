@@ -2717,13 +2717,14 @@
             if (!currentLevels) return;
             
             // Prüfe ob Victron-Daten vorhanden sind
-            const hasVictronData = currentLevels.victron_last_sync || currentLevels.dc_power || currentLevels.battery_voltage;
+            const hasVictronData = currentLevels.victron_last_sync || currentLevels.dc_power || currentLevels.solar_yield_today;
             if (!hasVictronData) return;
             
             const dcPower = parseFloat(currentLevels.dc_power) || 0;
-            const voltage = parseFloat(currentLevels.battery_voltage) || 0;
             const solarYield = parseFloat(currentLevels.solar_yield_today) || 0;
-            const soc = parseFloat(currentLevels.power_percentage) || 0;
+            
+            // Solar-Ertrag formatieren
+            const solarText = solarYield > 1000 ? `${(solarYield/1000).toFixed(1)} kWh` : `${Math.round(solarYield)} Wh`;
             
             // Letzter Sync formatieren
             let syncText = '--';
@@ -2734,42 +2735,18 @@
                 syncText = diffMin < 1 ? 'Gerade' : diffMin < 60 ? `vor ${diffMin}m` : `vor ${Math.round(diffMin/60)}h`;
             }
             
-            // Solar-Ertrag formatieren
-            const solarText = solarYield > 1000 ? `${(solarYield/1000).toFixed(1)} kWh` : `${Math.round(solarYield)} Wh`;
-            
-            // DC-Power Farbe
-            const dcColor = dcPower > 0 ? '#2ecc71' : dcPower < 0 ? '#e74c3c' : '#f39c12';
-            const dcSign = dcPower > 0 ? '+' : '';
-            
             grid.innerHTML += `
-                <div class="resource-card" style="grid-column: span 2; background: linear-gradient(135deg, rgba(46, 204, 113, 0.2) 0%, rgba(39, 174, 96, 0.3) 100%); border: 1px solid rgba(46, 204, 113, 0.3);">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="font-size:24px;">☀️</span>
-                            <div>
-                                <div style="font-weight:700;font-size:14px;">Victron Live</div>
-                                <div style="font-size:10px;opacity:0.6;">${syncText}</div>
-                            </div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="font-size:24px;font-weight:700;color:${dcColor};">${dcSign}${Math.round(dcPower)} W</div>
-                            <div style="font-size:10px;opacity:0.6;">DC-Leistung</div>
-                        </div>
+                <div class="resource-card" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.2) 0%, rgba(243, 156, 18, 0.3) 100%); border: 1px solid rgba(241, 196, 15, 0.3);">
+                    <div class="resource-header">
+                        <span class="resource-icon">☀️</span>
+                        <span class="resource-percentage" style="font-size:18px;">${Math.round(dcPower)}W</span>
                     </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-                        <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
-                            <div style="font-size:18px;font-weight:700;color:#3498db;">${voltage.toFixed(1)}V</div>
-                            <div style="font-size:10px;opacity:0.6;">Spannung</div>
-                        </div>
-                        <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
-                            <div style="font-size:18px;font-weight:700;color:#2ecc71;">${solarText}</div>
-                            <div style="font-size:10px;opacity:0.6;">Solar heute</div>
-                        </div>
-                        <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
-                            <div style="font-size:18px;font-weight:700;color:#4CAF50;">${Math.round(soc)}%</div>
-                            <div style="font-size:10px;opacity:0.6;">Batterie</div>
-                        </div>
+                    <div class="resource-name">Solar</div>
+                    <div class="resource-bar-bg">
+                        <div class="resource-bar" style="width: ${Math.min(dcPower / 10, 100)}%; background: linear-gradient(90deg, #f1c40f, #f39c12);"></div>
                     </div>
+                    <div class="resource-remaining">Heute: ${solarText}</div>
+                    <div class="resource-value" style="opacity:0.6;">${syncText}</div>
                 </div>
             `;
         }
