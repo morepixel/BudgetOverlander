@@ -227,8 +227,16 @@ router.get('/current', authenticateToken, async (req, res) => {
       }
     }
 
+    // Feldnamen mappen für Frontend-Kompatibilität
+    const mappedLevels = {
+      ...levels,
+      ...calculated,
+      greywater_level: levels.grey_water_level,
+      greywater_percentage: levels.grey_water_percentage,
+    };
+
     res.json({ 
-      levels: { ...levels, ...calculated },
+      levels: mappedLevels,
       vehicle 
     });
   } catch (error) {

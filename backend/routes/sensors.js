@@ -253,12 +253,14 @@ export async function syncVictronVRM(credentials, vehicleId) {
     const batteryCapacity = parseFloat(vehicle.battery_capacity) || 100;
     const powerLevel = (soc / 100) * batteryCapacity;
 
-    // current_levels aktualisieren (Batterie)
+    // current_levels aktualisieren (Batterie + Victron-Daten)
     await pool.query(
       `UPDATE current_levels
-       SET power_level = $1, power_percentage = $2, updated_at = NOW()
-       WHERE vehicle_id = $3`,
-      [powerLevel.toFixed(2), soc.toFixed(2), vehicleId]
+       SET power_level = $1, power_percentage = $2, 
+           battery_voltage = $3, dc_power = $4, solar_yield_today = $5,
+           victron_last_sync = NOW(), updated_at = NOW()
+       WHERE vehicle_id = $6`,
+      [powerLevel.toFixed(2), soc.toFixed(2), voltage, dcPower, solarYield, vehicleId]
     );
 
     // Wasser-Tanks aktualisieren wenn vorhanden
