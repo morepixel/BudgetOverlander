@@ -187,10 +187,10 @@ export async function syncVictronVRM(credentials, vehicleId) {
   try {
     // Stats-Endpoint für Echtzeit-Daten (letzte 15 Minuten)
     const now = Math.floor(Date.now() / 1000);
-    const start = now - 900; // 15 Minuten zurück
+    const start15min = now - 900; // 15 Minuten zurück
     
     const statsRes = await fetch(
-      `${VRM_BASE}/installations/${installationId}/stats?interval=15mins&start=${start}&end=${now}`,
+      `${VRM_BASE}/installations/${installationId}/stats?interval=15mins&start=${start15min}&end=${now}`,
       { headers: { 'x-authorization': `Token ${accessToken}` } }
     );
 
@@ -206,7 +206,29 @@ export async function syncVictronVRM(credentials, vehicleId) {
     const soc = totals.bs !== undefined ? parseFloat(totals.bs) : null;
     const voltage = totals.bv !== undefined ? parseFloat(totals.bv) : null;
     const dcPower = totals.Pdc !== undefined ? parseFloat(totals.Pdc) : null;
-    const solarYield = totals.total_solar_yield !== undefined ? parseFloat(totals.total_solar_yield) : null;
+    
+    // Tages-Ertrag: Stats für den ganzen Tag holen (seit Mitternacht)
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+    const startOfDay = Math.floor(todayMidnight.getTime() / 1000);
+    
+    let solarYield = null;
+    try {
+      const dayStatsRes = await fetch(
+        `${VRM_BASE}/installations/${installationId}/stats?interval=hours&start=${startOfDay}&end=${now}`,
+        { headers: { 'x-authorization': `Token ${accessToken}` } }
+      );
+      if (dayStatsRes.ok) {
+        const dayStats = await dayStatsRes.json();
+        const dayTotals = dayStats.totals || {};
+        // total_solar_yield ist in kWh, wir speichern in Wh
+        solarYield = dayTotals.total_solar_yield !== undefined 
+          ? parseFloat(dayTotals.total_solar_yield) * 1000 
+          : null;
+      }
+    } catch (e) {
+      console.error('Solar yield fetch error:', e);
+    }
 
     // Tank-Daten aus Diagnostics holen (für Frischwasser/Abwasser)
     const diagRes = await fetch(
