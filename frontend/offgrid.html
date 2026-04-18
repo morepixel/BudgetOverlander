@@ -2720,7 +2720,8 @@
             const hasVictronData = currentLevels.victron_last_sync || currentLevels.dc_power || currentLevels.solar_yield_today;
             if (!hasVictronData) return;
             
-            const dcPower = parseFloat(currentLevels.dc_power) || 0;
+            // PV Power bevorzugen, sonst DC Power
+            const pvPower = parseFloat(currentLevels.pv_power) || parseFloat(currentLevels.dc_power) || 0;
             const solarYield = parseFloat(currentLevels.solar_yield_today) || 0;
             
             // Solar-Ertrag formatieren
@@ -2736,19 +2737,151 @@
             }
             
             grid.innerHTML += `
-                <div class="resource-card" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.2) 0%, rgba(243, 156, 18, 0.3) 100%); border: 1px solid rgba(241, 196, 15, 0.3);">
+                <div class="resource-card" onclick="openVictronModal()" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.2) 0%, rgba(243, 156, 18, 0.3) 100%); border: 1px solid rgba(241, 196, 15, 0.3); cursor:pointer;">
                     <div class="resource-header">
                         <span class="resource-icon">☀️</span>
-                        <span class="resource-percentage" style="font-size:18px;">${Math.round(dcPower)}W</span>
+                        <span class="resource-percentage" style="font-size:18px;">${Math.round(pvPower)}W</span>
                     </div>
                     <div class="resource-name">Solar</div>
                     <div class="resource-bar-bg">
-                        <div class="resource-bar" style="width: ${Math.min(dcPower / 10, 100)}%; background: linear-gradient(90deg, #f1c40f, #f39c12);"></div>
+                        <div class="resource-bar" style="width: ${Math.min(pvPower / 10, 100)}%; background: linear-gradient(90deg, #f1c40f, #f39c12);"></div>
                     </div>
                     <div class="resource-remaining">Heute: ${solarText}</div>
                     <div class="resource-value" style="opacity:0.6;">${syncText}</div>
                 </div>
             `;
+        }
+        
+        function openVictronModal() {
+            if (!currentLevels) return;
+            
+            // Werte formatieren
+            const formatWh = (wh) => wh > 1000 ? `${(wh/1000).toFixed(2)} kWh` : `${Math.round(wh)} Wh`;
+            const formatTime = (h) => h ? (h >= 1 ? `${h.toFixed(1)} Std` : `${Math.round(h * 60)} Min`) : '--';
+            
+            const pvPower = parseFloat(currentLevels.pv_power) || parseFloat(currentLevels.dc_power) || 0;
+            const pvVoltage = parseFloat(currentLevels.pv_voltage) || 0;
+            const solarToday = parseFloat(currentLevels.solar_yield_today) || 0;
+            const solarYesterday = parseFloat(currentLevels.solar_yield_yesterday) || 0;
+            const solarMax = parseInt(currentLevels.solar_max_power_today) || 0;
+            const solarTotal = parseFloat(currentLevels.solar_total_yield) || 0;
+            
+            const batteryVoltage = parseFloat(currentLevels.battery_voltage) || 0;
+            const batteryCurrent = parseFloat(currentLevels.battery_current) || 0;
+            const batteryTimeToGo = parseFloat(currentLevels.battery_time_to_go) || 0;
+            const batteryConsumedAh = parseFloat(currentLevels.battery_consumed_ah) || 0;
+            const batteryCycles = parseInt(currentLevels.battery_charge_cycles) || 0;
+            const chargeState = currentLevels.charge_state || '--';
+            
+            const acConsumption = parseFloat(currentLevels.ac_consumption) || 0;
+            const dcSystem = parseFloat(currentLevels.dc_system_power) || 0;
+            const systemState = currentLevels.system_state || '--';
+            
+            let syncText = '--';
+            if (currentLevels.victron_last_sync) {
+                const syncDate = new Date(currentLevels.victron_last_sync);
+                syncText = syncDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            const modalContent = `
+                <div style="padding:4px 0;">
+                    <!-- Solar -->
+                    <div style="background:rgba(241,196,15,0.15);border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid rgba(241,196,15,0.3);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                            <span style="font-size:20px;">☀️</span>
+                            <span style="font-weight:700;">Solar</span>
+                            <span style="margin-left:auto;font-size:12px;opacity:0.6;">${chargeState}</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:20px;font-weight:700;color:#f1c40f;">${Math.round(pvPower)} W</div>
+                                <div style="font-size:10px;opacity:0.6;">Aktuell</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:20px;font-weight:700;color:#f39c12;">${pvVoltage.toFixed(1)} V</div>
+                                <div style="font-size:10px;opacity:0.6;">PV-Spannung</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:16px;font-weight:700;color:#2ecc71;">${formatWh(solarToday)}</div>
+                                <div style="font-size:10px;opacity:0.6;">Heute</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:16px;font-weight:700;color:#27ae60;">${formatWh(solarYesterday)}</div>
+                                <div style="font-size:10px;opacity:0.6;">Gestern</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:16px;font-weight:700;color:#e67e22;">${solarMax} W</div>
+                                <div style="font-size:10px;opacity:0.6;">Peak heute</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:16px;font-weight:700;color:#d35400;">${formatWh(solarTotal)}</div>
+                                <div style="font-size:10px;opacity:0.6;">Gesamt</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Batterie -->
+                    <div style="background:rgba(46,204,113,0.15);border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid rgba(46,204,113,0.3);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                            <span style="font-size:20px;">🔋</span>
+                            <span style="font-weight:700;">Batterie</span>
+                            <span style="margin-left:auto;font-size:14px;font-weight:700;color:#4CAF50;">${Math.round(currentLevels.power_percentage || 0)}%</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:16px;font-weight:700;color:#3498db;">${batteryVoltage.toFixed(2)} V</div>
+                                <div style="font-size:10px;opacity:0.6;">Spannung</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:16px;font-weight:700;color:${batteryCurrent >= 0 ? '#2ecc71' : '#e74c3c'};">${batteryCurrent >= 0 ? '+' : ''}${batteryCurrent.toFixed(1)} A</div>
+                                <div style="font-size:10px;opacity:0.6;">Strom</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:16px;font-weight:700;color:#9b59b6;">${formatTime(batteryTimeToGo)}</div>
+                                <div style="font-size:10px;opacity:0.6;">Restzeit</div>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+                            <div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;text-align:center;">
+                                <div style="font-size:14px;font-weight:600;">${Math.abs(batteryConsumedAh).toFixed(0)} Ah</div>
+                                <div style="font-size:10px;opacity:0.6;">Verbraucht</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;text-align:center;">
+                                <div style="font-size:14px;font-weight:600;">${batteryCycles}</div>
+                                <div style="font-size:10px;opacity:0.6;">Ladezyklen</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System -->
+                    <div style="background:rgba(52,152,219,0.15);border-radius:12px;padding:14px;border:1px solid rgba(52,152,219,0.3);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                            <span style="font-size:20px;">⚡</span>
+                            <span style="font-weight:700;">System</span>
+                            <span style="margin-left:auto;font-size:12px;opacity:0.6;">${systemState}</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:18px;font-weight:700;color:#e74c3c;">${Math.round(acConsumption)} W</div>
+                                <div style="font-size:10px;opacity:0.6;">AC-Verbrauch</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:18px;font-weight:700;color:#e67e22;">${Math.round(dcSystem)} W</div>
+                                <div style="font-size:10px;opacity:0.6;">DC-System</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align:center;margin-top:12px;font-size:11px;opacity:0.5;">
+                        Letztes Update: ${syncText} Uhr
+                    </div>
+                </div>
+            `;
+            
+            // Modal anzeigen (resourceModal wiederverwenden)
+            document.getElementById('resourceModalTitle').textContent = '☀️ Victron Live-Daten';
+            document.getElementById('resourceModalContent').innerHTML = modalContent;
+            document.getElementById('resourceModal').classList.add('active');
         }
 
         async function updateAutarkyDashboard() {
