@@ -26,23 +26,36 @@ router.post('/victron/connect', authenticateToken, async (req, res) => {
   if (!accessToken) return res.status(400).json({ error: 'accessToken fehlt' });
 
   try {
-    // VRM API testen: User-Installationen abrufen
-    const vrmRes = await fetch(`${VRM_BASE}/users/me/installations`, {
+    // VRM API: Erst User-ID holen, dann Installationen
+    const userRes = await fetch(`${VRM_BASE}/users/me/installations`, {
       headers: { 'x-authorization': `Token ${accessToken}` },
     });
 
-    if (!vrmRes.ok) {
+    if (!userRes.ok) {
       return res.status(400).json({ error: 'Ungültiger VRM Access Token. Bitte prüfe deinen Token im VRM Portal.' });
     }
 
-    const vrmData = await vrmRes.json();
-    const installations = (vrmData.records || []).map(i => ({
+    const userData = await userRes.json();
+    const userId = userData.user?.id;
+    
+    if (!userId) {
+      return res.status(400).json({ error: 'VRM User-ID konnte nicht ermittelt werden.' });
+    }
+
+    // Installationen über User-ID abrufen (liefert vollständige Daten)
+    const installRes = await fetch(`${VRM_BASE}/users/${userId}/installations`, {
+      headers: { 'x-authorization': `Token ${accessToken}` },
+    });
+
+    const installData = await installRes.json();
+    const installations = (installData.records || []).map(i => ({
       id: i.idSite,
       name: i.name,
-      lastSeen: i.lastTimestamp,
+      identifier: i.identifier,
+      lastSeen: i.syscreated,
     }));
 
-    res.json({ installations });
+    res.json({ installations, vrmUserId: userId });
   } catch (err) {
     console.error('VRM connect error:', err);
     res.status(500).json({ error: 'Fehler beim Verbinden mit Victron VRM' });
@@ -172,36 +185,75 @@ router.post('/victron/sync', authenticateToken, async (req, res) => {
 export async function syncVictronVRM(credentials, vehicleId) {
   const { accessToken, installationId } = credentials;
   try {
+    // Stats-Endpoint für Echtzeit-Daten (letzte 15 Minuten)
+    const now = Math.floor(Date.now() / 1000);
+    const start = now - 900; // 15 Minuten zurück
+    
+    const statsRes = await fetch(
+      `${VRM_BASE}/installations/${installationId}/stats?interval=15mins&start=${start}&end=${now}`,
+      { headers: { 'x-authorization': `Token ${accessToken}` } }
+    );
+
+    if (!statsRes.ok) {
+      const errText = await statsRes.text();
+      return { success: false, error: `VRM API Fehler ${statsRes.status}: ${errText.slice(0, 100)}` };
+    }
+
+    const stats = await statsRes.json();
+    const totals = stats.totals || {};
+
+    // Batterie-Werte aus Stats (bs = battery SOC, bv = battery voltage)
+    const soc = totals.bs !== undefined ? parseFloat(totals.bs) : null;
+    const voltage = totals.bv !== undefined ? parseFloat(totals.bv) : null;
+    const dcPower = totals.Pdc !== undefined ? parseFloat(totals.Pdc) : null;
+    const solarYield = totals.total_solar_yield !== undefined ? parseFloat(totals.total_solar_yield) : null;
+
+    // Tank-Daten aus Diagnostics holen (für Frischwasser/Abwasser)
     const diagRes = await fetch(
       `${VRM_BASE}/installations/${installationId}/diagnostics`,
       { headers: { 'x-authorization': `Token ${accessToken}` } }
     );
-
-    if (!diagRes.ok) {
-      const errText = await diagRes.text();
-      return { success: false, error: `VRM API Fehler ${diagRes.status}: ${errText.slice(0, 100)}` };
+    
+    let freshWater = null;
+    let greyWater = null;
+    
+    if (diagRes.ok) {
+      const diag = await diagRes.json();
+      const records = diag.records || [];
+      
+      // Tank-Sensoren: idDataAttribute 330 = Tank level %
+      // Fluid type 0 = Fuel, 1 = Fresh water, 2 = Waste water, 3 = Live well, 4 = Oil, 5 = Black water
+      const tankRecords = records.filter(r => r.idDataAttribute === 330);
+      
+      for (const tank of tankRecords) {
+        // Fluid type aus dem gleichen Device/Instance finden
+        const fluidTypeRecord = records.find(r => 
+          r.idDataAttribute === 329 && r.instance === tank.instance
+        );
+        const fluidType = fluidTypeRecord?.rawValue;
+        
+        if (fluidType === 1 || fluidType === '1') {
+          freshWater = parseFloat(tank.rawValue);
+        } else if (fluidType === 2 || fluidType === '2' || fluidType === 5 || fluidType === '5') {
+          greyWater = parseFloat(tank.rawValue);
+        }
+      }
     }
-
-    const diag = await diagRes.json();
-    const records = diag.records || [];
-
-    // Relevante Werte extrahieren (idDataAttribute IDs aus der VRM API-Dokumentation)
-    const soc        = findVrmValue(records, [266]);          // Battery SOC %
-    const voltage    = findVrmValue(records, [259]);          // Battery Voltage V
-    const current    = findVrmValue(records, [261]);          // Battery Current A
-    const solarPower = findVrmValue(records, [790, 855]);     // PV Power W
-    const dcPower    = findVrmValue(records, [258]);          // DC System Power W
 
     if (soc === null) {
       return { success: false, error: 'Batterie-SOC nicht gefunden. Prüfe ob ein BMV/SmartShunt verbunden ist.' };
     }
 
     // Kapazität aus vehicles-Tabelle holen
-    const vehicleResult = await pool.query('SELECT battery_capacity FROM vehicles WHERE id = $1', [vehicleId]);
-    const capacity = parseFloat(vehicleResult.rows[0]?.battery_capacity) || 100;
-    const powerLevel = (soc / 100) * capacity;
+    const vehicleResult = await pool.query(
+      'SELECT battery_capacity, water_tank_capacity, grey_water_capacity FROM vehicles WHERE id = $1',
+      [vehicleId]
+    );
+    const vehicle = vehicleResult.rows[0] || {};
+    const batteryCapacity = parseFloat(vehicle.battery_capacity) || 100;
+    const powerLevel = (soc / 100) * batteryCapacity;
 
-    // current_levels aktualisieren
+    // current_levels aktualisieren (Batterie)
     await pool.query(
       `UPDATE current_levels
        SET power_level = $1, power_percentage = $2, updated_at = NOW()
@@ -209,28 +261,42 @@ export async function syncVictronVRM(credentials, vehicleId) {
       [powerLevel.toFixed(2), soc.toFixed(2), vehicleId]
     );
 
+    // Wasser-Tanks aktualisieren wenn vorhanden
+    if (freshWater !== null) {
+      const waterCapacity = parseFloat(vehicle.water_tank_capacity) || 100;
+      const waterLevel = (freshWater / 100) * waterCapacity;
+      await pool.query(
+        `UPDATE current_levels
+         SET water_level = $1, water_percentage = $2, updated_at = NOW()
+         WHERE vehicle_id = $3`,
+        [waterLevel.toFixed(2), freshWater.toFixed(2), vehicleId]
+      );
+    }
+
+    if (greyWater !== null) {
+      const greyCapacity = parseFloat(vehicle.grey_water_capacity) || 80;
+      const greyLevel = (greyWater / 100) * greyCapacity;
+      await pool.query(
+        `UPDATE current_levels
+         SET grey_water_level = $1, grey_water_percentage = $2, updated_at = NOW()
+         WHERE vehicle_id = $3`,
+        [greyLevel.toFixed(2), greyWater.toFixed(2), vehicleId]
+      );
+    }
+
     return {
       success: true,
       soc,
       voltage,
-      current,
-      solarPower,
       dcPower,
+      solarYield,
+      freshWater,
+      greyWater,
       powerLevel: parseFloat(powerLevel.toFixed(2)),
     };
   } catch (err) {
     return { success: false, error: err.message };
   }
-}
-
-function findVrmValue(records, attributeIds) {
-  for (const id of attributeIds) {
-    const record = records.find(r => r.idDataAttribute === id);
-    if (record?.rawValue !== undefined && record.rawValue !== null) {
-      return parseFloat(record.rawValue);
-    }
-  }
-  return null;
 }
 
 export default router;
