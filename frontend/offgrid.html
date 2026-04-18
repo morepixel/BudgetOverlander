@@ -1065,6 +1065,15 @@
                 </div>
             </div>
             
+            <div class="setup-section" id="alertsSection" style="display:none;">
+                <div class="setup-section-title">🔔 Benachrichtigungen</div>
+                <div id="alertsContent">
+                    <div style="font-size:13px;opacity:0.8;margin-bottom:12px;">Erhalte Push-Benachrichtigungen wenn Grenzwerte über- oder unterschritten werden.</div>
+                    <div id="alertsList"></div>
+                    <button class="btn btn-primary" onclick="openAddAlertModal()" style="margin-top:12px;width:100%;">+ Neuen Alert hinzufügen</button>
+                </div>
+            </div>
+            
             <div class="setup-section">
                 <div class="setup-section-title" data-i18n="settings.language">Sprache</div>
                 <div style="display:flex;gap:8px;">
@@ -1542,9 +1551,13 @@
             const premiumBadge = document.getElementById('premiumBadge');
             const premiumSection = document.getElementById('premiumSection');
             const sensorSection = document.getElementById('sensorSection');
+            const alertsSection = document.getElementById('alertsSection');
 
             if (premiumBadge) premiumBadge.style.display = isPremium ? 'inline' : 'none';
             if (sensorSection) sensorSection.style.display = isPremium ? 'block' : 'none';
+            if (alertsSection) alertsSection.style.display = isPremium ? 'block' : 'none';
+            
+            if (isPremium && currentVehicle) loadAlerts();
 
             if (premiumSection) {
                 premiumSection.innerHTML = isPremium
@@ -1914,6 +1927,156 @@
             if (btn) { btn.disabled = false; btn.textContent = 'Installationen laden'; btn.style.display = 'block'; }
             const tokenInput = document.getElementById('victronToken');
             if (tokenInput) tokenInput.value = '';
+        }
+
+        // ─── Alert-System ─────────────────────────────────────────────────────────
+        let userAlerts = [];
+        
+        const ALERT_RESOURCES = {
+            battery: { icon: '🔋', name: 'Batterie', unit: '%', defaultThreshold: 20, defaultCondition: 'below' },
+            water: { icon: '💧', name: 'Wasser', unit: '%', defaultThreshold: 15, defaultCondition: 'below' },
+            greywater: { icon: '🚿', name: 'Abwasser', unit: '%', defaultThreshold: 80, defaultCondition: 'above' },
+            solar: { icon: '☀️', name: 'Solar', unit: 'W', defaultThreshold: 50, defaultCondition: 'below' },
+            voltage: { icon: '⚡', name: 'Spannung', unit: 'V', defaultThreshold: 12.0, defaultCondition: 'below' }
+        };
+        
+        async function loadAlerts() {
+            if (!currentVehicle) return;
+            try {
+                const data = await fetchAPI(`/alerts/${currentVehicle.id}`);
+                userAlerts = data?.alerts || [];
+                renderAlertsList();
+            } catch (e) {
+                console.error('Load alerts error:', e);
+            }
+        }
+        
+        function renderAlertsList() {
+            const container = document.getElementById('alertsList');
+            if (!container) return;
+            
+            if (userAlerts.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:16px;opacity:0.6;">Keine Alerts konfiguriert</div>';
+                return;
+            }
+            
+            container.innerHTML = userAlerts.map(alert => {
+                const config = ALERT_RESOURCES[alert.resource_type] || { icon: '📊', name: alert.resource_type, unit: '' };
+                const conditionText = alert.condition === 'below' ? 'unter' : 'über';
+                return `
+                    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;margin-bottom:8px;">
+                        <span style="font-size:24px;">${config.icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">${config.name} ${conditionText} ${alert.threshold_value}${config.unit}</div>
+                            <div style="font-size:11px;opacity:0.6;">Cooldown: ${alert.cooldown_minutes} Min</div>
+                        </div>
+                        <button onclick="toggleAlert(${alert.id})" style="background:${alert.is_enabled ? 'rgba(76,175,80,0.3)' : 'rgba(255,255,255,0.1)'};border:none;padding:8px 12px;border-radius:8px;color:white;cursor:pointer;">
+                            ${alert.is_enabled ? '✓ An' : '○ Aus'}
+                        </button>
+                        <button onclick="deleteAlert(${alert.id})" style="background:rgba(255,100,100,0.2);border:none;padding:8px;border-radius:8px;color:#ff7b7b;cursor:pointer;">🗑️</button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function toggleAlert(alertId) {
+            try {
+                await fetchAPI(`/alerts/${alertId}/toggle`, { method: 'PATCH' });
+                await loadAlerts();
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+            }
+        }
+        
+        async function deleteAlert(alertId) {
+            if (!confirm('Alert wirklich löschen?')) return;
+            try {
+                await fetchAPI(`/alerts/${alertId}`, { method: 'DELETE' });
+                await loadAlerts();
+                showToast('Gelöscht', 'Alert wurde entfernt', 'info');
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+            }
+        }
+        
+        function openAddAlertModal() {
+            const resourceOptions = Object.entries(ALERT_RESOURCES).map(([key, config]) => 
+                `<option value="${key}">${config.icon} ${config.name}</option>`
+            ).join('');
+            
+            const modalContent = `
+                <div style="padding:4px 0;">
+                    <div class="form-group">
+                        <label class="form-label">Ressource</label>
+                        <select class="form-input" id="alertResourceType" onchange="updateAlertDefaults()">
+                            ${resourceOptions}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bedingung</label>
+                        <select class="form-input" id="alertCondition">
+                            <option value="below">Unter (weniger als)</option>
+                            <option value="above">Über (mehr als)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Grenzwert <span id="alertUnit">%</span></label>
+                        <input type="number" class="form-input" id="alertThreshold" value="20" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Cooldown (Minuten zwischen Alerts)</label>
+                        <input type="number" class="form-input" id="alertCooldown" value="60" min="5" max="1440">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveNewAlert()" style="width:100%;margin-top:8px;">Alert speichern</button>
+                </div>
+            `;
+            
+            document.getElementById('resourceModalTitle').textContent = '🔔 Neuen Alert erstellen';
+            document.getElementById('resourceModalContent').innerHTML = modalContent;
+            document.getElementById('resourceModal').classList.add('active');
+            
+            updateAlertDefaults();
+        }
+        
+        function updateAlertDefaults() {
+            const resourceType = document.getElementById('alertResourceType')?.value;
+            const config = ALERT_RESOURCES[resourceType];
+            if (!config) return;
+            
+            document.getElementById('alertUnit').textContent = config.unit;
+            document.getElementById('alertThreshold').value = config.defaultThreshold;
+            document.getElementById('alertCondition').value = config.defaultCondition;
+        }
+        
+        async function saveNewAlert() {
+            const resourceType = document.getElementById('alertResourceType')?.value;
+            const condition = document.getElementById('alertCondition')?.value;
+            const threshold = parseFloat(document.getElementById('alertThreshold')?.value);
+            const cooldown = parseInt(document.getElementById('alertCooldown')?.value) || 60;
+            
+            if (!resourceType || !condition || isNaN(threshold)) {
+                showToast('Fehler', 'Bitte alle Felder ausfüllen', 'warning');
+                return;
+            }
+            
+            try {
+                await fetchAPI('/alerts', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        vehicleId: currentVehicle.id,
+                        resourceType,
+                        condition,
+                        thresholdValue: threshold,
+                        cooldownMinutes: cooldown
+                    })
+                });
+                
+                closeResourceModal();
+                await loadAlerts();
+                showToast('Gespeichert', 'Alert wurde erstellt', 'success');
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+            }
         }
 
         function showLogin() {

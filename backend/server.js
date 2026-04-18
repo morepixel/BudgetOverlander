@@ -75,6 +75,8 @@ import customResourcesRouter from './routes/custom-resources.js';
 import premiumRouter from './routes/premium.js';
 import testersRouter from './routes/testers.js';
 import sensorsRouter, { syncVictronVRM } from './routes/sensors.js';
+import alertsRouter from './routes/alerts.js';
+import { checkAndTriggerAlerts } from './services/pushService.js';
 
 dotenv.config();
 
@@ -121,6 +123,7 @@ app.use('/api/custom-resources', customResourcesRouter);
 app.use('/api/premium', premiumRouter);
 app.use('/api/testers', testersRouter);
 app.use('/api/sensors', sensorsRouter);
+app.use('/api/alerts', alertsRouter);
 
 // Health Check
 app.get('/api/health', (req, res) => {
@@ -400,6 +403,9 @@ cron.schedule('*/15 * * * *', async () => {
     }
 
     if (synced > 0) console.log(`⚡ Victron VRM Sync: ${synced}/${connections.rows.length} Installationen aktualisiert`);
+    
+    // Nach Sync: Alerts prüfen
+    await checkAndTriggerAlerts();
   } catch (error) {
     console.error('❌ Victron Cron-Job Fehler:', error);
   }
