@@ -1871,7 +1871,12 @@
                 });
                 if (result?.success) {
                     showToast('Sync erfolgreich', `Batterie: ${result.soc?.toFixed(0)}% SOC`, 'success');
-                    await loadData();
+                    // Daten neu laden
+                    const data = await fetchAPI('/resources/current');
+                    if (data?.levels) {
+                        currentLevels = data.levels;
+                        await updateUI();
+                    }
                     await loadVictronStatus();
                 } else {
                     showToast('Sync fehlgeschlagen', result?.error || 'Unbekannt', 'warning');
