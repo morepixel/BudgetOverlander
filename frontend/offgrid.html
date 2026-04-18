@@ -2708,49 +2708,70 @@
         function toSnakeCase(str) { return str.replace(/([A-Z])/g, '_$1').toLowerCase(); }
 
         function updateVictronDashboard() {
+            // Alte Dashboard-Box ausblenden (wird durch Kachel ersetzt)
             const dashboard = document.getElementById('victronDashboard');
-            if (!dashboard || !currentLevels) return;
+            if (dashboard) dashboard.style.display = 'none';
+        }
+
+        function renderVictronCard(grid) {
+            if (!currentLevels) return;
             
             // Prüfe ob Victron-Daten vorhanden sind
             const hasVictronData = currentLevels.victron_last_sync || currentLevels.dc_power || currentLevels.battery_voltage;
+            if (!hasVictronData) return;
             
-            if (!hasVictronData) {
-                dashboard.style.display = 'none';
-                return;
-            }
-            
-            dashboard.style.display = 'block';
-            
-            // DC-Leistung
             const dcPower = parseFloat(currentLevels.dc_power) || 0;
-            document.getElementById('victronDcPower').textContent = `${Math.round(dcPower)} W`;
-            document.getElementById('victronDcPower').style.color = dcPower > 0 ? '#2ecc71' : dcPower < 0 ? '#e74c3c' : '#f39c12';
-            
-            // Spannung
             const voltage = parseFloat(currentLevels.battery_voltage) || 0;
-            document.getElementById('victronVoltage').textContent = `${voltage.toFixed(2)} V`;
-            
-            // Solar-Ertrag
             const solarYield = parseFloat(currentLevels.solar_yield_today) || 0;
-            document.getElementById('victronSolarYield').textContent = solarYield > 1000 
-                ? `${(solarYield/1000).toFixed(1)} kWh` 
-                : `${Math.round(solarYield)} Wh`;
-            
-            // Batterie SOC
             const soc = parseFloat(currentLevels.power_percentage) || 0;
-            document.getElementById('victronSoc').textContent = `${Math.round(soc)} %`;
             
-            // Letzter Sync
+            // Letzter Sync formatieren
+            let syncText = '--';
             if (currentLevels.victron_last_sync) {
                 const syncDate = new Date(currentLevels.victron_last_sync);
                 const now = new Date();
                 const diffMin = Math.round((now - syncDate) / 60000);
-                document.getElementById('victronLastSync').textContent = diffMin < 1 
-                    ? 'Gerade aktualisiert' 
-                    : diffMin < 60 
-                        ? `vor ${diffMin} Min.` 
-                        : `vor ${Math.round(diffMin/60)} Std.`;
+                syncText = diffMin < 1 ? 'Gerade' : diffMin < 60 ? `vor ${diffMin}m` : `vor ${Math.round(diffMin/60)}h`;
             }
+            
+            // Solar-Ertrag formatieren
+            const solarText = solarYield > 1000 ? `${(solarYield/1000).toFixed(1)} kWh` : `${Math.round(solarYield)} Wh`;
+            
+            // DC-Power Farbe
+            const dcColor = dcPower > 0 ? '#2ecc71' : dcPower < 0 ? '#e74c3c' : '#f39c12';
+            const dcSign = dcPower > 0 ? '+' : '';
+            
+            grid.innerHTML += `
+                <div class="resource-card" style="grid-column: span 2; background: linear-gradient(135deg, rgba(46, 204, 113, 0.2) 0%, rgba(39, 174, 96, 0.3) 100%); border: 1px solid rgba(46, 204, 113, 0.3);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:24px;">☀️</span>
+                            <div>
+                                <div style="font-weight:700;font-size:14px;">Victron Live</div>
+                                <div style="font-size:10px;opacity:0.6;">${syncText}</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:24px;font-weight:700;color:${dcColor};">${dcSign}${Math.round(dcPower)} W</div>
+                            <div style="font-size:10px;opacity:0.6;">DC-Leistung</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                        <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                            <div style="font-size:18px;font-weight:700;color:#3498db;">${voltage.toFixed(1)}V</div>
+                            <div style="font-size:10px;opacity:0.6;">Spannung</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                            <div style="font-size:18px;font-weight:700;color:#2ecc71;">${solarText}</div>
+                            <div style="font-size:10px;opacity:0.6;">Solar heute</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,0.2);padding:10px;border-radius:8px;text-align:center;">
+                            <div style="font-size:18px;font-weight:700;color:#4CAF50;">${Math.round(soc)}%</div>
+                            <div style="font-size:10px;opacity:0.6;">Batterie</div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         async function updateAutarkyDashboard() {
@@ -3031,6 +3052,9 @@
                     }
                 }
             } catch (e) { /* Custom resources not loaded */ }
+            
+            // Victron Live-Kachel wenn Daten vorhanden
+            renderVictronCard(grid);
             
             // Button zum Hinzufügen neuer Custom Resources
             grid.innerHTML += `
