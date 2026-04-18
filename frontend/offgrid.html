@@ -717,6 +717,10 @@
             <button class="btn btn-primary" onclick="doLogin()" style="margin-bottom: 10px;" data-i18n="auth.login">Einloggen</button>
             <button class="btn btn-secondary" onclick="openRegisterModal()" data-i18n="auth.register">Neuen Account erstellen</button>
             
+            <div style="margin-top: 12px;">
+                <a href="#" onclick="openForgotPasswordModal(); return false;" style="color: rgba(255,255,255,0.7); font-size: 13px;" data-i18n="auth.forgotPassword">Passwort vergessen?</a>
+            </div>
+            
             <!-- Rechtliche Links -->
             <div style="margin-top: 20px; font-size: 12px; opacity: 0.7;">
                 <a href="#" onclick="openLegalModal('impressum'); return false;" style="color: rgba(255,255,255,0.8); margin: 0 8px;">Impressum</a> |
@@ -1155,6 +1159,37 @@
                     </label>
                 </div>
                 <button class="btn btn-primary" onclick="doRegister()" style="width: 100%;">Account erstellen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Passwort vergessen Modal -->
+    <div class="modal-overlay" id="forgotPasswordModal">
+        <div class="modal" style="max-width: 380px;">
+            <div class="modal-header">
+                <span class="modal-title">🔐 Passwort vergessen</span>
+                <button class="modal-close" onclick="closeForgotPasswordModal()">✕</button>
+            </div>
+            <div id="forgotPasswordStep1">
+                <p style="font-size: 14px; opacity: 0.8; margin-bottom: 16px;">Gib deine E-Mail-Adresse ein. Du erhältst einen Code zum Zurücksetzen deines Passworts.</p>
+                <div class="form-group">
+                    <input type="email" class="form-input" id="forgotEmail" placeholder="E-Mail" style="text-align: center;">
+                </div>
+                <button class="btn btn-primary" onclick="requestResetCode()" style="width: 100%;">Code anfordern</button>
+            </div>
+            <div id="forgotPasswordStep2" style="display: none;">
+                <p style="font-size: 14px; opacity: 0.8; margin-bottom: 16px;">Gib den 6-stelligen Code und dein neues Passwort ein.</p>
+                <div class="form-group">
+                    <input type="text" class="form-input" id="resetCode" placeholder="6-stelliger Code" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 8px;">
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-input" id="newPassword" placeholder="Neues Passwort" style="text-align: center;">
+                </div>
+                <div class="form-group">
+                    <input type="password" class="form-input" id="newPasswordConfirm" placeholder="Passwort bestätigen" style="text-align: center;">
+                </div>
+                <button class="btn btn-primary" onclick="resetPassword()" style="width: 100%;">Passwort ändern</button>
+                <button class="btn btn-secondary" onclick="backToStep1()" style="width: 100%; margin-top: 10px;">Zurück</button>
             </div>
         </div>
     </div>
@@ -1894,6 +1929,108 @@
 
         function closeRegisterModal() {
             document.getElementById('registerModal').classList.remove('active');
+        }
+
+        // Passwort vergessen Funktionen
+        let forgotPasswordEmail = '';
+
+        function openForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.add('active');
+            document.getElementById('forgotEmail').value = document.getElementById('loginEmail').value || '';
+            document.getElementById('forgotPasswordStep1').style.display = 'block';
+            document.getElementById('forgotPasswordStep2').style.display = 'none';
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').classList.remove('active');
+        }
+
+        function backToStep1() {
+            document.getElementById('forgotPasswordStep1').style.display = 'block';
+            document.getElementById('forgotPasswordStep2').style.display = 'none';
+        }
+
+        async function requestResetCode() {
+            const email = document.getElementById('forgotEmail').value.trim();
+            if (!email) {
+                alert('Bitte E-Mail-Adresse eingeben');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    forgotPasswordEmail = email;
+                    document.getElementById('forgotPasswordStep1').style.display = 'none';
+                    document.getElementById('forgotPasswordStep2').style.display = 'block';
+                    
+                    // Dev-Modus: Code anzeigen
+                    if (data.devCode) {
+                        document.getElementById('resetCode').value = data.devCode;
+                    }
+                    
+                    alert(data.message || 'Code wurde gesendet!');
+                } else {
+                    alert(data.error || 'Fehler beim Anfordern des Codes');
+                }
+            } catch (error) {
+                console.error('Forgot password error:', error);
+                alert('Verbindungsfehler');
+            }
+        }
+
+        async function resetPassword() {
+            const code = document.getElementById('resetCode').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            const newPasswordConfirm = document.getElementById('newPasswordConfirm').value;
+
+            if (!code || code.length !== 6) {
+                alert('Bitte 6-stelligen Code eingeben');
+                return;
+            }
+
+            if (!newPassword || newPassword.length < 6) {
+                alert('Passwort muss mindestens 6 Zeichen haben');
+                return;
+            }
+
+            if (newPassword !== newPasswordConfirm) {
+                alert('Passwörter stimmen nicht überein');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: forgotPasswordEmail, 
+                        code, 
+                        newPassword 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    alert('Passwort erfolgreich geändert! Du kannst dich jetzt einloggen.');
+                    closeForgotPasswordModal();
+                    document.getElementById('loginEmail').value = forgotPasswordEmail;
+                    document.getElementById('loginPassword').value = '';
+                } else {
+                    alert(data.error || 'Fehler beim Zurücksetzen');
+                }
+            } catch (error) {
+                console.error('Reset password error:', error);
+                alert('Verbindungsfehler');
+            }
         }
 
         async function doRegister() {
