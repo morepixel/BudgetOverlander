@@ -1279,6 +1279,48 @@
         
         console.log('API Config:', { isNativeApp, isLocalDev, API_BASE });
 
+        // OneSignal Push-Notifications initialisieren
+        const ONESIGNAL_APP_ID = '918ffba9-40e4-4d9e-bb34-fe5b706f2c01';
+        
+        async function initOneSignal() {
+            if (!isNativeApp || !window.plugins?.OneSignal) {
+                console.log('OneSignal: Nicht verfügbar (kein Native App oder Plugin fehlt)');
+                return;
+            }
+            
+            try {
+                window.plugins.OneSignal.initialize(ONESIGNAL_APP_ID);
+                window.plugins.OneSignal.Notifications.requestPermission(true);
+                
+                // Player ID für Push-Subscription speichern
+                window.plugins.OneSignal.User.pushSubscription.addEventListener('change', async (subscription) => {
+                    const playerId = subscription.current?.id;
+                    if (playerId && authToken) {
+                        try {
+                            await fetchAPI('/alerts/push/subscribe', {
+                                method: 'POST',
+                                body: JSON.stringify({ playerId, deviceType: 'ios' })
+                            });
+                            console.log('✅ OneSignal Player ID registriert:', playerId);
+                        } catch (e) {
+                            console.error('OneSignal Subscription Fehler:', e);
+                        }
+                    }
+                });
+                
+                console.log('✅ OneSignal initialisiert');
+            } catch (e) {
+                console.error('OneSignal Init Fehler:', e);
+            }
+        }
+        
+        // OneSignal nach Login initialisieren
+        document.addEventListener('DOMContentLoaded', () => {
+            if (isNativeApp) {
+                document.addEventListener('deviceready', initOneSignal, false);
+            }
+        });
+
         // i18n - Mehrsprachigkeit
         let currentLang = localStorage.getItem('language') || 'de';
         let translations = {};
