@@ -230,7 +230,7 @@ export async function syncVictronVRM(credentials, vehicleId) {
       console.error('Solar yield fetch error:', e);
     }
 
-    // Tank-Daten aus Diagnostics holen (für Frischwasser/Abwasser)
+    // Diagnostics für alle Detail-Daten holen
     const diagRes = await fetch(
       `${VRM_BASE}/installations/${installationId}/diagnostics`,
       { headers: { 'x-authorization': `Token ${accessToken}` } }
@@ -238,28 +238,67 @@ export async function syncVictronVRM(credentials, vehicleId) {
     
     let freshWater = null;
     let greyWater = null;
+    let batteryCurrent = null;
+    let batteryTimeToGo = null;
+    let batteryConsumedAh = null;
+    let batteryChargeCycles = null;
+    let pvVoltage = null;
+    let pvPower = null;
+    let solarYieldYesterday = null;
+    let solarMaxPowerToday = null;
+    let solarTotalYield = null;
+    let acConsumption = null;
+    let dcSystemPower = null;
+    let chargeState = null;
+    let systemState = null;
     
     if (diagRes.ok) {
       const diag = await diagRes.json();
       const records = diag.records || [];
       
-      // Tank-Sensoren: idDataAttribute 330 = Tank level %
-      // Fluid type 0 = Fuel, 1 = Fresh water, 2 = Waste water, 3 = Live well, 4 = Oil, 5 = Black water
-      const tankRecords = records.filter(r => r.idDataAttribute === 330);
+      // Helper: Wert nach idDataAttribute finden
+      const getValue = (attrId, instance = null) => {
+        const r = records.find(rec => 
+          rec.idDataAttribute === attrId && (instance === null || rec.instance === instance)
+        );
+        return r?.rawValue;
+      };
       
+      // Tank-Sensoren: idDataAttribute 330 = Tank level %
+      const tankRecords = records.filter(r => r.idDataAttribute === 330);
       for (const tank of tankRecords) {
-        // Fluid type aus dem gleichen Device/Instance finden
         const fluidTypeRecord = records.find(r => 
           r.idDataAttribute === 329 && r.instance === tank.instance
         );
         const fluidType = fluidTypeRecord?.rawValue;
-        
         if (fluidType === 1 || fluidType === '1') {
           freshWater = parseFloat(tank.rawValue);
         } else if (fluidType === 2 || fluidType === '2' || fluidType === 5 || fluidType === '5') {
           greyWater = parseFloat(tank.rawValue);
         }
       }
+      
+      // Batterie-Daten (BMV/SmartShunt - instance 279 oder 0)
+      batteryCurrent = parseFloat(getValue(49)) || parseFloat(getValue(147));  // Current
+      batteryTimeToGo = parseFloat(getValue(146)) || parseFloat(getValue(52)); // Time to go (h)
+      batteryConsumedAh = parseFloat(getValue(50)) || parseFloat(getValue(145)); // Consumed Ah
+      batteryChargeCycles = parseInt(getValue(58)) || null; // Charge cycles
+      
+      // Solar-Charger Daten (MPPT - instance 277)
+      pvVoltage = parseFloat(getValue(86)); // PV voltage
+      pvPower = parseFloat(getValue(442));  // PV power
+      solarYieldYesterday = parseFloat(getValue(96)) ? parseFloat(getValue(96)) * 1000 : null; // Yield yesterday (kWh -> Wh)
+      solarMaxPowerToday = parseInt(getValue(95)) || null; // Max charge power today
+      solarTotalYield = parseFloat(getValue(285)) ? parseFloat(getValue(285)) * 1000 : null; // User yield total (kWh -> Wh)
+      
+      // Ladezustand
+      const chargeStateRaw = getValue(85) || getValue(557);
+      chargeState = records.find(r => r.idDataAttribute === 85 || r.idDataAttribute === 557)?.formattedValue || null;
+      
+      // System-Daten (instance 0)
+      acConsumption = parseFloat(getValue(131)) || parseFloat(getValue(567)); // AC Consumption
+      dcSystemPower = parseFloat(getValue(140)); // DC System
+      systemState = records.find(r => r.idDataAttribute === 571)?.formattedValue || null;
     }
 
     if (soc === null) {
@@ -280,9 +319,18 @@ export async function syncVictronVRM(credentials, vehicleId) {
       `UPDATE current_levels
        SET power_level = $1, power_percentage = $2, 
            battery_voltage = $3, dc_power = $4, solar_yield_today = $5,
+           battery_current = $6, battery_time_to_go = $7, battery_consumed_ah = $8,
+           battery_charge_cycles = $9, pv_voltage = $10, pv_power = $11,
+           solar_yield_yesterday = $12, solar_max_power_today = $13, solar_total_yield = $14,
+           ac_consumption = $15, dc_system_power = $16, charge_state = $17, system_state = $18,
            victron_last_sync = NOW(), updated_at = NOW()
-       WHERE vehicle_id = $6`,
-      [powerLevel.toFixed(2), soc.toFixed(2), voltage, dcPower, solarYield, vehicleId]
+       WHERE vehicle_id = $19`,
+      [
+        powerLevel.toFixed(2), soc.toFixed(2), voltage, dcPower, solarYield,
+        batteryCurrent, batteryTimeToGo, batteryConsumedAh, batteryChargeCycles,
+        pvVoltage, pvPower, solarYieldYesterday, solarMaxPowerToday, solarTotalYield,
+        acConsumption, dcSystemPower, chargeState, systemState, vehicleId
+      ]
     );
 
     // Wasser-Tanks aktualisieren wenn vorhanden
