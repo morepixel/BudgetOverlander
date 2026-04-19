@@ -1983,6 +1983,12 @@
                 if (data?.levels) {
                     currentLevels = data.levels;
                     await updateUI();
+                    
+                    // Wenn Victron-Modal offen ist, aktualisieren
+                    const modal = document.getElementById('resourceModal');
+                    if (modal?.classList.contains('active') && currentLevels.victron_last_sync) {
+                        openVictronBatteryModal();
+                    }
                 }
                 
                 if (!victronSynced) {
