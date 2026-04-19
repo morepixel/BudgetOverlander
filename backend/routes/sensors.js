@@ -312,21 +312,37 @@ export async function syncVictronVRM(credentials, vehicleId) {
     );
     const vehicle = vehicleResult.rows[0] || {};
     const batteryCapacity = parseFloat(vehicle.battery_capacity) || 100;
-    const powerLevel = (soc / 100) * batteryCapacity;
+    
+    // Sichere Werte mit Null-Checks
+    const safeSoc = soc !== null && !isNaN(soc) ? soc : null;
+    const safeVoltage = voltage !== null && !isNaN(voltage) ? voltage : null;
+    const powerLevel = safeSoc !== null ? (safeSoc / 100) * batteryCapacity : null;
 
     // current_levels aktualisieren (Batterie + Victron-Daten)
     await pool.query(
       `UPDATE current_levels
-       SET power_level = $1, power_percentage = $2, 
-           battery_voltage = $3, dc_power = $4, solar_yield_today = $5,
-           battery_current = $6, battery_time_to_go = $7, battery_consumed_ah = $8,
-           battery_charge_cycles = $9, pv_voltage = $10, pv_power = $11,
-           solar_yield_yesterday = $12, solar_max_power_today = $13, solar_total_yield = $14,
-           ac_consumption = $15, dc_system_power = $16, charge_state = $17, system_state = $18,
+       SET power_level = COALESCE($1, power_level), 
+           power_percentage = COALESCE($2, power_percentage), 
+           battery_voltage = COALESCE($3, battery_voltage), 
+           dc_power = COALESCE($4, dc_power), 
+           solar_yield_today = COALESCE($5, solar_yield_today),
+           battery_current = COALESCE($6, battery_current), 
+           battery_time_to_go = COALESCE($7, battery_time_to_go), 
+           battery_consumed_ah = COALESCE($8, battery_consumed_ah),
+           battery_charge_cycles = COALESCE($9, battery_charge_cycles), 
+           pv_voltage = COALESCE($10, pv_voltage), 
+           pv_power = COALESCE($11, pv_power),
+           solar_yield_yesterday = COALESCE($12, solar_yield_yesterday), 
+           solar_max_power_today = COALESCE($13, solar_max_power_today), 
+           solar_total_yield = COALESCE($14, solar_total_yield),
+           ac_consumption = COALESCE($15, ac_consumption), 
+           dc_system_power = COALESCE($16, dc_system_power), 
+           charge_state = COALESCE($17, charge_state), 
+           system_state = COALESCE($18, system_state),
            victron_last_sync = NOW(), updated_at = NOW()
        WHERE vehicle_id = $19`,
       [
-        powerLevel.toFixed(2), soc.toFixed(2), voltage, dcPower, solarYield,
+        powerLevel, safeSoc, safeVoltage, dcPower, solarYield,
         batteryCurrent, batteryTimeToGo, batteryConsumedAh, batteryChargeCycles,
         pvVoltage, pvPower, solarYieldYesterday, solarMaxPowerToday, solarTotalYield,
         acConsumption, dcSystemPower, chargeState, systemState, vehicleId
