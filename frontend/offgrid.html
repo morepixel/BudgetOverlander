@@ -3462,33 +3462,45 @@
             if (hasVictronData && batteryTimeToGo > 0) {
                 // Echte Victron-Restzeit verwenden
                 remainingDays = (batteryTimeToGo / 24).toFixed(1);
-                // Verbrauch aus aktuellem Strom berechnen (A * 24h = Ah/Tag)
-                // Negativer Strom = Entladung, positiver = Ladung
-                const dailyConsumption = batteryCurrent < 0 ? Math.abs(batteryCurrent) * 24 : 0;
-                totalConsumption = dailyConsumption;
                 
-                // Watt berechnen: Strom * Spannung
+                // Victron-Werte
                 const batteryVoltage = parseFloat(currentLevels.battery_voltage) || 24;
-                const currentWatts = Math.abs(batteryCurrent * batteryVoltage);
+                const pvPower = parseFloat(currentLevels.pv_power) || 0;
+                const dcPower = Math.abs(parseFloat(currentLevels.dc_power)) || 0;
                 const acConsumption = parseFloat(currentLevels.ac_consumption) || 0;
-                const dcPower = parseFloat(currentLevels.dc_power) || 0;
                 
-                // Gesamtverbrauch in Watt (AC + DC oder berechnet aus Strom)
-                const totalWatts = acConsumption > 0 ? acConsumption : (dcPower > 0 ? dcPower : currentWatts);
+                // Ampere berechnen
+                const pvAmpere = pvPower / batteryVoltage;
+                const dcAmpere = dcPower / batteryVoltage;
+                const acAmpere = acConsumption / batteryVoltage;
+                
+                // Gesamtverbrauch (DC + AC)
+                const totalConsumptionW = dcPower + acConsumption;
+                const totalConsumptionA = totalConsumptionW / batteryVoltage;
+                
+                // Netto-Bilanz
+                const nettoW = pvPower - totalConsumptionW;
+                const nettoA = nettoW / batteryVoltage;
                 
                 consumersHtml = `
                     <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
-                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
-                            <span style="opacity:0.7;">⚡ Aktuell</span>
-                            <span style="color:${batteryCurrent < 0 ? '#ff7b7b' : '#4CAF50'};">${batteryCurrent < 0 ? '' : '+'}${batteryCurrent.toFixed(1)} A / ${totalWatts.toFixed(0)} W</span>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                            <span style="color:#4CAF50;">☀️ Solar rein</span>
+                            <span style="color:#4CAF50;font-weight:600;">+${pvPower.toFixed(0)} W / +${pvAmpere.toFixed(1)} A</span>
                         </div>
-                        ${batteryConsumedAh > 0 ? `
-                        <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.7;">
-                            <span>Verbraucht seit Voll</span>
-                            <span>${batteryConsumedAh.toFixed(1)} Ah</span>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                            <span style="color:#ff7b7b;">⚡ Verbrauch</span>
+                            <span style="color:#ff7b7b;font-weight:600;">-${totalConsumptionW.toFixed(0)} W / -${totalConsumptionA.toFixed(1)} A</span>
+                        </div>
+                        ${dcPower > 0 && acConsumption > 0 ? `
+                        <div style="display:flex;justify-content:space-between;font-size:10px;opacity:0.6;margin-left:16px;">
+                            <span>DC: ${dcPower.toFixed(0)}W | AC: ${acConsumption.toFixed(0)}W</span>
                         </div>
                         ` : ''}
-                        <div style="font-size:10px;opacity:0.5;margin-top:4px;text-align:center;">📊 Live-Daten von Victron</div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:6px 8px;margin-top:6px;background:rgba(${nettoW >= 0 ? '76,175,80' : '255,100,100'},0.2);border-radius:6px;">
+                            <span>Bilanz</span>
+                            <span style="color:${nettoW >= 0 ? '#4CAF50' : '#ff7b7b'};">${nettoW >= 0 ? '+' : ''}${nettoW.toFixed(0)} W / ${nettoA >= 0 ? '+' : ''}${nettoA.toFixed(1)} A</span>
+                        </div>
                     </div>
                 `;
             } else {
@@ -3525,30 +3537,18 @@
             
             const remainingText = remainingDays != null ? `~${remainingDays} Tage` : '--';
             
-            // Solar-Ertrag - echte Victron-Daten wenn vorhanden
+            // Solar-Ertrag - nur für Nicht-Victron-User
             let solarHtml = '';
             const solarWp = currentVehicle.solar_power || 0;
             const hasVictronSolar = currentLevels.pv_power || currentLevels.solar_yield_today;
             
-            if (hasVictronSolar || solarWp > 0) {
+            // Wenn Victron verbunden ist, zeigen wir Solar oben in consumersHtml an
+            // Nur für Nicht-Victron-User den alten Solar-Bereich anzeigen
+            if (!hasVictronData && solarWp > 0) {
                 let solarAhToday = 0;
-                let currentPower = 0;
                 let solarStatus = '☀️';
                 
-                if (hasVictronSolar) {
-                    // Echte Victron-Daten
-                    currentPower = parseFloat(currentLevels.pv_power) || parseFloat(currentLevels.dc_power) || 0;
-                    const solarWhToday = parseFloat(currentLevels.solar_yield_today) || 0;
-                    const voltage = parseFloat(currentLevels.battery_voltage) || 12;
-                    solarAhToday = solarWhToday / voltage;
-                    
-                    // Status basierend auf aktueller Leistung
-                    if (currentPower > 200) solarStatus = '☀️';
-                    else if (currentPower > 50) solarStatus = '⛅';
-                    else if (currentPower > 0) solarStatus = '🌤️';
-                    else solarStatus = '🌙';
-                } else if (userLocation && weatherData?.daily) {
-                    // Fallback: Schätzung basierend auf Wetter
+                if (userLocation && weatherData?.daily) {
                     const sunshineHours = (weatherData.daily.sunshine_duration?.[0] || 0) / 3600;
                     solarAhToday = (solarWp * sunshineHours * 0.7 * 0.15) / 12;
                     const code = weatherData.daily.weathercode?.[0] || 0;
@@ -3564,19 +3564,11 @@
                 const balanceColor = netBalance >= 0 ? '#4CAF50' : '#ff7b7b';
                 const balanceSign = netBalance >= 0 ? '+' : '';
                 
-                // Anzeige: Victron-Live oder geschätzt
-                const solarLabel = hasVictronSolar 
-                    ? `${solarStatus} Solar (${Math.round(currentPower)}W)`
-                    : `${solarStatus} Solar (${solarWp}Wp)`;
-                const solarValue = hasVictronSolar
-                    ? `+${solarAhToday.toFixed(1)} Ah heute`
-                    : `+${solarAhToday.toFixed(1)} Ah/Tag`;
-                
                 solarHtml = `
                     <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
                         <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
-                            <span style="opacity:0.7;">${solarLabel}</span>
-                            <span style="color:#4CAF50;">${solarValue}</span>
+                            <span style="opacity:0.7;">${solarStatus} Solar (${solarWp}Wp)</span>
+                            <span style="color:#4CAF50;">+${solarAhToday.toFixed(1)} Ah/Tag</span>
                         </div>
                         <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;padding:4px 8px;background:rgba(0,0,0,0.2);border-radius:4px;">
                             <span>Bilanz</span>
