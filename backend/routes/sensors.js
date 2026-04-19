@@ -279,6 +279,17 @@ export async function syncVictronVRM(credentials, vehicleId) {
       }
       
       // Batterie-Daten (BMV/SmartShunt - instance 279 oder 0)
+      // SOC aus Diagnostics holen wenn Stats keinen Wert liefert
+      if (soc === null) {
+        const diagSoc = parseFloat(getValue(51)) || parseFloat(getValue(148)); // State of charge %
+        if (diagSoc && !isNaN(diagSoc)) soc = diagSoc;
+      }
+      // Spannung aus Diagnostics wenn nicht vorhanden
+      if (voltage === null) {
+        const diagVoltage = parseFloat(getValue(48)) || parseFloat(getValue(144)); // Battery voltage
+        if (diagVoltage && !isNaN(diagVoltage)) voltage = diagVoltage;
+      }
+      
       batteryCurrent = parseFloat(getValue(49)) || parseFloat(getValue(147));  // Current
       batteryTimeToGo = parseFloat(getValue(146)) || parseFloat(getValue(52)); // Time to go (h)
       batteryConsumedAh = parseFloat(getValue(50)) || parseFloat(getValue(145)); // Consumed Ah
