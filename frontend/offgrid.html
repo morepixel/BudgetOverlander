@@ -655,7 +655,7 @@
         <div class="splash-title">Budget Overlander</div>
     </div>
 
-    <div class="header" id="mainHeader">
+    <div class="header" id="mainHeader" style="display:flex;align-items:center;justify-content:space-between;">
             <div class="logo">
                 <div class="animated-logo">
                     <div class="logo-sky"></div>
@@ -678,6 +678,7 @@
                     </div>
                 </div>
         </div>
+        <button id="refreshDataBtn" onclick="refreshAllData()" style="background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:36px;height:36px;color:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">🔄</button>
     </div>
 
     <div class="app-container">
@@ -1941,6 +1942,48 @@
                 }
             } catch (e) {
                 showToast('Fehler', e.message, 'warning');
+            }
+        }
+        
+        // Alle Daten aktualisieren (Header-Button)
+        async function refreshAllData() {
+            if (!currentVehicle) return;
+            
+            const btn = document.getElementById('refreshDataBtn');
+            if (btn) {
+                btn.style.animation = 'spin 1s linear infinite';
+                btn.disabled = true;
+            }
+            
+            try {
+                // Victron-Sync wenn Premium
+                if (isPremium && window._victronConnected) {
+                    const result = await fetchAPI('/sensors/victron/sync', {
+                        method: 'POST',
+                        body: JSON.stringify({ vehicleId: currentVehicle.id })
+                    });
+                    if (result?.success) {
+                        showToast('Victron aktualisiert', `SOC: ${result.soc?.toFixed(0)}%`, 'success');
+                    }
+                }
+                
+                // Aktuelle Daten laden
+                const data = await fetchAPI('/resources/current');
+                if (data?.levels) {
+                    currentLevels = data.levels;
+                    await updateUI();
+                }
+                
+                if (!isPremium || !window._victronConnected) {
+                    showToast('Aktualisiert', 'Daten wurden geladen', 'success');
+                }
+            } catch (e) {
+                showToast('Fehler', e.message, 'warning');
+            } finally {
+                if (btn) {
+                    btn.style.animation = '';
+                    btn.disabled = false;
+                }
             }
         }
 
