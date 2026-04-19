@@ -411,9 +411,47 @@ cron.schedule('*/15 * * * *', async () => {
   }
 }, { timezone: 'Europe/Berlin' });
 
+// ─── Täglicher Snapshot aller Ressourcen-Levels (für Verbrauchsstatistiken) ───
+cron.schedule('0 23 * * *', async () => {
+  try {
+    // Alle Fahrzeuge mit aktuellen Levels holen
+    const result = await pool.query(`
+      SELECT v.id as vehicle_id, v.user_id, cl.*
+      FROM vehicles v
+      JOIN current_levels cl ON cl.vehicle_id = v.id
+    `);
+    
+    let logged = 0;
+    for (const row of result.rows) {
+      // Für jede Ressource einen Snapshot erstellen
+      const resources = [
+        { type: 'water', level: row.water_level, pct: row.water_percentage },
+        { type: 'power', level: row.power_level, pct: row.power_percentage },
+        { type: 'greywater', level: row.grey_water_level, pct: row.grey_water_percentage },
+        { type: 'fuel', level: row.fuel_level, pct: row.fuel_percentage },
+        { type: 'gas', level: row.gas_level, pct: row.gas_percentage }
+      ];
+      
+      for (const res of resources) {
+        if (res.level != null && res.level > 0) {
+          await pool.query(`
+            INSERT INTO resource_logs (vehicle_id, user_id, resource_type, action, amount, current_level, current_percentage)
+            VALUES ($1, $2, $3, 'daily_snapshot', $4, $4, $5)
+          `, [row.vehicle_id, row.user_id, res.type, res.level, res.pct]);
+          logged++;
+        }
+      }
+    }
+    
+    if (logged > 0) console.log(`📊 Täglicher Snapshot: ${logged} Ressourcen-Logs erstellt`);
+  } catch (error) {
+    console.error('❌ Daily Snapshot Fehler:', error);
+  }
+}, { timezone: 'Europe/Berlin' });
+
 app.listen(PORT, () => {
   console.log(`\n🚀 DaysLeft Backend läuft auf Port ${PORT}`);
   console.log(`📍 API: http://localhost:${PORT}/api`);
   console.log(`💚 Health: http://localhost:${PORT}/api/health`);
-  console.log(`⏰ Cron: Stündlicher Verbrauch + Victron VRM Sync alle 15 min\n`);
+  console.log(`⏰ Cron: Stündlicher Verbrauch + Victron VRM Sync alle 15 min + Täglicher Snapshot 23:00\n`);
 });

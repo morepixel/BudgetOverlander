@@ -636,4 +636,87 @@ function calculateRemaining(vehicle, levels) {
   return result;
 }
 
+// ─── Durchschnittsverbrauch aus historischen Logs berechnen ───────────────────
+router.get('/stats/:vehicleId', authenticateToken, async (req, res) => {
+  const { vehicleId } = req.params;
+  const { resourceType, days = 30 } = req.query;
+  
+  try {
+    // Prüfe ob Fahrzeug dem User gehört
+    const vehicleCheck = await pool.query(
+      'SELECT id FROM vehicles WHERE id = $1 AND user_id = $2',
+      [vehicleId, req.user.id]
+    );
+    if (vehicleCheck.rows.length === 0) {
+      return res.status(403).json({ error: 'Kein Zugriff auf dieses Fahrzeug' });
+    }
+    
+    // Logs der letzten X Tage holen
+    const logsResult = await pool.query(`
+      SELECT resource_type, current_level, current_percentage, created_at
+      FROM resource_logs
+      WHERE vehicle_id = $1 
+        AND created_at > NOW() - INTERVAL '${parseInt(days)} days'
+        ${resourceType ? "AND resource_type = $2" : ""}
+      ORDER BY resource_type, created_at
+    `, resourceType ? [vehicleId, resourceType] : [vehicleId]);
+    
+    const logs = logsResult.rows;
+    
+    // Verbrauch pro Ressource berechnen
+    const stats = {};
+    const resourceGroups = {};
+    
+    // Logs nach Ressource gruppieren
+    for (const log of logs) {
+      if (!resourceGroups[log.resource_type]) {
+        resourceGroups[log.resource_type] = [];
+      }
+      resourceGroups[log.resource_type].push(log);
+    }
+    
+    // Für jede Ressource den Durchschnittsverbrauch berechnen
+    for (const [type, typeLogs] of Object.entries(resourceGroups)) {
+      if (typeLogs.length < 2) continue;
+      
+      let totalConsumption = 0;
+      let totalDays = 0;
+      let refillCount = 0;
+      
+      for (let i = 1; i < typeLogs.length; i++) {
+        const prev = typeLogs[i - 1];
+        const curr = typeLogs[i];
+        const levelDiff = parseFloat(prev.current_level) - parseFloat(curr.current_level);
+        const daysDiff = (new Date(curr.created_at) - new Date(prev.created_at)) / (1000 * 60 * 60 * 24);
+        
+        // Nur Verbrauch zählen (Level sinkt), nicht Auffüllen
+        if (levelDiff > 0 && daysDiff > 0) {
+          totalConsumption += levelDiff;
+          totalDays += daysDiff;
+        } else if (levelDiff < 0) {
+          // Auffüllen erkannt
+          refillCount++;
+        }
+      }
+      
+      const avgPerDay = totalDays > 0 ? totalConsumption / totalDays : 0;
+      
+      stats[type] = {
+        avgConsumptionPerDay: Math.round(avgPerDay * 10) / 10,
+        totalConsumption: Math.round(totalConsumption * 10) / 10,
+        totalDays: Math.round(totalDays * 10) / 10,
+        dataPoints: typeLogs.length,
+        refillCount,
+        firstLog: typeLogs[0].created_at,
+        lastLog: typeLogs[typeLogs.length - 1].created_at
+      };
+    }
+    
+    res.json({ stats, period: `${days} Tage` });
+  } catch (err) {
+    console.error('Stats error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
