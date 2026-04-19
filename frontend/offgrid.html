@@ -103,7 +103,7 @@
             font-size: 12px;
         }
         .edit-mode-btn {
-            position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 75px); right: 16px;
+            position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); right: 16px;
             background: rgba(76,175,80,0.9); border: none; border-radius: 50%;
             width: 50px; height: 50px; font-size: 20px;
             cursor: pointer; z-index: 1001; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
@@ -1756,9 +1756,12 @@
             const cards = grid.querySelectorAll('.resource-card');
             const order = [...cards].map(card => card.dataset.resource).filter(Boolean);
             
+            console.log('Saving resource order:', order);
+            
             if (order.length > 0) {
                 customResourceOrder = order;
                 localStorage.setItem('resourceOrder', JSON.stringify(order));
+                showToast('Gespeichert', 'Kachel-Reihenfolge gespeichert', 'success');
             }
         }
 
@@ -3001,7 +3004,7 @@
             }
             
             grid.innerHTML += `
-                <div class="resource-card" onclick="openVictronModal()" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.2) 0%, rgba(243, 156, 18, 0.3) 100%); border: 1px solid rgba(241, 196, 15, 0.3); cursor:pointer;">
+                <div class="resource-card" data-resource="solar" onclick="openVictronModal()" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.2) 0%, rgba(243, 156, 18, 0.3) 100%); border: 1px solid rgba(241, 196, 15, 0.3); cursor:pointer;">
                     <div class="resource-header">
                         <span class="resource-icon">☀️</span>
                         <span class="resource-percentage" style="font-size:18px;">${Math.round(pvPower)}W</span>
