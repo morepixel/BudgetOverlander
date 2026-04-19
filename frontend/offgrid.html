@@ -3903,12 +3903,19 @@
         function openResourceModal(type) {
             currentResourceType = type;
             const config = RESOURCE_CONFIG[type];
+            
+            // Bei Power mit Victron-Verbindung: Victron-Modal öffnen statt manuelles
+            if (type === 'power' && currentLevels?.victron_last_sync) {
+                openVictronBatteryModal();
+                return;
+            }
+            
             document.getElementById('modalTitle').textContent = `${config.icon} ${getResourceName(currentResourceType)}`;
             const pct = currentLevels[`${type}_percentage`] || 0;
             document.getElementById('modalSlider').value = pct;
             document.getElementById('modalSliderValue').textContent = `${Math.round(pct)}%`;
             
-            // Verbraucher-Bereich nur bei Power anzeigen
+            // Verbraucher-Bereich nur bei Power anzeigen (manueller Modus)
             const consumersSection = document.getElementById('modalConsumersSection');
             if (type === 'power') {
                 consumersSection.style.display = 'block';
@@ -3917,6 +3924,76 @@
                 consumersSection.style.display = 'none';
             }
             
+            document.getElementById('resourceModal').classList.add('active');
+        }
+        
+        function openVictronBatteryModal() {
+            const voltage = parseFloat(currentLevels.battery_voltage) || 0;
+            const soc = parseFloat(currentLevels.power_percentage) || 0;
+            const current = parseFloat(currentLevels.battery_current) || 0;
+            const timeToGo = parseFloat(currentLevels.battery_time_to_go) || 0;
+            const consumedAh = Math.abs(parseFloat(currentLevels.battery_consumed_ah)) || 0;
+            const pvPower = parseFloat(currentLevels.pv_power) || 0;
+            const dcPower = Math.abs(parseFloat(currentLevels.dc_power)) || 0;
+            const acConsumption = parseFloat(currentLevels.ac_consumption) || 0;
+            const chargeState = currentLevels.charge_state || '--';
+            const systemState = currentLevels.system_state || '--';
+            
+            // Sync-Zeit formatieren
+            let syncText = '--';
+            if (currentLevels.victron_last_sync) {
+                const syncDate = new Date(currentLevels.victron_last_sync);
+                const diffMin = Math.round((Date.now() - syncDate) / 60000);
+                syncText = diffMin < 1 ? 'Gerade eben' : diffMin < 60 ? `vor ${diffMin} Min` : `vor ${Math.round(diffMin/60)} Std`;
+            }
+            
+            const totalConsumption = dcPower + acConsumption;
+            const netPower = pvPower - totalConsumption;
+            
+            const modalContent = `
+                <div style="padding:4px 0;">
+                    <div style="text-align:center;margin-bottom:16px;">
+                        <div style="font-size:48px;font-weight:700;color:${soc > 50 ? '#4CAF50' : soc > 20 ? '#FFC107' : '#ff5252'};">${soc.toFixed(0)}%</div>
+                        <div style="font-size:14px;opacity:0.7;">${voltage.toFixed(2)} V</div>
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                        <div style="background:rgba(76,175,80,0.15);padding:12px;border-radius:10px;text-align:center;">
+                            <div style="font-size:11px;opacity:0.7;">☀️ Solar</div>
+                            <div style="font-size:18px;font-weight:600;color:#4CAF50;">+${pvPower.toFixed(0)} W</div>
+                        </div>
+                        <div style="background:rgba(255,100,100,0.15);padding:12px;border-radius:10px;text-align:center;">
+                            <div style="font-size:11px;opacity:0.7;">⚡ Verbrauch</div>
+                            <div style="font-size:18px;font-weight:600;color:#ff7b7b;">-${totalConsumption.toFixed(0)} W</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background:rgba(${netPower >= 0 ? '76,175,80' : '255,100,100'},0.2);padding:12px;border-radius:10px;text-align:center;margin-bottom:16px;">
+                        <div style="font-size:12px;opacity:0.8;">Netto-Bilanz</div>
+                        <div style="font-size:24px;font-weight:700;color:${netPower >= 0 ? '#4CAF50' : '#ff7b7b'};">${netPower >= 0 ? '+' : ''}${netPower.toFixed(0)} W</div>
+                    </div>
+                    
+                    <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:10px;margin-bottom:16px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+                            <div><span style="opacity:0.6;">Strom:</span> <strong>${current.toFixed(1)} A</strong></div>
+                            <div><span style="opacity:0.6;">Restzeit:</span> <strong>${timeToGo > 0 ? (timeToGo/24).toFixed(1) + ' Tage' : '--'}</strong></div>
+                            <div><span style="opacity:0.6;">Verbraucht:</span> <strong>${consumedAh.toFixed(1)} Ah</strong></div>
+                            <div><span style="opacity:0.6;">DC-Last:</span> <strong>${dcPower.toFixed(0)} W</strong></div>
+                            <div><span style="opacity:0.6;">AC-Last:</span> <strong>${acConsumption.toFixed(0)} W</strong></div>
+                            <div><span style="opacity:0.6;">Status:</span> <strong>${chargeState}</strong></div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align:center;font-size:11px;opacity:0.5;">
+                        📊 Live-Daten von Victron VRM • ${syncText}
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="refreshAllData()" style="width:100%;margin-top:16px;">🔄 Daten aktualisieren</button>
+                </div>
+            `;
+            
+            document.getElementById('resourceModalTitle').textContent = '🔋 Batterie (Victron)';
+            document.getElementById('resourceModalContent').innerHTML = modalContent;
             document.getElementById('resourceModal').classList.add('active');
         }
         
