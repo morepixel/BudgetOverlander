@@ -3486,23 +3486,16 @@
                 const nettoA = nettoW / batteryVoltage;
                 
                 consumersHtml = `
-                    <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
-                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
-                            <span style="color:#4CAF50;">☀️ Solar rein</span>
-                            <span style="color:#4CAF50;font-weight:600;">+${pvPower.toFixed(0)} W / +${pvAmpere.toFixed(1)} A</span>
+                    <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.15);padding-top:10px;">
+                        <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 8px;font-size:11px;">
+                            <span style="color:#4CAF50;">☀️ Rein</span>
+                            <span style="color:#4CAF50;font-weight:600;text-align:right;white-space:nowrap;">+${pvPower.toFixed(0)}W / +${pvAmpere.toFixed(1)}A</span>
+                            <span style="color:#ff7b7b;">⚡ Raus</span>
+                            <span style="color:#ff7b7b;font-weight:600;text-align:right;white-space:nowrap;">-${totalConsumptionW.toFixed(0)}W / -${totalConsumptionA.toFixed(1)}A</span>
                         </div>
-                        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
-                            <span style="color:#ff7b7b;">⚡ Verbrauch</span>
-                            <span style="color:#ff7b7b;font-weight:600;">-${totalConsumptionW.toFixed(0)} W / -${totalConsumptionA.toFixed(1)} A</span>
-                        </div>
-                        ${dcPower > 0 && acConsumption > 0 ? `
-                        <div style="display:flex;justify-content:space-between;font-size:10px;opacity:0.6;margin-left:16px;">
-                            <span>DC: ${dcPower.toFixed(0)}W | AC: ${acConsumption.toFixed(0)}W</span>
-                        </div>
-                        ` : ''}
-                        <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;padding:6px 8px;margin-top:6px;background:rgba(${nettoW >= 0 ? '76,175,80' : '255,100,100'},0.2);border-radius:6px;">
-                            <span>Bilanz</span>
-                            <span style="color:${nettoW >= 0 ? '#4CAF50' : '#ff7b7b'};">${nettoW >= 0 ? '+' : ''}${nettoW.toFixed(0)} W / ${nettoA >= 0 ? '+' : ''}${nettoA.toFixed(1)} A</span>
+                        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;padding:8px 10px;margin-top:8px;background:rgba(${nettoW >= 0 ? '76,175,80' : '255,100,100'},0.25);border-radius:8px;">
+                            <span style="opacity:0.9;">Bilanz</span>
+                            <span style="color:${nettoW >= 0 ? '#4CAF50' : '#ff7b7b'};white-space:nowrap;">${nettoW >= 0 ? '+' : ''}${nettoW.toFixed(0)}W / ${nettoA >= 0 ? '+' : ''}${nettoA.toFixed(1)}A</span>
                         </div>
                     </div>
                 `;
