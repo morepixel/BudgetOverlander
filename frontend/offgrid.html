@@ -3310,6 +3310,14 @@
             const grid = document.getElementById('resourcesGrid');
             grid.innerHTML = '';
             
+            // Stats für Durchschnittsverbrauch laden (im Hintergrund)
+            if (currentVehicle && !window._resourceStats) {
+                try {
+                    const statsData = await fetchAPI(`/resources/stats/${currentVehicle.id}?days=30`);
+                    window._resourceStats = statsData?.stats || {};
+                } catch (e) { window._resourceStats = {}; }
+            }
+            
             // Gespeicherte oder optimierte Reihenfolge
             let sortedResources;
             // Prüfe ob Victron-Solar-Kachel angezeigt werden soll
@@ -3391,6 +3399,15 @@
                     consumeBtn = `<button class="btn btn-secondary" style="padding:4px 8px;font-size:11px;margin-top:8px;width:100%;" onclick="event.stopPropagation(); consumeResource('food', 1)">🍽️ Tag vorbei (-1)</button>`;
                 }
                 
+                // Durchschnittsverbrauch aus Stats holen (für Wasser, Greywater)
+                let avgConsumptionHtml = '';
+                if ((key === 'water' || key === 'greywater') && window._resourceStats?.[key]) {
+                    const avg = window._resourceStats[key].avgConsumptionPerDay;
+                    if (avg > 0) {
+                        avgConsumptionHtml = `<div style="font-size:10px;opacity:0.6;margin-top:2px;">Ø ${avg.toFixed(1)} ${config.unit}/Tag</div>`;
+                    }
+                }
+                
                 grid.innerHTML += `
                     <div class="resource-card ${statusClass}" data-resource="${key}" onclick="openResourceModal('${key}')" style="position:relative;">
                         <div class="resource-header">
@@ -3403,6 +3420,7 @@
                         </div>
                         <div class="resource-remaining">${remainingText}</div>
                         <div class="resource-value">${config.unit === 'kg' ? level.toFixed(1) : Math.round(level)} / ${capacity} ${config.unit}</div>
+                        ${avgConsumptionHtml}
                         ${consumeBtn}
                     </div>
                 `;
