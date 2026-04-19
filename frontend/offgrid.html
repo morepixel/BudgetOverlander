@@ -3445,41 +3445,76 @@
             const config = RESOURCE_CONFIG.power;
             const level = currentLevels.power_level || 0;
             const pct = currentLevels.power_percentage || 0;
-            const remaining = currentLevels.power_days_remaining;
             const capacity = currentVehicle.battery_capacity || 0;
             let statusClass = pct < 20 ? 'critical' : pct < 40 ? 'warning' : '';
-            const remainingText = remaining != null ? `~${remaining} Tage` : '--';
             
-            // Verbraucher laden
-            let consumersHtml = '';
+            // Victron-Daten für echten Verbrauch
+            const hasVictronData = currentLevels.battery_time_to_go || currentLevels.battery_current;
+            const batteryTimeToGo = parseFloat(currentLevels.battery_time_to_go) || 0; // Stunden
+            const batteryCurrent = parseFloat(currentLevels.battery_current) || 0; // Ampere (negativ = Entladung)
+            const batteryConsumedAh = Math.abs(parseFloat(currentLevels.battery_consumed_ah)) || 0;
+            
+            // Restzeit: Victron time_to_go (in Stunden) oder manuelle Berechnung
+            let remainingDays = null;
             let totalConsumption = 0;
-            try {
-                const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
-                const consumersList = data?.consumers || [];
-                const activeConsumers = consumersList.filter(c => c.is_active);
-                totalConsumption = activeConsumers.reduce((sum, c) => sum + parseFloat(c.consumption_ah || 0), 0);
+            let consumersHtml = '';
+            
+            if (hasVictronData && batteryTimeToGo > 0) {
+                // Echte Victron-Restzeit verwenden
+                remainingDays = (batteryTimeToGo / 24).toFixed(1);
+                // Verbrauch aus aktuellem Strom berechnen (A * 24h = Ah/Tag)
+                // Negativer Strom = Entladung, positiver = Ladung
+                const dailyConsumption = batteryCurrent < 0 ? Math.abs(batteryCurrent) * 24 : 0;
+                totalConsumption = dailyConsumption;
                 
-                if (consumersList.length > 0) {
-                    consumersHtml = `
-                        <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
-                            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
-                                <span style="opacity:0.7;">⚡ Verbrauch</span>
-                                <span style="color:#ff7b7b;">-${totalConsumption.toFixed(1)} Ah/Tag</span>
-                            </div>
-                            <div style="max-height:60px;overflow-y:auto;font-size:11px;">
-                                ${consumersList.slice(0, 3).map(c => `
-                                    <div style="display:flex;align-items:center;gap:4px;padding:2px 0;opacity:${c.is_active ? 1 : 0.5};">
-                                        <span>${c.is_active ? '✅' : '⬜'}</span>
-                                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</span>
-                                        <span>${c.consumption_ah} Ah</span>
-                                    </div>
-                                `).join('')}
-                                ${consumersList.length > 3 ? `<div style="opacity:0.5;text-align:center;">+${consumersList.length - 3} weitere</div>` : ''}
-                            </div>
+                consumersHtml = `
+                    <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                            <span style="opacity:0.7;">⚡ Aktueller Verbrauch</span>
+                            <span style="color:${batteryCurrent < 0 ? '#ff7b7b' : '#4CAF50'};">${batteryCurrent < 0 ? '' : '+'}${batteryCurrent.toFixed(1)} A</span>
                         </div>
-                    `;
-                }
-            } catch (e) { /* Verbraucher nicht geladen */ }
+                        ${batteryConsumedAh > 0 ? `
+                        <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.7;">
+                            <span>Verbraucht seit Voll</span>
+                            <span>${batteryConsumedAh.toFixed(1)} Ah</span>
+                        </div>
+                        ` : ''}
+                        <div style="font-size:10px;opacity:0.5;margin-top:4px;text-align:center;">📊 Live-Daten von Victron</div>
+                    </div>
+                `;
+            } else {
+                // Fallback: Manuelle Verbraucher
+                remainingDays = currentLevels.power_days_remaining;
+                try {
+                    const data = await fetchAPI(`/consumers/${currentVehicle.id}`);
+                    const consumersList = data?.consumers || [];
+                    const activeConsumers = consumersList.filter(c => c.is_active);
+                    totalConsumption = activeConsumers.reduce((sum, c) => sum + parseFloat(c.consumption_ah || 0), 0);
+                    
+                    if (consumersList.length > 0) {
+                        consumersHtml = `
+                            <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
+                                <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                                    <span style="opacity:0.7;">⚡ Verbrauch</span>
+                                    <span style="color:#ff7b7b;">-${totalConsumption.toFixed(1)} Ah/Tag</span>
+                                </div>
+                                <div style="max-height:60px;overflow-y:auto;font-size:11px;">
+                                    ${consumersList.slice(0, 3).map(c => `
+                                        <div style="display:flex;align-items:center;gap:4px;padding:2px 0;opacity:${c.is_active ? 1 : 0.5};">
+                                            <span>${c.is_active ? '✅' : '⬜'}</span>
+                                            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.name}</span>
+                                            <span>${c.consumption_ah} Ah</span>
+                                        </div>
+                                    `).join('')}
+                                    ${consumersList.length > 3 ? `<div style="opacity:0.5;text-align:center;">+${consumersList.length - 3} weitere</div>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (e) { /* Verbraucher nicht geladen */ }
+            }
+            
+            const remainingText = remainingDays != null ? `~${remainingDays} Tage` : '--';
             
             // Solar-Ertrag - echte Victron-Daten wenn vorhanden
             let solarHtml = '';
