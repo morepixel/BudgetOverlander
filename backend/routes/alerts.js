@@ -1,6 +1,6 @@
 import express from 'express';
 import pool from '../database/db-postgres.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken } from './auth.js';
 
 const router = express.Router();
 
