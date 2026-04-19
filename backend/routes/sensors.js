@@ -203,8 +203,8 @@ export async function syncVictronVRM(credentials, vehicleId) {
     const totals = stats.totals || {};
 
     // Batterie-Werte aus Stats (bs = battery SOC, bv = battery voltage)
-    const soc = totals.bs !== undefined ? parseFloat(totals.bs) : null;
-    const voltage = totals.bv !== undefined ? parseFloat(totals.bv) : null;
+    let soc = totals.bs !== undefined ? parseFloat(totals.bs) : null;
+    let voltage = totals.bv !== undefined ? parseFloat(totals.bv) : null;
     const dcPower = totals.Pdc !== undefined ? parseFloat(totals.Pdc) : null;
     
     // Tages-Ertrag: Stats für den ganzen Tag holen (seit Mitternacht)
