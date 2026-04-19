@@ -3312,14 +3312,23 @@
             
             // Gespeicherte oder optimierte Reihenfolge
             let sortedResources;
+            // Prüfe ob Victron-Solar-Kachel angezeigt werden soll
+            const hasVictronSolar = currentLevels && (currentLevels.victron_last_sync || currentLevels.dc_power || currentLevels.solar_yield_today);
+            
+            // Alle verfügbaren Ressourcen inkl. Solar wenn Victron verbunden
+            let allResources = [...enabledResources];
+            if (hasVictronSolar && !allResources.includes('solar')) {
+                allResources.push('solar');
+            }
+            
             if (customResourceOrder && customResourceOrder.length > 0) {
                 // Gespeicherte Reihenfolge verwenden, neue Ressourcen am Ende
-                sortedResources = [...customResourceOrder.filter(r => enabledResources.includes(r))];
-                enabledResources.forEach(r => { if (!sortedResources.includes(r)) sortedResources.push(r); });
+                sortedResources = [...customResourceOrder.filter(r => allResources.includes(r))];
+                allResources.forEach(r => { if (!sortedResources.includes(r)) sortedResources.push(r); });
             } else {
-                // Standard: Wasser zuerst, dann Power (span-2), dann Grauwasser
-                sortedResources = [...enabledResources].sort((a, b) => {
-                    const order = { water: 0, power: 1, greywater: 2 };
+                // Standard: Wasser zuerst, dann Power (span-2), dann Grauwasser, Solar am Ende
+                sortedResources = [...allResources].sort((a, b) => {
+                    const order = { water: 0, power: 1, greywater: 2, solar: 3 };
                     return (order[a] ?? 99) - (order[b] ?? 99);
                 });
             }
@@ -3331,6 +3340,10 @@
                 }
                 if (key === 'power') {
                     await renderPowerCard(grid);
+                    continue;
+                }
+                if (key === 'solar') {
+                    renderVictronCard(grid);
                     continue;
                 }
                 const config = RESOURCE_CONFIG[key];
@@ -3429,9 +3442,6 @@
                     }
                 }
             } catch (e) { /* Custom resources not loaded */ }
-            
-            // Victron Live-Kachel wenn Daten vorhanden
-            renderVictronCard(grid);
             
             // Button zum Hinzufügen neuer Custom Resources
             grid.innerHTML += `
