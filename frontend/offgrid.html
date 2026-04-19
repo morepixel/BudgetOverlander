@@ -3467,11 +3467,20 @@
                 const dailyConsumption = batteryCurrent < 0 ? Math.abs(batteryCurrent) * 24 : 0;
                 totalConsumption = dailyConsumption;
                 
+                // Watt berechnen: Strom * Spannung
+                const batteryVoltage = parseFloat(currentLevels.battery_voltage) || 24;
+                const currentWatts = Math.abs(batteryCurrent * batteryVoltage);
+                const acConsumption = parseFloat(currentLevels.ac_consumption) || 0;
+                const dcPower = parseFloat(currentLevels.dc_power) || 0;
+                
+                // Gesamtverbrauch in Watt (AC + DC oder berechnet aus Strom)
+                const totalWatts = acConsumption > 0 ? acConsumption : (dcPower > 0 ? dcPower : currentWatts);
+                
                 consumersHtml = `
                     <div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.1);padding-top:8px;">
                         <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
-                            <span style="opacity:0.7;">⚡ Aktueller Verbrauch</span>
-                            <span style="color:${batteryCurrent < 0 ? '#ff7b7b' : '#4CAF50'};">${batteryCurrent < 0 ? '' : '+'}${batteryCurrent.toFixed(1)} A</span>
+                            <span style="opacity:0.7;">⚡ Aktuell</span>
+                            <span style="color:${batteryCurrent < 0 ? '#ff7b7b' : '#4CAF50'};">${batteryCurrent < 0 ? '' : '+'}${batteryCurrent.toFixed(1)} A / ${totalWatts.toFixed(0)} W</span>
                         </div>
                         ${batteryConsumedAh > 0 ? `
                         <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.7;">
